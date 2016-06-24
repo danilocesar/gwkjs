@@ -1,0 +1,3 @@
+[Test]
+Type=session
+Exec=gwkjs @pkglibexecdir@/installed-tests/scripts/@name@

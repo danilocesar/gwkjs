@@ -1,0 +1,156 @@
+EXTRA_DIST += \
+	test/run-with-dbus \
+	test/test-bus.conf
+
+TEST_PROGS_OPTIONS =
+
+if XVFB_TESTS
+XVFB_INVOCATION = $(XVFB) -ac -noreset -screen 0 1024x768x16
+XIDS = 101 102 103 104 105 106 107 197 199 211 223 227 293 307 308 309 310 311 \
+   491 492 493 494 495 496 497 498 499 500 501 502 503 504 505 506 507 508 509 \
+   991 992 993 994 995 996 997 998 999 1000 1001 1002 1003 1004 1005 1006 1007 \
+  1008 1009 4703 4721 4723 4729 4733 4751 9973 9974 9975 9976 9977 9978 9979 \
+  9980 9981 9982 9983 9984 9985 9986 9987 9988 9989 9990 9991 9992 9993 9994 \
+  9995 9996 9997 9998 9999
+XVFB_START = \
+${XVFB_INVOCATION} -help 2>/dev/null 1>&2 \
+    && XID=`for id in $(XIDS) ; do test -e /tmp/.X$$id-lock || { echo $$id; exit 0; }; done; exit 1` \
+    && { ${XVFB} :$$XID -nolisten tcp -auth /dev/null >/dev/null 2>&1 & \
+           trap "kill -15 $$! " 0 HUP INT QUIT TRAP USR1 PIPE TERM ; } \
+    || { echo "Gtk+Tests:ERROR: Failed to start Xvfb environment for X11 target tests."; exit 1; } \
+    && DISPLAY=:$$XID && export DISPLAY &&
+else
+XVFB_START =
+endif
+
+if DBUS_TESTS
+RUN_WITH_DBUS = ${top_srcdir}/test/run-with-dbus --session --system
+else
+RUN_WITH_DBUS =
+TEST_PROGS_OPTIONS += -s /js/GDBus
+endif
+
+GTESTER = ${XVFB_START} ${TESTS_ENVIRONMENT} ${RUN_WITH_DBUS} gtester
+CLEANFILES += uninstalled-system-test-bus.conf uninstalled-test-bus.conf
+clean-local: test-user-data-clean
+
+test-user-data-clean:
+	-rm -fr $(builddir)/test_user_data
+
+########################################################################
+TEST_PROGS += gwkjs-tests
+
+gwkjs_tests_CPPFLAGS =				\
+	$(AM_CPPFLAGS)				\
+	-DGWKJS_COMPILATION			\
+	$(GWKJSTESTS_CFLAGS)			\
+	$(gwkjs_directory_defines)		\
+	-I$(top_srcdir)/test
+
+mock_js_resources_files = $(shell glib-compile-resources --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/test/mock-js-resources.gresource.xml)
+mock-js-resources.h: $(srcdir)/test/mock-js-resources.gresource.xml $(modules_resource_files)
+	$(AM_V_GEN) glib-compile-resources --target=$@ --sourcedir=$(srcdir) --sourcedir=$(builddir) --generate --c-name mock_js_resources $<
+mock-js-resources.c: $(srcdir)/test/mock-js-resources.gresource.xml $(modules_resource_files)
+	$(AM_V_GEN) glib-compile-resources --target=$@ --sourcedir=$(srcdir) --sourcedir=$(builddir) --generate --c-name mock_js_resources $<
+
+mock_js_invalidation_resources_dir = $(top_srcdir)/test/gwkjs-test-coverage/cache_invalidation
+mock_js_invalidation_before_resources_files =								\
+	$(mock_js_invalidation_resources_dir)/before/resource.js					\
+	$(mock_js_invalidation_resources_dir)/before/mock-js-resource-cache-before.gresource.xml	\
+	$(NULL)
+mock_js_invalidation_after_resources_files =								\
+	$(mock_js_invalidation_resources_dir)/after/resource.js						\
+	$(mock_js_invalidation_resources_dir)/after/mock-js-resource-cache-after.gresource.xml		\
+	$(NULL)
+mock_js_invalidation_resources_files =			\
+	$(mock_js_invalidation_before_resources_files)	\
+	$(mock_js_invalidation_after_resources_files)	\
+	$(NULL)
+
+mock-cache-invalidation-before.gresource: $(mock_js_invalidation_before_resources_files)
+	$(AM_V_GEN) glib-compile-resources --target=$@ --sourcedir=$(mock_js_invalidation_resources_dir)/before $(mock_js_invalidation_resources_dir)/before/mock-js-resource-cache-before.gresource.xml
+mock-cache-invalidation-after.gresource: $(mock_js_invalidation_after_resources_files)
+	$(AM_V_GEN) glib-compile-resources --target=$@ --sourcedir=$(mock_js_invalidation_resources_dir)/after $(mock_js_invalidation_resources_dir)/after/mock-js-resource-cache-after.gresource.xml
+
+EXTRA_DIST += 							\
+	$(mock_js_resources_files)				\
+	$(mock_js_invalidation_resources_files)			\
+	$(srcdir)/test/mock-js-resources.gresource.xml		\
+	$(srcdir)/test/gwkjs-test-coverage/loadedJSFromResource.js \
+	$(NULL)
+
+## -rdynamic makes backtraces work
+gwkjs_tests_LDFLAGS = -rdynamic
+gwkjs_tests_LDADD =		\
+	libgwkjs.la		\
+	$(GWKJSTESTS_LIBS)
+
+gwkjs_tests_SOURCES =					\
+	test/gwkjs-tests.cpp				\
+	test/gwkjs-tests-add-funcs.h			\
+	test/gwkjs-test-coverage.cpp			\
+	mock-js-resources.c				\
+	$(NULL)
+
+gwkjs_tests_DEPENDENCIES =				\
+	mock-cache-invalidation-before.gresource	\
+	mock-cache-invalidation-after.gresource		\
+	$(NULL)
+
+CLEANFILES +=						\
+	mock-cache-invalidation-before.gresource	\
+	mock-cache-invalidation-after.gresource		\
+	mock-js-resources.c				\
+	$(NULL)
+
+check-local: gwkjs-tests
+	@test -z "${TEST_PROGS}" || ${GTESTER} --verbose ${TEST_PROGS} ${TEST_PROGS_OPTIONS}
+
+# GWKJS_PATH is empty here since we want to force the use of our own
+# resources
+TESTS_ENVIRONMENT =							\
+	TOP_SRCDIR=$(abs_top_srcdir)					\
+	TOP_BUILDDIR=$(abs_top_builddir)				\
+	DBUS_SESSION_BUS_ADDRESS=''					\
+	XDG_DATA_HOME=test_user_data					\
+	GWKJS_DEBUG_OUTPUT=test_user_data/logs/gwkjs.log			\
+	BUILDDIR=.							\
+	GWKJS_USE_UNINSTALLED_FILES=1					\
+	GWKJS_TEST_TIMEOUT=420						\
+	GWKJS_PATH= \
+	LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(FIREFOX_JS_LIBDIR)"	\
+	G_FILENAME_ENCODING=latin1	# ensure filenames are not utf8	\
+	DBUS_UUIDGEN="$(DBUS_UUIDGEN)"
+
+if ENABLE_COVERAGE
+TESTS_ENVIRONMENT += \
+	GWKJS_UNIT_COVERAGE_OUTPUT=lcov \
+	GWKJS_UNIT_COVERAGE_PREFIX=resource:///org/gnome/gwkjs/
+endif
+
+########################################################################
+if ENABLE_COVERAGE
+lcov:
+	test -d lcov || mkdir lcov
+	$(LCOV) --compat-libtool --directory . --capture -o lcov/lcov_tmp.info
+	$(LCOV) --extract lcov/lcov_tmp.info "$(PWD)/*" -o lcov/lcov.info
+	rm -f lcov/lcov_tmp.info
+	$(GENHTML) --legend -o lcov lcov/lcov.info lcov/coverage.lcov
+
+lcov-clean:
+	find . -name '*.gcda' -delete
+	rm -rf lcov
+
+lcov-realclean: lcov-clean
+	find . -name '*.gcno' -delete
+
+clean-local: lcov-realclean
+
+.PHONY: lcov lcov-clean lcov-realclean
+else
+lcov:
+	@echo >&1 "*** ERROR: 'configure --enable-coverage' required"
+	@exit 1
+
+.PHONY: lcov
+endif

@@ -1,0 +1,3 @@
+In order to run those example scripts, do:
+
+  gwkjs-console script-filename.js

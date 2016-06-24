@@ -1,0 +1,18 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+bindir=@bindir@
+includedir=@includedir@
+datarootdir=@datarootdir@
+datadir=@datadir@
+
+gwkjs_console=${bindir}/gwkjs-console
+
+Cflags: -I${includedir}/gwkjs-1.0
+Requires: gobject-2.0
+Requires.private: gobject-introspection-1.0 mozjs-24
+Libs: -L${libdir} -lgwkjs
+
+Name: gwkjs-1.0
+Description: JS bindings for GObjects
+Version: @VERSION@

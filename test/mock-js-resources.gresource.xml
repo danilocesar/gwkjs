@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/gnome/gwkjs/mock">
+    <file>test/gwkjs-test-coverage/loadedJSFromResource.js</file>
+    <file>test/gwkjs-test-coverage/cache_notation/simple_executable_lines.js</file>
+    <file>test/gwkjs-test-coverage/cache_notation/simple_branch.js</file>
+    <file>test/gwkjs-test-coverage/cache_notation/simple_function.js</file>
+  </gresource>
+</gresources>

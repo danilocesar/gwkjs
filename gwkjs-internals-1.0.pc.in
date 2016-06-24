@@ -1,0 +1,16 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+bindir=@bindir@
+includedir=@includedir@
+datarootdir=@datarootdir@
+datadir=@datadir@
+
+jsdir=@gwkjsjsdir@
+
+Cflags: -I${includedir}/gwkjs-1.0
+Requires: gwkjs-1.0 gobject-introspection-1.0 mozjs-24
+
+Name: gwkjs-internals-1.0
+Description: Internal API for gwkjs (for modules and embedders); uses mozjs
+Version: @VERSION@
