@@ -666,10 +666,8 @@ gwkjs_context_eval(GwkjsContext   *js_context,
     }
 
     if (exit_status_p) {
-        g_warning("arrived! %p", retval);
         if (JSValueIsNumber(js_context->context, retval)) {
             double code = JSValueToNumber(js_context->context, retval, NULL);
-            g_warning("CODE: %f", code);
             *exit_status_p = (int)code;
         } else {
             /* Assume success if no integer was returned */
@@ -727,10 +725,10 @@ gwkjs_context_define_string_array(GwkjsContext  *js_context,
     JSValueRef exception = NULL;
 
     if (!gwkjs_define_string_array(js_context->context,
-                                 js_context->global,
-                                 array_name, array_length, array_values,
-                                 kJSPropertyAttributeDontDelete,
-                                 &exception)) {
+                                   js_context->global,
+                                   array_name, array_length, array_values,
+                                   kJSPropertyAttributeDontDelete,
+                                   &exception)) {
         gwkjs_log_exception(js_context->context, exception);
         g_set_error(error,
                     GWKJS_ERROR,
