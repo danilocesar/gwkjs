@@ -37,6 +37,7 @@ nobase_gwkjs_module_include_HEADERS =	\
 	gwkjs/byteArray.h		\
 	gwkjs/importer.h		\
 	gwkjs/jsapi-util.h	\
+	gwkjs/exceptions.h	\
 	gwkjs/runtime.h		\
 	gwkjs/type-module.h	\
 	gwkjs/mem.h		\
@@ -115,6 +116,7 @@ libgwkjs_la_SOURCES =		\
 	gwkjs/gi.cpp		\
 	gwkjs/coverage-internal.h	\
 	gwkjs/coverage.cpp \
+	gwkjs/exceptions.cpp \
 	gwkjs/jsapi-private.cpp	\
 	gwkjs/jsapi-util.cpp	\
 	gwkjs/jsapi-dynamic-class.cpp \

@@ -24,8 +24,8 @@
 #ifndef __GWKJS_RUNTIME_H__
 #define __GWKJS_RUNTIME_H__
 
-JSRuntime * gwkjs_runtime_for_current_thread (void);
+//JSRuntime * gwkjs_runtime_for_current_thread (void);
 
-JSBool      gwkjs_runtime_is_sweeping        (JSRuntime *runtime);
+//JSBool      gwkjs_runtime_is_sweeping        (JSRuntime *runtime);
 
 #endif /* __GWKJS_RUNTIME_H__ */

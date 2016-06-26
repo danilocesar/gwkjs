@@ -34,12 +34,19 @@ _Pragma("GCC diagnostic push")
 _Pragma("GCC diagnostic ignored \"-Wstrict-prototypes\"")
 _Pragma("GCC diagnostic ignored \"-Winvalid-offsetof\"")
 #endif
-#include <jsapi.h>
-#include <jsdbgapi.h> // Needed by some bits
+#include <JavaScriptCore/JavaScript.h>
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
 _Pragma("GCC diagnostic pop")
 #endif
 #include <glib.h>
+
+// JSBool is now a gboolean
+#define JSBool bool
+#define jsval JSValueRef
+#define JS_FALSE FALSE
+#define JS_TRUE TRUE
+#define jsid JSStringRef
+
 
 #include <gwkjs/jsapi-util.h>
 
@@ -49,14 +56,16 @@ G_BEGIN_DECLS
  * See https://bugzilla.gnome.org/show_bug.cgi?id=622896 for some initial discussion.
  */
 
+// XXX: remove
 #define JSVAL_IS_OBJECT(obj) (JSVAL_IS_NULL(obj) || !JSVAL_IS_PRIMITIVE(obj))
+
 
 #define JS_GetGlobalObject(cx) gwkjs_get_global_object(cx)
 
-static JSBool G_GNUC_UNUSED JS_NewNumberValue(JSContext *cx, double d, jsval *rval)
+static JSBool G_GNUC_UNUSED JS_NewNumberValue(JSContextRef cx, double d, jsval *rval)
     {
-        *rval = JS_NumberValue(d);
-        if (JSVAL_IS_NUMBER(*rval))
+        *rval = JSValueMakeNumber(cx, d);
+        if (JSValueIsNumber(cx, *rval))
             return JS_TRUE;
         return JS_FALSE;
     }
@@ -65,11 +74,13 @@ static JSBool G_GNUC_UNUSED JS_NewNumberValue(JSContext *cx, double d, jsval *rv
  * GWKJS_NATIVE_CONSTRUCTOR_DECLARE:
  * Prototype a constructor.
  */
-#define GWKJS_NATIVE_CONSTRUCTOR_DECLARE(name)            \
-static JSBool                                           \
-gwkjs_##name##_constructor(JSContext  *context,           \
-                         unsigned    argc,              \
-                         jsval      *vp)
+#define GWKJS_NATIVE_CONSTRUCTOR_DECLARE(name)          \
+static JSObjectRef                                      \
+gwkjs_##name##_constructor(JSContextRef context,        \
+                           JSObjectRef constructor,     \
+                           size_t argc,                 \
+                           const JSValueRef arguments[],\
+                           JSValueRef* exception)
 
 /**
  * GWKJS_NATIVE_CONSTRUCTOR_VARIABLES:
@@ -77,8 +88,7 @@ gwkjs_##name##_constructor(JSContext  *context,           \
  * be at the very top.
  */
 #define GWKJS_NATIVE_CONSTRUCTOR_VARIABLES(name)          \
-    JSObject *object = NULL;                                            \
-    JS::CallArgs argv G_GNUC_UNUSED = JS::CallArgsFromVp(argc, vp);
+    JSObjectRef object = NULL;                                            \
 
 /**
  * GWKJS_NATIVE_CONSTRUCTOR_PRELUDE:
@@ -86,13 +96,11 @@ gwkjs_##name##_constructor(JSContext  *context,           \
  */
 #define GWKJS_NATIVE_CONSTRUCTOR_PRELUDE(name)                            \
     {                                                                   \
-        if (!JS_IsConstructing(context, vp)) {                          \
-            gwkjs_throw_constructor_error(context);                       \
-            return JS_FALSE;                                            \
-        }                                                               \
-        object = gwkjs_new_object_for_constructor(context, &gwkjs_##name##_class, vp); \
-        if (object == NULL)                                             \
-            return JS_FALSE;                                            \
+        object = gwkjs_new_object_for_constructor(context, &gwkjs_##name##_class); \
+        if (object == NULL) {                                            \
+            g_warning("Couldn't create object");                    \
+            return object;                           \
+        }                                                           \
     }
 
 /**

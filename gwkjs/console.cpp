@@ -119,28 +119,29 @@ main(int argc, char **argv)
                                             "program-name", program_name,
                                             NULL);
 
-    if (coverage_prefixes) {
-        if (!coverage_output_path)
-            g_error("--coverage-output is required when taking coverage statistics");
-
-        char *path_to_cache_file = g_build_filename(coverage_output_path,
-                                                    GWKJS_COVERAGE_CACHE_FILE_NAME,
-                                                    NULL);
-        coverage = gwkjs_coverage_new_from_cache((const gchar **) coverage_prefixes,
-                                               js_context,
-                                               path_to_cache_file);
-        g_free(path_to_cache_file);
-    }
+// TODO: IMPLEMENT
+//    if (coverage_prefixes) {
+//        if (!coverage_output_path)
+//            g_error("--coverage-output is required when taking coverage statistics");
+//
+//        char *path_to_cache_file = g_build_filename(coverage_output_path,
+//                                                    GWKJS_COVERAGE_CACHE_FILE_NAME,
+//                                                    NULL);
+//        coverage = gwkjs_coverage_new_from_cache((const gchar **) coverage_prefixes,
+//                                               js_context,
+//                                               path_to_cache_file);
+//        g_free(path_to_cache_file);
+//    }
 
     /* prepare command line arguments */
-    if (!gwkjs_context_define_string_array(js_context, "ARGV",
-                                         argc - 1, (const char**)argv + 1,
-                                         &error)) {
-        code = 1;
-        g_printerr("Failed to defined ARGV: %s", error->message);
-        g_clear_error(&error);
-        goto out;
-    }
+    //if (!gwkjs_context_define_string_array(js_context, "ARGV",
+    //                                     argc - 1, (const char**)argv + 1,
+    //                                     &error)) {
+    //    code = 1;
+    //    g_printerr("Failed to defined ARGV: %s", error->message);
+    //    g_clear_error(&error);
+    //    goto out;
+    //}
 
     /* evaluate the script */
     if (!gwkjs_context_eval(js_context, script, len,
@@ -152,12 +153,12 @@ main(int argc, char **argv)
     }
 
  out:
-
-    /* Probably doesn't make sense to write statistics on failure */
-    if (coverage && code == 0)
-        gwkjs_coverage_write_statistics(coverage,
-                                      coverage_output_path);
- 
+// TODO: IMPLEMENT
+//    /* Probably doesn't make sense to write statistics on failure */
+//    if (coverage && code == 0)
+//        gwkjs_coverage_write_statistics(coverage,
+//                                      coverage_output_path);
+// 
     g_object_unref(js_context);
     g_free(script);
     exit(code);

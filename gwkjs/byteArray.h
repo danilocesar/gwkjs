@@ -33,28 +33,28 @@
 
 G_BEGIN_DECLS
 
-JSBool    gwkjs_typecheck_bytearray        (JSContext     *context,
-                                          JSObject      *obj,
+JSBool    gwkjs_typecheck_bytearray        (JSContextRef     context,
+                                          JSObjectRef      obj,
                                           JSBool         throw_error);
 
-JSBool        gwkjs_define_byte_array_stuff    (JSContext  *context,
-                                              JSObject  **module_out);
+JSBool        gwkjs_define_byte_array_stuff    (JSContextRef  context,
+                                                JSObjectRef  *module_out);
 
-JSObject *    gwkjs_byte_array_from_byte_array (JSContext  *context,
+JSObjectRef    gwkjs_byte_array_from_byte_array (JSContextRef  context,
                                               GByteArray *array);
-JSObject *    gwkjs_byte_array_from_bytes (JSContext  *context,
+JSObjectRef    gwkjs_byte_array_from_bytes (JSContextRef  context,
                                          GBytes *bytes);
 
-GByteArray *   gwkjs_byte_array_get_byte_array (JSContext  *context,
-                                              JSObject   *object);
+GByteArray *   gwkjs_byte_array_get_byte_array (JSContextRef context,
+                                                JSObjectRef  object);
 
-GBytes *      gwkjs_byte_array_get_bytes (JSContext  *context,
-                                        JSObject   *object);
+GBytes *      gwkjs_byte_array_get_bytes (JSContextRef  context,
+                                          JSObjectRef   object);
 
-void          gwkjs_byte_array_peek_data (JSContext  *context,
-                                        JSObject   *object,
-                                        guint8    **out_data,
-                                        gsize      *out_len);
+void          gwkjs_byte_array_peek_data (JSContextRef  context,
+                                        JSObjectRef     object,
+                                        guint8          **out_data,
+                                        gsize           *out_len);
 
 G_END_DECLS
 

@@ -67,6 +67,10 @@ if test x$enable_coverage = xyes; then
 fi
 AM_CONDITIONAL([ENABLE_COVERAGE], [test x$enable_coverage = xyes])
 
+# TODO: REMOVE IT FOR RELEASE LATER.
+CFLAGS="$CFLAGS -g -O0"
+CXXFLAGS="$CXXFLAGS -g -O0"
+
 # Checks for libraries.
 m4_define(glib_required_version, 2.42.0)
 
@@ -75,7 +79,7 @@ AC_CHECK_FUNCS(mallinfo)
 
 GOBJECT_INTROSPECTION_REQUIRE([1.41.4])
 
-common_packages="gmodule-2.0 gthread-2.0 gio-2.0 >= glib_required_version mozjs-24"
+common_packages="gmodule-2.0 gthread-2.0 gio-2.0 >= glib_required_version javascriptcoregtk-4.0"
 gwkjs_packages="gobject-introspection-1.0 libffi $common_packages"
 gwkjs_cairo_packages="cairo cairo-gobject $common_packages"
 gwkjs_gdbus_packages="gobject-2.0 >= glib_required_version gio-2.0"
