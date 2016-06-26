@@ -576,10 +576,10 @@ gwkjs_define_string_array(JSContextRef context,
 JSBool
 gwkjs_log_exception_full(JSContextRef context,
                          JSValueRef      exc,
-                         JSStringRef  message)
+                         const gchar  *message)
 {
 // TODO: make a real implementation
-    g_warning("EXCEPTION!");
+    g_warning("UNIMPLEMENTED: gwkjs_log_exception_full");
 
     return TRUE;
 

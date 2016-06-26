@@ -285,9 +285,9 @@ JSObjectRef   gwkjs_define_string_array          (JSContextRef       context,
                                                   unsigned       attrs,
                                                   JSValueRef     *exception);
 
-//void        gwkjs_throw                        (JSContextRef       context,
-//                                              const char      *format,
-//                                              ...)  G_GNUC_PRINTF (2, 3);
+void        gwkjs_throw                        (JSContextRef       context,
+                                                const char      *format,
+                                                ...)  G_GNUC_PRINTF (2, 3);
 //void        gwkjs_throw_custom                 (JSContextRef       context,
 //                                              const char      *error_class,
 //                                              const char      *format,
@@ -306,7 +306,7 @@ JSBool      gwkjs_log_exception                (JSContextRef       context,
 //
 JSBool      gwkjs_log_exception_full           (JSContextRef       context,
                                                 JSValueRef         exc,
-                                                JSStringRef        message);
+                                                const gchar        *message);
 //
 //#ifdef __GWKJS_UTIL_LOG_H__
 //void        gwkjs_log_object_props             (JSContextRef       context,

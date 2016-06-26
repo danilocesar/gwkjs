@@ -1,52 +1,54 @@
-///* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-///*
-// * Copyright (c) 2008  litl, LLC
-// *
-// * Permission is hereby granted, free of charge, to any person obtaining a copy
-// * of this software and associated documentation files (the "Software"), to
-// * deal in the Software without restriction, including without limitation the
-// * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-// * sell copies of the Software, and to permit persons to whom the Software is
-// * furnished to do so, subject to the following conditions:
-// *
-// * The above copyright notice and this permission notice shall be included in
-// * all copies or substantial portions of the Software.
-// *
-// * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-// * IN THE SOFTWARE.
-// */
-//
-//#include <config.h>
-//
-//#include "jsapi-util.h"
-//#include "compat.h"
-//#include "gi/gerror.h"
-//
-//#include <util/log.h>
-//
-//#include <string.h>
-//
-///*
-// * See:
-// * https://bugzilla.mozilla.org/show_bug.cgi?id=166436
-// * https://bugzilla.mozilla.org/show_bug.cgi?id=215173
-// *
-// * Very surprisingly, jsapi.h lacks any way to "throw new Error()"
-// *
-// * So here is an awful hack inspired by
-// * http://egachine.berlios.de/embedding-sm-best-practice/embedding-sm-best-practice.html#error-handling
-// */
-//static void
-//gwkjs_throw_valist(JSContext       *context,
-//                 const char      *error_class,
-//                 const char      *format,
-//                 va_list          args)
-//{
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+/*
+ * Copyright (c) 2008  litl, LLC
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+#include <config.h>
+
+#include "jsapi-util.h"
+#include "compat.h"
+#include "gi/gerror.h"
+
+#include <util/log.h>
+
+#include <string.h>
+
+/*
+ * See:
+ * https://bugzilla.mozilla.org/show_bug.cgi?id=166436
+ * https://bugzilla.mozilla.org/show_bug.cgi?id=215173
+ *
+ * Very surprisingly, jsapi.h lacks any way to "throw new Error()"
+ *
+ * So here is an awful hack inspired by
+ * http://egachine.berlios.de/embedding-sm-best-practice/embedding-sm-best-practice.html#error-handling
+ */
+static void
+gwkjs_throw_valist(JSContextRef  context,
+                   const char      *error_class,
+                   const char      *format,
+                   va_list          args)
+{
+    g_warning("UNIMPLEMENTED gwkjs_throw_valist: %s", format);
+// TODO: Make a real implementation
 //    char *s;
 //    JSBool result;
 //    jsval v_constructor, v_message;
@@ -107,27 +109,27 @@
 //    g_free(s);
 //
 //    JS_EndRequest(context);
-//}
-//
-///* Throws an exception, like "throw new Error(message)"
-// *
-// * If an exception is already set in the context, this will
-// * NOT overwrite it. That's an important semantic since
-// * we want the "root cause" exception. To overwrite,
-// * use JS_ClearPendingException() first.
-// */
-//void
-//gwkjs_throw(JSContext       *context,
-//          const char      *format,
-//          ...)
-//{
-//    va_list args;
-//
-//    va_start(args, format);
-//    gwkjs_throw_valist(context, "Error", format, args);
-//    va_end(args);
-//}
-//
+}
+
+/* Throws an exception, like "throw new Error(message)"
+ *
+ * If an exception is already set in the context, this will
+ * NOT overwrite it. That's an important semantic since
+ * we want the "root cause" exception. To overwrite,
+ * use JS_ClearPendingException() first.
+ */
+void
+gwkjs_throw(JSContextRef  context,
+            const char      *format,
+            ...)
+{
+    va_list args;
+
+    va_start(args, format);
+    gwkjs_throw_valist(context, "Error", format, args);
+    va_end(args);
+}
+
 ///*
 // * Like gwkjs_throw, but allows to customize the error
 // * class. Mainly used for throwing TypeError instead of

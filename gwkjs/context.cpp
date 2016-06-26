@@ -110,178 +110,134 @@ enum {
 static GMutex contexts_lock;
 static GList *all_contexts = NULL;
 
-// TODO: implement
-//
-//static JSBool
-//gwkjs_log(JSContext *context,
-//        unsigned   argc,
-//        jsval     *vp)
-//{
-//    JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-//    char *s;
-//    JSExceptionState *exc_state;
-//    JSString *jstr;
-//
-//    if (argc != 1) {
-//        gwkjs_throw(context, "Must pass a single argument to log()");
-//        return JS_FALSE;
-//    }
-//
-//    JS_BeginRequest(context);
-//
-//    /* JS_ValueToString might throw, in which we will only
-//     *log that the value could be converted to string */
-//    exc_state = JS_SaveExceptionState(context);
-//    jstr = JS_ValueToString(context, argv[0]);
-//    if (jstr != NULL)
-//        argv[0] = STRING_TO_JSVAL(jstr);    // GC root
-//    JS_RestoreExceptionState(context, exc_state);
-//
-//    if (jstr == NULL) {
-//        g_message("JS LOG: <cannot convert value to string>");
-//        JS_EndRequest(context);
-//        return JS_TRUE;
-//    }
-//
-//    if (!gwkjs_string_to_utf8(context, STRING_TO_JSVAL(jstr), &s)) {
-//        JS_EndRequest(context);
-//        return JS_FALSE;
-//    }
-//
-//    g_message("JS LOG: %s", s);
-//    g_free(s);
-//
-//    JS_EndRequest(context);
-//    argv.rval().set(JSVAL_VOID);
-//    return JS_TRUE;
-//}
-//
-//static JSBool
-//gwkjs_log_error(JSContext *context,
-//              unsigned   argc,
-//              jsval     *vp)
-//{
-//    JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-//    JSExceptionState *exc_state;
-//    JSString *jstr;
-//
-//    if ((argc != 1 && argc != 2) ||
-//        !JSVAL_IS_OBJECT (argv[0])) {
-//        gwkjs_throw(context, "Must pass an exception and optionally a message to logError()");
-//        return JS_FALSE;
-//    }
-//
-//    JS_BeginRequest(context);
-//
-//    if (argc == 2) {
-//        /* JS_ValueToString might throw, in which we will only
-//         *log that the value could be converted to string */
-//        exc_state = JS_SaveExceptionState(context);
-//        jstr = JS_ValueToString(context, argv[1]);
-//        if (jstr != NULL)
-//            argv[1] = STRING_TO_JSVAL(jstr);    // GC root
-//        JS_RestoreExceptionState(context, exc_state);
-//    } else {
-//        jstr = NULL;
-//    }
-//
-//    gwkjs_log_exception_full(context, argv[0], jstr);
-//
-//    JS_EndRequest(context);
-//    argv.rval().set(JSVAL_VOID);
-//    return JS_TRUE;
-//}
-//
-//static JSBool
-//gwkjs_print_parse_args(JSContext *context,
-//                     JS::CallArgs &argv,
-//                     char     **buffer)
-//{
-//    GString *str;
-//    gchar *s;
-//    guint n;
-//
-//    JS_BeginRequest(context);
-//
-//    str = g_string_new("");
-//    for (n = 0; n < argv.length(); ++n) {
-//        JSExceptionState *exc_state;
-//        JSString *jstr;
-//
-//        /* JS_ValueToString might throw, in which we will only
-//         * log that the value could be converted to string */
-//        exc_state = JS_SaveExceptionState(context);
-//
-//        jstr = JS_ValueToString(context, argv[n]);
-//        if (jstr != NULL)
-//            argv[n] = STRING_TO_JSVAL(jstr); // GC root
-//
-//        JS_RestoreExceptionState(context, exc_state);
-//
-//        if (jstr != NULL) {
-//            if (!gwkjs_string_to_utf8(context, STRING_TO_JSVAL(jstr), &s)) {
-//                JS_EndRequest(context);
-//                g_string_free(str, TRUE);
-//                return JS_FALSE;
-//            }
-//
-//            g_string_append(str, s);
-//            g_free(s);
-//            if (n < (argv.length()-1))
-//                g_string_append_c(str, ' ');
-//        } else {
-//            JS_EndRequest(context);
-//            *buffer = g_string_free(str, TRUE);
-//            if (!*buffer)
-//                *buffer = g_strdup("<invalid string>");
-//            return JS_TRUE;
-//        }
-//
-//    }
-//    *buffer = g_string_free(str, FALSE);
-//
-//    JS_EndRequest(context);
-//    return JS_TRUE;
-//}
-//
-//static JSBool
-//gwkjs_print(JSContext *context,
-//          unsigned   argc,
-//          jsval     *vp)
-//{
-//    JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-//    char *buffer;
-//
-//    if (!gwkjs_print_parse_args(context, argv, &buffer)) {
-//        return FALSE;
-//    }
-//
-//    g_print("%s\n", buffer);
-//    g_free(buffer);
-//
-//    argv.rval().set(JSVAL_VOID);
-//    return JS_TRUE;
-//}
-//
-//static JSBool
-//gwkjs_printerr(JSContext *context,
-//             unsigned   argc,
-//             jsval     *vp)
-//{
-//    JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-//    char *buffer;
-//
-//    if (!gwkjs_print_parse_args(context, argv, &buffer)) {
-//        return FALSE;
-//    }
-//
-//    g_printerr("%s\n", buffer);
-//    g_free(buffer);
-//
-//    argv.rval().set(JSVAL_VOID);
-//    return JS_TRUE;
-//}
-//
+static JSValueRef
+gwkjs_log(JSContextRef ctx,
+          JSObjectRef function,
+          JSObjectRef thisObject,
+          size_t argumentCount,
+          const JSValueRef arguments[],
+          JSValueRef* exception)
+{
+    gchar *s = NULL;
+
+    if (argumentCount != 1) {
+        gwkjs_throw(ctx, "Must pass a single argument to log()");
+        goto out;
+    }
+    s = gwkjs_jsvalue_to_cstring(ctx, arguments[0], exception);
+
+    if (*exception != NULL) {
+        g_message("JS LOG: <cannot convert value to string>");
+    }
+
+    g_message("JS LOG: %s", s);
+
+out:
+    g_free(s);
+    return JSValueMakeUndefined(ctx);
+}
+
+static JSValueRef
+gwkjs_log_error(JSContextRef ctx,
+                JSObjectRef function,
+                JSObjectRef thisObject,
+                size_t argumentCount,
+                const JSValueRef arguments[],
+                JSValueRef* exception)
+{
+    gchar *str = NULL;
+
+    if ((argumentCount != 1 && argumentCount != 2) ||
+        !JSValueIsObject (ctx, arguments[0])) {
+        gwkjs_throw(ctx, "Must pass an exception and optionally a message to logError()");
+        goto out;
+    }
+
+    if (argumentCount == 2) {
+        /* JS_ValueToString might throw, in which we will only
+         *log that the value could be converted to string */
+        str = gwkjs_jsvalue_to_cstring(ctx, arguments[1], NULL);
+    }
+
+    gwkjs_log_exception_full(ctx, arguments[0], str);
+
+out:
+    g_free(str);
+    return JSValueMakeUndefined(ctx);
+}
+
+static JSBool
+gwkjs_print_parse_args(JSContextRef ctx,
+                size_t argumentCount,
+                const JSValueRef arguments[],
+                char     **buffer,
+                JSValueRef* exception)
+{
+    GString *str;
+    gchar *s;
+    guint n;
+
+    str = g_string_new("");
+    for (n = 0; n < argumentCount; ++n) {
+        s = gwkjs_jsvalue_to_cstring(ctx, arguments[n], exception);
+
+        if (!s)
+            g_string_append(str, "<invalid string>");
+        else
+            g_string_append(str, s);
+        g_free(s);
+
+        if (n < (argumentCount-1))
+            g_string_append_c(str, ' ');
+
+    }
+    *buffer = g_string_free(str, FALSE);
+
+    return TRUE;
+}
+
+static JSValueRef
+gwkjs_print(JSContextRef ctx,
+          JSObjectRef function,
+          JSObjectRef thisObject,
+          size_t argumentCount,
+          const JSValueRef arguments[],
+          JSValueRef* exception)
+{
+    char *buffer;
+
+    if (!gwkjs_print_parse_args(ctx, argumentCount, arguments, &buffer, exception)) {
+        return FALSE;
+    }
+
+    g_print("%s\n", buffer);
+    g_free(buffer);
+
+out:
+    return JSValueMakeUndefined(ctx);
+}
+
+static JSValueRef
+gwkjs_printerr(JSContextRef ctx,
+          JSObjectRef function,
+          JSObjectRef thisObject,
+          size_t argumentCount,
+          const JSValueRef arguments[],
+          JSValueRef* exception)
+{
+    char *buffer;
+
+    if (!gwkjs_print_parse_args(ctx, argumentCount, arguments, &buffer, exception)) {
+        return FALSE;
+    }
+
+    g_printerr("%s\n", buffer);
+    g_free(buffer);
+
+out:
+    return JSValueMakeUndefined(ctx);
+}
+
 
 static void
 gwkjs_context_init(GwkjsContext *js_context)
@@ -410,14 +366,20 @@ gwkjs_context_class_init(GwkjsContextClass *klass)
 //    G_OBJECT_CLASS(gwkjs_context_parent_class)->finalize(object);
 //}
 //
-//static JSFunctionSpec global_funcs[] = {
-//    { "log", JSOP_WRAPPER (gwkjs_log), 1, GWKJS_MODULE_PROP_FLAGS },
-//    { "logError", JSOP_WRAPPER (gwkjs_log_error), 2, GWKJS_MODULE_PROP_FLAGS },
-//    { "print", JSOP_WRAPPER (gwkjs_print), 0, GWKJS_MODULE_PROP_FLAGS },
-//    { "printerr", JSOP_WRAPPER (gwkjs_printerr), 0, GWKJS_MODULE_PROP_FLAGS },
-//    { NULL },
-//};
-//
+static void
+_gwkjs_create_global_function(JSContextRef context,
+                              JSObjectRef global,
+                              const gchar* name,
+                              JSObjectCallAsFunctionCallback cb)
+{
+    JSObjectRef ref = JSObjectMakeFunctionWithCallback(context, NULL, cb);
+    gwkjs_object_set_property(context, global, name, ref,
+                                  kJSPropertyAttributeReadOnly |
+                                  kJSPropertyAttributeDontEnum |
+                                  kJSPropertyAttributeDontDelete,
+                              NULL);
+}
+
 static void
 gwkjs_context_constructed(GObject *object)
 {
@@ -454,9 +416,17 @@ gwkjs_context_constructed(GObject *object)
     if (exception)
         g_error("No memory to export global object as 'window'");
 
-    // TODO: Add global_funcs
-    //if (!JS_DefineFunctions(js_context->context, js_context->global, &global_funcs[0]))
-    //    g_error("Failed to define properties on the global object");
+    _gwkjs_create_global_function(js_context->context, js_context->global,
+                                  "log", &gwkjs_log);
+
+    _gwkjs_create_global_function(js_context->context, js_context->global,
+                                  "logErrpr", &gwkjs_log_error);
+
+    _gwkjs_create_global_function(js_context->context, js_context->global,
+                                  "print", &gwkjs_print);
+
+    _gwkjs_create_global_function(js_context->context, js_context->global,
+                                  "printerr", &gwkjs_printerr);
 
 // TODO: implement the root importer
 //    /* We create the global-to-runtime root importer with the
