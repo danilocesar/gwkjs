@@ -446,14 +446,13 @@ gwkjs_context_constructed(GObject *object)
 
     js_context->global = JSContextGetGlobalObject(js_context->context);
 
-// TODO: REMOVE COMMENT LATER
-//    JSValueRef exception = NULL;
-//    gwkjs_object_set_property(js_context->context, js_context->global,
-//                              "window", js_context->global,
-//                              kJSPropertyAttributeReadOnly | kJSPropertyAttributeDontDelete,
-//                              &exception);
-//    if (exception)
-//        g_error("No memory to export global object as 'window'");
+    JSValueRef exception = NULL;
+    gwkjs_object_set_property(js_context->context, js_context->global,
+                              "window", js_context->global,
+                              kJSPropertyAttributeReadOnly | kJSPropertyAttributeDontDelete,
+                              &exception);
+    if (exception)
+        g_error("No memory to export global object as 'window'");
 
     // TODO: Add global_funcs
     //if (!JS_DefineFunctions(js_context->context, js_context->global, &global_funcs[0]))
@@ -533,13 +532,13 @@ gwkjs_context_new(void)
     return (GwkjsContext*) g_object_new (GWKJS_TYPE_CONTEXT, NULL);
 }
 
-//GwkjsContext*
-//gwkjs_context_new_with_search_path(char** search_path)
-//{
-//    return (GwkjsContext*) g_object_new (GWKJS_TYPE_CONTEXT,
-//                         "search-path", search_path,
-//                         NULL);
-//}
+GwkjsContext*
+gwkjs_context_new_with_search_path(char** search_path)
+{
+    return (GwkjsContext*) g_object_new (GWKJS_TYPE_CONTEXT,
+                         "search-path", search_path,
+                         NULL);
+}
 //
 //gboolean
 //_gwkjs_context_destroying (GwkjsContext *context)
@@ -682,38 +681,38 @@ gwkjs_context_eval(GwkjsContext   *js_context,
     return ret;
 }
 
-//gboolean
-//gwkjs_context_eval_file(GwkjsContext    *js_context,
-//                      const char    *filename,
-//                      int           *exit_status_p,
-//                      GError       **error)
-//{
-//    char     *script = NULL;
-//    gsize    script_len;
-//    gboolean ret = TRUE;
-//
-//    GFile *file = g_file_new_for_commandline_arg(filename);
-//
-//    if (!g_file_query_exists(file, NULL)) {
-//        ret = FALSE;
-//        goto out;
-//    }
-//
-//    if (!g_file_load_contents(file, NULL, &script, &script_len, NULL, error)) {
-//        ret = FALSE;
-//        goto out;
-//    }
-//
-//    if (!gwkjs_context_eval(js_context, script, script_len, filename, exit_status_p, error)) {
-//        ret = FALSE;
-//        goto out;
-//    }
-//
-//out:
-//    g_free(script);
-//    g_object_unref(file);
-//    return ret;
-//}
+gboolean
+gwkjs_context_eval_file(GwkjsContext    *js_context,
+                      const char    *filename,
+                      int           *exit_status_p,
+                      GError       **error)
+{
+    char     *script = NULL;
+    gsize    script_len;
+    gboolean ret = TRUE;
+
+    GFile *file = g_file_new_for_commandline_arg(filename);
+
+    if (!g_file_query_exists(file, NULL)) {
+        ret = FALSE;
+        goto out;
+    }
+
+    if (!g_file_load_contents(file, NULL, &script, &script_len, NULL, error)) {
+        ret = FALSE;
+        goto out;
+    }
+
+    if (!gwkjs_context_eval(js_context, script, script_len, filename, exit_status_p, error)) {
+        ret = FALSE;
+        goto out;
+    }
+
+out:
+    g_free(script);
+    g_object_unref(file);
+    return ret;
+}
 
 gboolean
 gwkjs_context_define_string_array(GwkjsContext  *js_context,
