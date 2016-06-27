@@ -117,11 +117,11 @@ gwkjs_##name##_constructor(JSContextRef context,        \
  * and fail. To be used with classes that require a constructor (because they have
  * instances), but whose constructor cannot be used from JS code.
  */
-#define GWKJS_NATIVE_CONSTRUCTOR_DEFINE_ABSTRACT(name)            \
-    GWKJS_NATIVE_CONSTRUCTOR_DECLARE(name)                        \
-    {                                                           \
-        gwkjs_throw_abstract_constructor_error(context, vp);      \
-        return JS_FALSE;                                        \
+#define GWKJS_NATIVE_CONSTRUCTOR_DEFINE_ABSTRACT(name)                          \
+    GWKJS_NATIVE_CONSTRUCTOR_DECLARE(name)                                      \
+    {                                                                           \
+        gwkjs_throw_abstract_constructor_error(context, constructor, exception);\
+        return JS_FALSE;                                                        \
     }
 
 G_END_DECLS

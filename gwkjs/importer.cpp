@@ -38,20 +38,20 @@
 #define MODULE_INIT_FILENAME "__init__.js"
 
 static char **gwkjs_search_path = NULL;
-//
-//typedef struct {
-//    gboolean is_root;
-//} Importer;
-//
+
+typedef struct {
+    gboolean is_root;
+} Importer;
+
 //typedef struct {
 //    GPtrArray *elements;
 //    unsigned int index;
 //} ImporterIterator;
 //
-//extern struct JSClass gwkjs_importer_class;
-//
-//GWKJS_DEFINE_PRIV_FROM_JS(Importer, gwkjs_importer_class)
-//
+extern JSClassDefinition gwkjs_importer_class;
+
+GWKJS_DEFINE_PRIV_FROM_JS(Importer, gwkjs_importer_class)
+
 //static JSBool
 //define_meta_properties(JSContext  *context,
 //                       JSObject   *module_obj,
@@ -661,6 +661,15 @@ static char **gwkjs_search_path = NULL;
 // * then on its prototype.
 // *
 // */
+static void
+importer_new_enumerate(JSContextRef ctx,
+                       JSObjectRef object,
+                       JSPropertyNameAccumulatorRef propertyNames)
+{
+// TODO: IMPLEMENT
+return;
+
+}
 //static JSBool
 //importer_new_enumerate(JSContext  *context,
 //                       JS::HandleObject object,
@@ -847,6 +856,45 @@ static char **gwkjs_search_path = NULL;
 // * was not resolved; and non-null, referring to obj or one of its prototypes,
 // * if id was resolved.
 // */
+
+static JSValueRef
+importer_new_resolve(JSContextRef ctx,
+                     JSObjectRef object,
+                     JSStringRef property_name,
+                     JSValueRef* exception)
+{
+    JSValueRef ret = NULL;
+    gchar *name = NULL;
+    Importer *priv;
+
+    const gchar *module_init_name = gwkjs_context_get_const_string(ctx, GWKJS_STRING_MODULE_INIT);
+    name = gwkjs_jsstring_to_cstring(property_name);
+
+    /* let Object.prototype resolve these */
+    if (strcmp(name, "valueOf") == 0 ||
+        strcmp(name, "toString") == 0 ||
+        strcmp(name, "__iterator__") == 0)
+        goto out;
+
+    priv = priv_from_js(object);
+
+    gwkjs_debug_jsprop(GWKJS_DEBUG_IMPORTER,
+                     "Resolve prop '%s' hook obj %p priv %p",
+                     name, (void *)object, priv);
+    if (priv == NULL) /* we are the prototype, or have the wrong class */
+        goto out;
+
+    // TODO: proper implement dir import
+    //if (do_import(context, obj, priv, name)) {
+    //    objp.set(obj);
+    //}
+
+out:
+    g_free(name);
+    return ret;
+}
+
+
 //static JSBool
 //importer_new_resolve(JSContext *context,
 //                     JS::HandleObject obj,
@@ -890,25 +938,25 @@ static char **gwkjs_search_path = NULL;
 //    g_free(name);
 //    return ret;
 //}
-//
-//GWKJS_NATIVE_CONSTRUCTOR_DEFINE_ABSTRACT(importer)
-//
-//static void
-//importer_finalize(JSFreeOp *fop,
-//                  JSObject *obj)
-//{
-//    Importer *priv;
-//
-//    priv = (Importer*) JS_GetPrivate(obj);
-//    gwkjs_debug_lifecycle(GWKJS_DEBUG_IMPORTER,
-//                        "finalize, obj %p priv %p", obj, priv);
-//    if (priv == NULL)
-//        return; /* we are the prototype, not a real instance */
-//
-//    GWKJS_DEC_COUNTER(importer);
-//    g_slice_free(Importer, priv);
-//}
-//
+
+GWKJS_NATIVE_CONSTRUCTOR_DEFINE_ABSTRACT(importer)
+
+
+static void
+importer_finalize(JSObjectRef obj)
+{
+    Importer *priv;
+
+    priv = (Importer*) JSObjectGetPrivate(obj);
+    gwkjs_debug_lifecycle(GWKJS_DEBUG_IMPORTER,
+                        "finalize, obj %p priv %p", obj, priv);
+    if (priv == NULL)
+        return; /* we are the prototype, not a real instance */
+
+    GWKJS_DEC_COUNTER(importer);
+    g_slice_free(Importer, priv);
+}
+
 ///* The bizarre thing about this vtable is that it applies to both
 // * instances of the object, and to the prototype that instances of the
 // * class have.
@@ -928,6 +976,31 @@ static char **gwkjs_search_path = NULL;
 //    importer_finalize,
 //    JSCLASS_NO_OPTIONAL_MEMBERS
 //};
+
+JSClassDefinition gwkjs_importer_class = {
+    0,                         //     Version
+    0,                         //     JSClassAttributes
+    "GwkjsFileImporter",       //     const char* className;
+    NULL,                      //     JSClassRef parentClass;
+    NULL,                      //     const JSStaticValue*                staticValues;
+    NULL,                      //     const JSStaticFunction*             staticFunctions;
+    NULL,                      //     JSObjectInitializeCallback          initialize;
+    importer_finalize,         //     JSObjectFinalizeCallback            finalize;
+    NULL,                      //     JSObjectHasPropertyCallback         hasProperty;
+
+    importer_new_resolve,      //TODO: is this really resolve?
+                               //     JSObjectGetPropertyCallback         getProperty;
+
+    NULL,                      //     JSObjectSetPropertyCallback         setProperty;
+    NULL,                      //     JSObjectDeletePropertyCallback      deleteProperty;
+    importer_new_enumerate,    //     JSObjectGetPropertyNamesCallback    getPropertyNames;
+    NULL,                      //     JSObjectCallAsFunctionCallback      callAsFunction;
+    gwkjs_importer_constructor,//     JSObjectCallAsConstructorCallback   callAsConstructor;
+    NULL,                      //     JSObjectHasInstanceCallback         hasInstance;
+    NULL,                      //     JSObjectConvertToTypeCallback       convertToType;
+};
+static JSClassRef gwkjs_importer_class_ref = NULL;
+
 //
 //JSPropertySpec gwkjs_importer_proto_props[] = {
 //    { NULL }
@@ -941,11 +1014,32 @@ static JSObjectRef
 importer_new(JSContextRef context,
              gboolean   is_root)
 {
-    //TODO: creating a dummy importer
-    return JSObjectMake(context, NULL, NULL);
+    JSObjectRef ret;
+
+    // XXX: NOT THREAD SAFE?
+    if (!gwkjs_importer_class_ref) {
+        gwkjs_importer_class_ref = JSClassCreate(&gwkjs_importer_class);
+    }
+
+    ret = JSObjectMake(context, gwkjs_importer_class_ref, NULL);
+    if (ret == NULL)
+        return ret;
+
+    Importer *priv = g_slice_new0(Importer);
+    priv->is_root = is_root;
+
+    g_assert(priv_from_js(ret) == NULL);
+    JSObjectSetPrivate(ret, priv);
+    g_assert(priv_from_js(ret) == priv);
+
+    gwkjs_debug_lifecycle(GWKJS_DEBUG_IMPORTER,
+                        "importer constructor, obj %p priv %p", ret, priv);
+    JSObjectSetPrivate(ret, priv);
+
+    return ret;
 
 
-// TODO: IMPLEMENT
+// TODO:  we might want to check the PROTOTYPE stuff later
 //    JSObject *importer;
 //    Importer *priv;
 //    JSObject *global;
@@ -1089,7 +1183,6 @@ gwkjs_create_importer(JSContextRef context,
 
     g_strfreev(search_path);
 
-    // TODO: implement meta properties
     //if (!define_meta_properties(context, importer, NULL, importer_name, in_object))
     //    g_error("failed to define meta properties on importer");
 

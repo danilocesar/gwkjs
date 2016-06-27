@@ -45,7 +45,7 @@ gchar *
 gwkjs_jsstring_to_cstring (JSStringRef property_name)
 {
     gint length = JSStringGetMaximumUTF8CStringSize(property_name);
-    gchar *cproperty_name = (gchar *) g_alloca(length * sizeof(gchar));
+    gchar *cproperty_name = (gchar *) g_new(gchar, length + 1);
     JSStringGetUTF8CString(property_name, cproperty_name, length);
 
     return (cproperty_name);
@@ -93,6 +93,15 @@ gwkjs_object_get_property(JSContextRef ctx,
 {
     JSStringRef prop = gwkjs_cstring_to_jsstring(propertyName);
     return (JSObjectGetProperty(ctx, object, prop, exception));
+}
+
+gboolean
+gwkjs_object_has_property(JSContextRef ctx,
+                          JSObjectRef object,
+                          const gchar* propertyName)
+{
+    JSStringRef prop = gwkjs_cstring_to_jsstring(propertyName);
+    return (JSObjectHasProperty(ctx, object, prop));
 }
 
 gchar*
@@ -289,29 +298,25 @@ gwkjs_jsvalue_to_cstring(JSContextRef ctx, JSValueRef val, JSValueRef* exception
 //    gwkjs_throw(context,
 //              "Constructor called as normal method. Use 'new SomeObject()' not 'SomeObject()'");
 //}
-//
-//void
-//gwkjs_throw_abstract_constructor_error(JSContext *context,
-//                                     jsval     *vp)
-//{
-//    jsval callee;
-//    jsval prototype;
-//    JSClass *proto_class;
-//    const char *name = "anonymous";
-//
-//    callee = JS_CALLEE(context, vp);
-//
-//    if (JSVAL_IS_OBJECT(callee)) {
-//        if (gwkjs_object_get_property_const(context, JSVAL_TO_OBJECT(callee),
-//                                          GWKJS_STRING_PROTOTYPE, &prototype)) {
-//            proto_class = JS_GetClass(JSVAL_TO_OBJECT(prototype));
-//            name = proto_class->name;
-//        }
-//    }
-//
-//    gwkjs_throw(context, "You cannot construct new instances of '%s'", name);
-//}
-//
+
+void
+gwkjs_throw_abstract_constructor_error(JSContextRef context,
+                                       JSObjectRef  object,
+                                       JSValueRef   *exception)
+{
+    const char *name = "[anonymous]";
+    gchar *s = NULL;
+    JSValueRef proto = JSObjectGetPrototype(context, object);
+
+    s = gwkjs_jsvalue_to_cstring(context, object, NULL);
+
+    //TODO: implement throw
+    //gwkjs_throw(context, "You cannot construct new instances of '%s'", name);
+
+    gwkjs_make_exception(context, exception, "ConstructorError",
+                         "You cannot construct new instances of '%s'", s? s : "[anonymous]");
+}
+
 
 JSObjectRef
 gwkjs_build_string_array(JSContextRef  context,

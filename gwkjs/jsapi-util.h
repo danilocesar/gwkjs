@@ -62,32 +62,33 @@ G_BEGIN_DECLS
 // * ENUMERATE: allows copyProperties to work among other reasons to have it
 // */
 //#define GWKJS_MODULE_PROP_FLAGS (JSPROP_PERMANENT | JSPROP_ENUMERATE)
-//
-///*
-// * Helper methods to access private data:
-// *
-// * do_base_typecheck: checks that object has the right JSClass, and possibly
-// *                    throw a TypeError exception if the check fails
-// * priv_from_js: accesses the object private field; as a debug measure,
-// *               it also checks that the object is of a compatible
-// *               JSClass, but it doesn't raise an exception (it
-// *               wouldn't be of much use, if subsequent code crashes on
-// *               NULL)
-// * priv_from_js_with_typecheck: a convenience function to call
-// *                              do_base_typecheck and priv_from_js
-// */
-//#define GWKJS_DEFINE_PRIV_FROM_JS(type, klass)                          \
+
+/*
+ * Helper methods to access private data:
+ *
+ * do_base_typecheck: checks that object has the right JSClass, and possibly
+ *                    throw a TypeError exception if the check fails
+ * priv_from_js: accesses the object private field; as a debug measure,
+ *               it also checks that the object is of a compatible
+ *               JSClass, but it doesn't raise an exception (it
+ *               wouldn't be of much use, if subsequent code crashes on
+ *               NULL)
+ * priv_from_js_with_typecheck: a convenience function to call
+ *                              do_base_typecheck and priv_from_js
+ */
+#define GWKJS_DEFINE_PRIV_FROM_JS(type, klass)                          \
+    static inline type *                                                \
+    priv_from_js(JSObjectRef object)                                    \
+    {                                                                   \
+        return (type *) JSObjectGetPrivate(object);                     \
+    }                                                                   \
+// TODO: IMPLEMENT                                                      \
 //    __attribute__((unused)) static inline JSBool                        \
 //    do_base_typecheck(JSContextRef context,                             \
 //                      JSObjectRef  object,                              \
 //                      JSBool       throw_error)                         \
 //    {                                                                   \
 //        return gwkjs_typecheck_instance(context, object, &klass, throw_error);  \
-//    }                                                                   \
-//    static inline type *                                                \
-//    priv_from_js(JSObjectRef object)                                    \
-//    {                                                                   \
-//        return (type *) JSObjectGetPrivate(object);                     \
 //    }                                                                   \
 //    __attribute__((unused)) static JSBool                               \
 //    priv_from_js_with_typecheck(JSContextRef context,                   \
@@ -99,7 +100,7 @@ G_BEGIN_DECLS
 //        *out = priv_from_js(object);                                    \
 //        return JS_TRUE;                                                 \
 //    }
-//
+
 ///**
 // * GWKJS_DEFINE_PROTO:
 // * @tn: The name of the prototype, as a string
@@ -209,6 +210,10 @@ gwkjs_object_get_property(JSContextRef ctx,
                           JSObjectRef object,
                           const gchar* propertyName,
                           JSValueRef* exception);
+gboolean
+gwkjs_object_has_property(JSContextRef ctx,
+                          JSObjectRef object,
+                          const gchar* propertyName);
 
 
 void
@@ -219,9 +224,8 @@ gwkjs_object_set_property(JSContextRef ctx,
                           JSPropertyAttributes attributes,
                           JSValueRef* exception);
 
-//
-//gchar *     gwkjs_jsstring_to_cstring          (JSStringRef     property_name);
-//
+gchar *     gwkjs_jsstring_to_cstring          (JSStringRef     property_name);
+
 //gboolean    gwkjs_init_context_standard        (JSContextRef    context,
 //                                                JSObjectRef     *global_out);
 //
@@ -260,9 +264,11 @@ gwkjs_object_set_property(JSContextRef ctx,
 //                                              JSObject       **prototype_p);
 //*/
 //void gwkjs_throw_constructor_error             (JSContextRef       context);
-//void gwkjs_throw_abstract_constructor_error    (JSContextRef       context,
-//                                              jsval           *vp);
-//
+
+void gwkjs_throw_abstract_constructor_error    (JSContextRef       context,
+                                                JSObjectRef     obj,
+                                                JSValueRef      *exception);
+
 //JSBool gwkjs_typecheck_instance                 (JSContextRef  context,
 //                                               JSObjectRef   obj,
 //                                               JSClassDefinition    *static_clasp,
@@ -439,38 +445,38 @@ JSBool            gwkjs_eval_with_scope        (JSContextRef    context,
                                                 JSValueRef   *retval_p,
                                                 JSValueRef   *exception);
 
-//typedef enum {
-//  GWKJS_STRING_CONSTRUCTOR,
-//  GWKJS_STRING_PROTOTYPE,
-//  GWKJS_STRING_LENGTH,
-//  GWKJS_STRING_IMPORTS,
-//  GWKJS_STRING_PARENT_MODULE,
-//  GWKJS_STRING_MODULE_INIT,
-//  GWKJS_STRING_SEARCH_PATH,
-//  GWKJS_STRING_KEEP_ALIVE_MARKER,
-//  GWKJS_STRING_PRIVATE_NS_MARKER,
-//  GWKJS_STRING_GI_MODULE,
-//  GWKJS_STRING_GI_VERSIONS,
-//  GWKJS_STRING_GI_OVERRIDES,
-//  GWKJS_STRING_GOBJECT_INIT,
-//  GWKJS_STRING_INSTANCE_INIT,
-//  GWKJS_STRING_NEW_INTERNAL,
-//  GWKJS_STRING_NEW,
-//  GWKJS_STRING_MESSAGE,
-//  GWKJS_STRING_CODE,
-//  GWKJS_STRING_STACK,
-//  GWKJS_STRING_FILENAME,
-//  GWKJS_STRING_LINE_NUMBER,
-//  GWKJS_STRING_NAME,
-//  GWKJS_STRING_X,
-//  GWKJS_STRING_Y,
-//  GWKJS_STRING_WIDTH,
-//  GWKJS_STRING_HEIGHT,
-//  GWKJS_STRING_LAST
-//} GwkjsConstString;
-//
-//jsid              gwkjs_context_get_const_string  (JSContextRef       context,
-//                                                 GwkjsConstString   string);
+typedef enum {
+  GWKJS_STRING_CONSTRUCTOR,
+  GWKJS_STRING_PROTOTYPE,
+  GWKJS_STRING_LENGTH,
+  GWKJS_STRING_IMPORTS,
+  GWKJS_STRING_PARENT_MODULE,
+  GWKJS_STRING_MODULE_INIT,
+  GWKJS_STRING_SEARCH_PATH,
+  GWKJS_STRING_KEEP_ALIVE_MARKER,
+  GWKJS_STRING_PRIVATE_NS_MARKER,
+  GWKJS_STRING_GI_MODULE,
+  GWKJS_STRING_GI_VERSIONS,
+  GWKJS_STRING_GI_OVERRIDES,
+  GWKJS_STRING_GOBJECT_INIT,
+  GWKJS_STRING_INSTANCE_INIT,
+  GWKJS_STRING_NEW_INTERNAL,
+  GWKJS_STRING_NEW,
+  GWKJS_STRING_MESSAGE,
+  GWKJS_STRING_CODE,
+  GWKJS_STRING_STACK,
+  GWKJS_STRING_FILENAME,
+  GWKJS_STRING_LINE_NUMBER,
+  GWKJS_STRING_NAME,
+  GWKJS_STRING_X,
+  GWKJS_STRING_Y,
+  GWKJS_STRING_WIDTH,
+  GWKJS_STRING_HEIGHT,
+  GWKJS_STRING_LAST
+} GwkjsConstString;
+
+const gchar*              gwkjs_context_get_const_string  (JSContextRef       context,
+                                                           GwkjsConstString   string);
 //gboolean          gwkjs_object_get_property_const (JSContextRef       context,
 //                                                 JSObjectRef        obj,
 //                                                 GwkjsConstString   property_name,

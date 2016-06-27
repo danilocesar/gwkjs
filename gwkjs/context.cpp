@@ -77,20 +77,19 @@ struct _GwkjsContext {
 };
 
 
-// TODO: IMPLEMENT
-///* Keep this consistent with GwkjsConstString */
-//static const char *const_strings[] = {
-//    "constructor", "prototype", "length",
-//    "imports", "__parentModule__", "__init__", "searchPath",
-//    "__gwkjsKeepAlive", "__gwkjsPrivateNS",
-//    "gi", "versions", "overrides",
-//    "_init", "_instance_init", "_new_internal", "new",
-//    "message", "code", "stack", "fileName", "lineNumber", "name",
-//    "x", "y", "width", "height",
-//};
-//
-//G_STATIC_ASSERT(G_N_ELEMENTS(const_strings) == GWKJS_STRING_LAST);
-//
+/* Keep this consistent with GwkjsConstString */
+static const char *const_strings[] = {
+    "constructor", "prototype", "length",
+    "imports", "__parentModule__", "__init__", "searchPath",
+    "__gwkjsKeepAlive", "__gwkjsPrivateNS",
+    "gi", "versions", "overrides",
+    "_init", "_instance_init", "_new_internal", "new",
+    "message", "code", "stack", "fileName", "lineNumber", "name",
+    "x", "y", "width", "height",
+};
+
+G_STATIC_ASSERT(G_N_ELEMENTS(const_strings) == GWKJS_STRING_LAST);
+
 
 struct _GwkjsContextClass {
     GObjectClass parent;
@@ -404,7 +403,7 @@ gwkjs_context_constructed(GObject *object)
 
     /* set ourselves as the private data */
     // TODO: do the context needs a private return?
-    //JS_SetContextPrivate(js_context->context, js_context);
+    //JSObjectSetPrivate(js_context->context, js_context);
 
     js_context->global = JSContextGetGlobalObject(js_context->context);
 
@@ -728,14 +727,13 @@ gwkjs_context_make_current (GwkjsContext *context)
 
     current_context = context;
 }
-//
-//jsid
-//gwkjs_context_get_const_string(JSContext      *context,
-//                             GwkjsConstString  name)
-//{
-//    GwkjsContext *gwkjs_context = (GwkjsContext *) JS_GetContextPrivate(context);
-//    return gwkjs_context->const_strings[name];
-//}
+
+const gchar *
+gwkjs_context_get_const_string(JSContextRef      context,
+                               GwkjsConstString  name)
+{
+    return const_strings[name];
+}
 //
 //gboolean
 //gwkjs_object_get_property_const(JSContext      *context,
