@@ -1,42 +1,43 @@
-///* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-///*
-// * Copyright (c) 2008-2010  litl, LLC
-// *
-// * Permission is hereby granted, free of charge, to any person obtaining a copy
-// * of this software and associated documentation files (the "Software"), to
-// * deal in the Software without restriction, including without limitation the
-// * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-// * sell copies of the Software, and to permit persons to whom the Software is
-// * furnished to do so, subject to the following conditions:
-// *
-// * The above copyright notice and this permission notice shall be included in
-// * all copies or substantial portions of the Software.
-// *
-// * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-// * IN THE SOFTWARE.
-// */
-//
-//#include <config.h>
-//
-//#include <util/log.h>
-//#include <util/glib.h>
-//
-//#include <gwkjs/gwkjs-module.h>
-//#include <gwkjs/importer.h>
-//#include <gwkjs/compat.h>
-//
-//#include <gio/gio.h>
-//
-//#include <string.h>
-//
-//#define MODULE_INIT_FILENAME "__init__.js"
-//
-//static char **gwkjs_search_path = NULL;
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+/*
+ * Copyright (c) 2008-2010  litl, LLC
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+#include <config.h>
+
+#include <util/log.h>
+#include <util/glib.h>
+
+#include <gwkjs/gwkjs-module.h>
+#include <gwkjs/importer.h>
+#include <gwkjs/compat.h>
+
+#include <gio/gio.h>
+
+#include <string.h>
+#include "exceptions.h"
+
+#define MODULE_INIT_FILENAME "__init__.js"
+
+static char **gwkjs_search_path = NULL;
 //
 //typedef struct {
 //    gboolean is_root;
@@ -935,11 +936,16 @@
 //JSFunctionSpec gwkjs_importer_proto_funcs[] = {
 //    { NULL }
 //};
-//
-//static JSObject*
-//importer_new(JSContext *context,
-//             gboolean   is_root)
-//{
+
+static JSObjectRef
+importer_new(JSContextRef context,
+             gboolean   is_root)
+{
+    //TODO: creating a dummy importer
+    return JSObjectMake(context, NULL, NULL);
+
+
+// TODO: IMPLEMENT
 //    JSObject *importer;
 //    Importer *priv;
 //    JSObject *global;
@@ -997,98 +1003,99 @@
 //                        "importer constructor, obj %p priv %p", importer, priv);
 //
 //    return importer;
-//}
-//
-//static G_CONST_RETURN char * G_CONST_RETURN *
-//gwkjs_get_search_path(void)
-//{
-//    char **search_path;
-//
-//    /* not thread safe */
-//
-//    if (!gwkjs_search_path) {
-//        G_CONST_RETURN gchar* G_CONST_RETURN * system_data_dirs;
-//        const char *envstr;
-//        GPtrArray *path;
-//        gsize i;
-//
-//        path = g_ptr_array_new();
-//
-//        /* in order of priority */
-//
-//        /* $GWKJS_PATH */
-//        envstr = g_getenv("GWKJS_PATH");
-//        if (envstr) {
-//            char **dirs, **d;
-//            dirs = g_strsplit(envstr, G_SEARCHPATH_SEPARATOR_S, 0);
-//            for (d = dirs; *d != NULL; d++)
-//                g_ptr_array_add(path, *d);
-//            /* we assume the array and strings are allocated separately */
-//            g_free(dirs);
-//        }
-//
-//        g_ptr_array_add(path, g_strdup("resource:///org/gnome/gwkjs/modules/"));
-//
-//        /* $XDG_DATA_DIRS /gwkjs-1.0 */
-//        system_data_dirs = g_get_system_data_dirs();
-//        for (i = 0; system_data_dirs[i] != NULL; ++i) {
-//            char *s;
-//            s = g_build_filename(system_data_dirs[i], "gwkjs-1.0", NULL);
-//            g_ptr_array_add(path, s);
-//        }
-//
-//        /* ${datadir}/share/gwkjs-1.0 */
-//        g_ptr_array_add(path, g_strdup(GWKJS_JS_DIR));
-//
-//        g_ptr_array_add(path, NULL);
-//
-//        search_path = (char**)g_ptr_array_free(path, FALSE);
-//
-//        gwkjs_search_path = search_path;
-//    } else {
-//        search_path = gwkjs_search_path;
-//    }
-//
-//    return (G_CONST_RETURN char * G_CONST_RETURN *)search_path;
-//}
-//
-//static JSObject*
-//gwkjs_create_importer(JSContext    *context,
-//                    const char   *importer_name,
-//                    const char  **initial_search_path,
-//                    gboolean      add_standard_search_path,
-//                    gboolean      is_root,
-//                    JSObject     *in_object)
-//{
-//    JSObject *importer;
-//    char **paths[2] = {0};
-//    char **search_path;
-//
-//    paths[0] = (char**)initial_search_path;
-//    if (add_standard_search_path) {
-//        /* Stick the "standard" shared search path after the provided one. */
-//        paths[1] = (char**)gwkjs_get_search_path();
-//    }
-//
-//    search_path = gwkjs_g_strv_concat(paths, 2);
-//
-//    importer = importer_new(context, is_root);
-//
-//    /* API users can replace this property from JS, is the idea */
-//    if (!gwkjs_define_string_array(context, importer,
-//                                 "searchPath", -1, (const char **)search_path,
-//                                 /* settable (no READONLY) but not deleteable (PERMANENT) */
-//                                 JSPROP_PERMANENT | JSPROP_ENUMERATE))
-//        g_error("no memory to define importer search path prop");
-//
-//    g_strfreev(search_path);
-//
-//    if (!define_meta_properties(context, importer, NULL, importer_name, in_object))
-//        g_error("failed to define meta properties on importer");
-//
-//    return importer;
-//}
-//
+}
+
+static G_CONST_RETURN char * G_CONST_RETURN *
+gwkjs_get_search_path(void)
+{
+    char **search_path;
+
+    /* not thread safe */
+
+    if (!gwkjs_search_path) {
+        G_CONST_RETURN gchar* G_CONST_RETURN * system_data_dirs;
+        const char *envstr;
+        GPtrArray *path;
+        gsize i;
+
+        path = g_ptr_array_new();
+
+        /* in order of priority */
+
+        /* $GWKJS_PATH */
+        envstr = g_getenv("GWKJS_PATH");
+        if (envstr) {
+            char **dirs, **d;
+            dirs = g_strsplit(envstr, G_SEARCHPATH_SEPARATOR_S, 0);
+            for (d = dirs; *d != NULL; d++)
+                g_ptr_array_add(path, *d);
+            /* we assume the array and strings are allocated separately */
+            g_free(dirs);
+        }
+
+        g_ptr_array_add(path, g_strdup("resource:///org/gnome/gwkjs/modules/"));
+
+        /* $XDG_DATA_DIRS /gwkjs-1.0 */
+        system_data_dirs = g_get_system_data_dirs();
+        for (i = 0; system_data_dirs[i] != NULL; ++i) {
+            char *s;
+            s = g_build_filename(system_data_dirs[i], "gwkjs-1.0", NULL);
+            g_ptr_array_add(path, s);
+        }
+
+        /* ${datadir}/share/gwkjs-1.0 */
+        g_ptr_array_add(path, g_strdup(GWKJS_JS_DIR));
+
+        g_ptr_array_add(path, NULL);
+
+        search_path = (char**)g_ptr_array_free(path, FALSE);
+
+        gwkjs_search_path = search_path;
+    } else {
+        search_path = gwkjs_search_path;
+    }
+
+    return (G_CONST_RETURN char * G_CONST_RETURN *)search_path;
+}
+
+static JSObjectRef
+gwkjs_create_importer(JSContextRef context,
+                    const char   *importer_name,
+                    const char  **initial_search_path,
+                    gboolean      add_standard_search_path,
+                    gboolean      is_root,
+                    JSObjectRef     *in_object)
+{
+    JSObjectRef importer;
+    char **paths[2] = {0};
+    char **search_path;
+
+    paths[0] = (char**)initial_search_path;
+    if (add_standard_search_path) {
+        /* Stick the "standard" shared search path after the provided one. */
+        paths[1] = (char**)gwkjs_get_search_path();
+    }
+
+    search_path = gwkjs_g_strv_concat(paths, 2);
+
+    importer = importer_new(context, is_root);
+
+    /* API users can replace this property from JS, is the idea */
+    if (!gwkjs_define_string_array(context, importer,
+                                 "searchPath", -1, (const char **)search_path,
+                                 /* settable (no READONLY) but not deleteable (PERMANENT) */
+                                 kJSPropertyAttributeDontDelete, NULL))
+        g_error("no memory to define importer search path prop");
+
+    g_strfreev(search_path);
+
+    // TODO: implement meta properties
+    //if (!define_meta_properties(context, importer, NULL, importer_name, in_object))
+    //    g_error("failed to define meta properties on importer");
+
+    return importer;
+}
+
 //JSObject*
 //gwkjs_define_importer(JSContext    *context,
 //                    JSObject     *in_object,
@@ -1112,80 +1119,71 @@
 //
 //    return importer;
 //}
-//
-///* If this were called twice for the same runtime with different args it
-// * would basically be a bug, but checking for that is a lot of code so
-// * we just ignore all calls after the first and hope the args are the same.
-// */
-//JSBool
-//gwkjs_create_root_importer(JSContext   *context,
-//                         const char **initial_search_path,
-//                         gboolean     add_standard_search_path)
-//{
-//    jsval importer;
-//
-//    JS_BeginRequest(context);
-//
-//    importer = gwkjs_get_global_slot(context, GWKJS_GLOBAL_SLOT_IMPORTS);
-//
-//    if (G_UNLIKELY (!JSVAL_IS_VOID(importer))) {
-//        gwkjs_debug(GWKJS_DEBUG_IMPORTER,
-//                  "Someone else already created root importer, ignoring second request");
-//
-//        JS_EndRequest(context);
-//        return JS_TRUE;
-//    }
-//
-//    importer = OBJECT_TO_JSVAL(gwkjs_create_importer(context, "imports",
-//                                                   initial_search_path,
-//                                                   add_standard_search_path,
-//                                                   TRUE, NULL));
-//    gwkjs_set_global_slot(context, GWKJS_GLOBAL_SLOT_IMPORTS, importer);
-//
-//    JS_EndRequest(context);
-//    return JS_TRUE;
-//}
-//
-//JSBool
-//gwkjs_define_root_importer_object(JSContext        *context,
-//                                JS::HandleObject  in_object,
-//                                JS::HandleObject  root_importer)
-//{
-//    JSBool success;
-//    jsid imports_name;
-//
-//    success = JS_FALSE;
-//    JS_BeginRequest(context);
-//
-//    JS::RootedValue importer (JS_GetRuntime(context),
-//                              OBJECT_TO_JSVAL(root_importer));
-//    imports_name = gwkjs_context_get_const_string(context, GWKJS_STRING_IMPORTS);
-//    if (!JS_DefinePropertyById(context, in_object,
-//                               imports_name, importer,
-//                               NULL, NULL,
-//                               GWKJS_MODULE_PROP_FLAGS)) {
-//        gwkjs_debug(GWKJS_DEBUG_IMPORTER, "DefineProperty imports on %p failed",
-//                  (JSObject *) in_object);
-//        goto fail;
-//    }
-//
-//    success = JS_TRUE;
-// fail:
-//    JS_EndRequest(context);
-//    return success;
-//}
-//
-//JSBool
-//gwkjs_define_root_importer(JSContext   *context,
-//                         JSObject    *in_object)
-//{
-//    JS::RootedValue importer(JS_GetRuntime(context),
-//                             gwkjs_get_global_slot(context, GWKJS_GLOBAL_SLOT_IMPORTS));
-//    JS::RootedObject rooted_in_object(JS_GetRuntime(context),
-//                                      in_object);
-//    JS::RootedObject rooted_importer(JS_GetRuntime(context),
-//                                     JSVAL_TO_OBJECT(importer));
-//    return gwkjs_define_root_importer_object(context,
-//                                           rooted_in_object,
-//                                           rooted_importer);
-//}
+
+/* If this were called twice for the same runtime with different args it
+ * would basically be a bug, but checking for that is a lot of code so
+ * we just ignore all calls after the first and hope the args are the same.
+ */
+JSObjectRef
+gwkjs_create_root_importer(GwkjsContext   *c,
+                           const char **initial_search_path,
+                           gboolean     add_standard_search_path)
+{
+    JSContextRef context = (JSContextRef) gwkjs_context_get_native_context(c);
+    JSObjectRef global = JSContextGetGlobalObject(context);
+    JSValueRef importer_v  = gwkjs_object_get_property(context, global,
+                                                     "imports", NULL);
+
+    if (G_UNLIKELY (!JSValueIsUndefined(context, importer_v) &&
+                    !JSValueIsNull(context, importer_v))) {
+        gwkjs_debug(GWKJS_DEBUG_IMPORTER,
+                  "Someone else already created root importer, ignoring second request");
+
+        // TODO: we might want to return here. As double imports
+        // wouldn'y fail, would only be ignored.
+        return NULL;
+    }
+
+    JSObjectRef importer = gwkjs_create_importer(context, "imports",
+                                     initial_search_path,
+                                     add_standard_search_path,
+                                     TRUE, NULL);
+    return importer;
+}
+
+JSBool
+gwkjs_define_root_importer_object(JSContextRef     context,
+                                  JSObjectRef  in_object,
+                                  JSValueRef  root_importer)
+{
+    JSBool success = FALSE;
+    JSValueRef exception = NULL;
+
+    // Do we really want a read only attr?
+    gwkjs_object_set_property(context, in_object, "imports",
+                              root_importer,
+                              kJSPropertyAttributeDontDelete |
+                              kJSPropertyAttributeReadOnly, NULL);
+
+    if (exception) {
+        gchar *msg = gwkjs_exception_to_string(context, exception);
+        gwkjs_debug(GWKJS_DEBUG_IMPORTER, "DefineProperty imports on %p failed with: %s",
+                    in_object, msg);
+        g_free(msg);
+        goto fail;
+    }
+
+    success = JS_TRUE;
+ fail:
+    return success;
+}
+
+JSBool
+gwkjs_define_root_importer(JSContextRef   context,
+                           JSObjectRef in_object,
+                           JSValueRef importer)
+{
+    return gwkjs_define_root_importer_object(context,
+                                             in_object,
+                                             importer);
+}

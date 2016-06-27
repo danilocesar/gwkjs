@@ -65,9 +65,10 @@ gboolean        gwkjs_context_define_string_array  (GwkjsContext  *js_context,
 GList*          gwkjs_context_get_all              (void);
 
 GwkjsContext     *gwkjs_context_get_current          (void);
-void            gwkjs_context_make_current         (GwkjsContext *js_context);
 
-void*           gwkjs_context_get_native_context   (GwkjsContext *js_context);
+void            gwkjs_context_make_current          (GwkjsContext *js_context);
+
+gpointer        gwkjs_context_get_native_context    (GwkjsContext *js_context);
 
 void            gwkjs_context_print_stack_stderr    (GwkjsContext *js_context);
 

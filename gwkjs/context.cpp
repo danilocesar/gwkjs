@@ -428,24 +428,26 @@ gwkjs_context_constructed(GObject *object)
     _gwkjs_create_global_function(js_context->context, js_context->global,
                                   "printerr", &gwkjs_printerr);
 
-// TODO: implement the root importer
-//    /* We create the global-to-runtime root importer with the
-//     * passed-in search path. If someone else already created
-//     * the root importer, this is a no-op.
-//     */
-//    if (!gwkjs_create_root_importer(js_context->context,
-//                                  js_context->search_path ?
-//                                  (const char**) js_context->search_path :
-//                                  NULL,
-//                                  TRUE))
-//        g_error("Failed to create root importer");
-//
-//    /* Now copy the global root importer (which we just created,
-//     * if it didn't exist) to our global object
-//     */
-//    if (!gwkjs_define_root_importer(js_context->context,
-//                                  js_context->global))
-//        g_error("Failed to point 'imports' property at root importer");
+    /* We create the global-to-runtime root importer with the
+     * passed-in search path. If someone else already created
+     * the root importer, this is a no-op.
+     */
+    JSValueRef importer = NULL;
+    importer = gwkjs_create_root_importer(js_context,
+                                          js_context->search_path ?
+                                          (const char**) js_context->search_path :
+                                          NULL,
+                                          TRUE);
+    if (importer == NULL)
+        g_error("Failed to create root importer");
+
+    /* Now copy the global root importer (which we just created,
+     * if it didn't exist) to our global object
+     */
+    if (!gwkjs_define_root_importer(js_context->context,
+                                    js_context->global,
+                                    importer))
+        g_error("Failed to point 'imports' property at root importer");
 
     g_mutex_lock (&contexts_lock);
     all_contexts = g_list_prepend(all_contexts, object);
@@ -597,19 +599,19 @@ gwkjs_context_new_with_search_path(char** search_path)
 //  g_mutex_unlock (&contexts_lock);
 //  return result;
 //}
-//
-///**
-// * gwkjs_context_get_native_context:
-// *
-// * Returns a pointer to the underlying native context.  For SpiderMonkey, this
-// * is a JSContext *
-// */
-//void*
-//gwkjs_context_get_native_context (GwkjsContext *js_context)
-//{
-//    g_return_val_if_fail(GWKJS_IS_CONTEXT(js_context), NULL);
-//    return js_context->context;
-//}
+
+/**
+ * gwkjs_context_get_native_context:
+ *
+ * Returns a pointer to the underlying native context.  For SpiderMonkey, this
+ * is a JSContextRef
+ */
+gpointer
+gwkjs_context_get_native_context (GwkjsContext *js_context)
+{
+    g_return_val_if_fail(GWKJS_IS_CONTEXT(js_context), NULL);
+    return (gpointer) js_context->context;
+}
 
 gboolean
 gwkjs_context_eval(GwkjsContext   *js_context,

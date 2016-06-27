@@ -232,7 +232,7 @@ gwkjs_jsvalue_to_cstring(JSContextRef ctx, JSValueRef val, JSValueRef* exception
 //    global = JS_GetGlobalObject(context);
 //    return JS_GetReservedSlot(global, JSCLASS_GLOBAL_SLOT_COUNT + slot);
 //}
-//
+
 ///* Returns whether the object had the property; if the object did
 // * not have the property, always sets an exception. Treats
 // * "the property's value is JSVAL_VOID" the same as "no such property,".
@@ -282,7 +282,7 @@ gwkjs_jsvalue_to_cstring(JSContextRef ctx, JSValueRef val, JSValueRef* exception
 //    g_free(name);
 //    return JS_FALSE;
 //}
-//
+
 //void
 //gwkjs_throw_constructor_error(JSContext *context)
 //{
@@ -347,7 +347,7 @@ gwkjs_define_string_array(JSContextRef context,
                           unsigned attrs,
 						  JSValueRef *exception)
 {
-    JSObjectRef array;
+    JSObjectRef array = NULL;
 
     array = gwkjs_build_string_array(context, array_length, (char **) array_values);
 
@@ -1443,8 +1443,6 @@ gwkjs_eval_with_scope(JSContextRef context,
 		// There was a problem during script execution,
 		// We will return an exception instead
 		return FALSE;
-	    //JSValueRef str = gwkjs_object_get_property(context, (JSObjectRef)exception, "name", NULL);
-    	//g_warning("   aaaa %s", gwkjs_jsvalue_to_cstring(context, str, NULL));
 	}
 
 // TODO: check if needs implementation
