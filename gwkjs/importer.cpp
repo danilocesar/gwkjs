@@ -25,6 +25,7 @@
 
 #include <util/log.h>
 #include <util/glib.h>
+#include <glib.h>
 
 #include <gwkjs/gwkjs-module.h>
 #include <gwkjs/importer.h>
@@ -41,6 +42,7 @@ static char **gwkjs_search_path = NULL;
 
 typedef struct {
     gboolean is_root;
+    GHashTable *modules;
 } Importer;
 
 //typedef struct {
@@ -49,86 +51,94 @@ typedef struct {
 //} ImporterIterator;
 //
 extern JSClassDefinition gwkjs_importer_class;
+static JSClassRef gwkjs_importer_class_ref = NULL;
 
 GWKJS_DEFINE_PRIV_FROM_JS(Importer, gwkjs_importer_class)
 
-//static JSBool
-//define_meta_properties(JSContext  *context,
-//                       JSObject   *module_obj,
-//                       const char *full_path,
-//                       const char *module_name,
-//                       JSObject   *parent)
-//{
-//    gboolean parent_is_module;
-//
-//    /* We define both __moduleName__ and __parentModule__ to null
-//     * on the root importer
-//     */
-//    parent_is_module = parent && JS_InstanceOf(context, parent, &gwkjs_importer_class, NULL);
-//
-//    gwkjs_debug(GWKJS_DEBUG_IMPORTER, "Defining parent %p of %p '%s' is mod %d",
-//              parent, module_obj, module_name ? module_name : "<root>", parent_is_module);
-//
-//    if (full_path != NULL) {
-//        if (!JS_DefineProperty(context, module_obj,
-//                               "__file__",
-//                               STRING_TO_JSVAL(JS_NewStringCopyZ(context, full_path)),
-//                               NULL, NULL,
-//                               /* don't set ENUMERATE since we wouldn't want to copy
-//                                * this symbol to any other object for example.
-//                                */
-//                               JSPROP_READONLY | JSPROP_PERMANENT))
-//            return JS_FALSE;
-//    }
-//
-//    if (!JS_DefineProperty(context, module_obj,
-//                           "__moduleName__",
-//                           parent_is_module ?
-//                           STRING_TO_JSVAL(JS_NewStringCopyZ(context, module_name)) :
-//                           JSVAL_NULL,
-//                           NULL, NULL,
-//                           /* don't set ENUMERATE since we wouldn't want to copy
-//                            * this symbol to any other object for example.
-//                            */
-//                           JSPROP_READONLY | JSPROP_PERMANENT))
-//        return JS_FALSE;
-//
-//    if (!JS_DefineProperty(context, module_obj,
-//                           "__parentModule__",
-//                           parent_is_module ? OBJECT_TO_JSVAL(parent) : JSVAL_NULL,
-//                           NULL, NULL,
-//                           /* don't set ENUMERATE since we wouldn't want to copy
-//                            * this symbol to any other object for example.
-//                            */
-//                           JSPROP_READONLY | JSPROP_PERMANENT))
-//        return JS_FALSE;
-//
-//    return JS_TRUE;
-//}
-//
-//static JSBool
-//import_directory(JSContext   *context,
-//                 JSObject    *obj,
-//                 const char  *name,
-//                 const char **full_paths)
-//{
-//    JSObject *importer;
-//
-//    gwkjs_debug(GWKJS_DEBUG_IMPORTER,
-//              "Importing directory '%s'",
-//              name);
-//
-//    /* We define a sub-importer that has only the given directories on
-//     * its search path. gwkjs_define_importer() exits if it fails, so
-//     * this always succeeds.
-//     */
-//    importer = gwkjs_define_importer(context, obj, name, full_paths, FALSE);
-//    if (importer == NULL)
-//        return JS_FALSE;
-//
-//    return JS_TRUE;
-//}
-//
+static JSBool
+define_meta_properties(JSContextRef context,
+                       JSObjectRef  module_obj,
+                       const char  *full_path,
+                       const char  *module_name,
+                       JSObjectRef parent)
+{
+    gboolean parent_is_module = FALSE;
+
+    /* We define both __moduleName__ and __parentModule__ to null
+     * on the root importer
+     */
+    // TODO: IMplement this
+    // parent_is_module = parent && JS_InstanceOf(context, parent, &gwkjs_importer_class, NULL);
+
+    gwkjs_debug(GWKJS_DEBUG_IMPORTER, "Defining parent %p of %p '%s' is mod %d",
+              parent, module_obj, module_name ? module_name : "<root>", parent_is_module);
+
+    JSValueRef exception = NULL;
+    if (full_path != NULL) {
+        gwkjs_object_set_property(context, module_obj,
+                               "__file__",
+                               JSValueMakeString(context, gwkjs_cstring_to_jsstring(full_path)),
+                               /* don't set ENUMERATE since we wouldn't want to copy
+                                * this symbol to any other object for example.
+                                */
+                               kJSPropertyAttributeReadOnly |
+                               kJSPropertyAttributeDontEnum |
+                               kJSPropertyAttributeDontDelete,
+                               &exception);
+        if (exception)
+            return FALSE;
+    }
+
+    gwkjs_object_set_property(context, module_obj,
+                               "__moduleName__",
+                               JSValueMakeString(context, gwkjs_cstring_to_jsstring(module_name)),
+                               /* don't set ENUMERATE since we wouldn't want to copy
+                                * this symbol to any other object for example.
+                                */
+                               kJSPropertyAttributeReadOnly |
+                               kJSPropertyAttributeDontEnum |
+                               kJSPropertyAttributeDontDelete,
+                               &exception);
+    if (exception)
+        return FALSE;
+
+
+    gwkjs_object_set_property(context, module_obj,
+                           "__parentModule__",
+                           parent_is_module ? parent :  JSValueMakeUndefined(context),
+                           /* don't set ENUMERATE since we wouldn't want to copy
+                            * this symbol to any other object for example.
+                            */
+                           kJSPropertyAttributeReadOnly |
+                           kJSPropertyAttributeDontEnum |
+                           kJSPropertyAttributeDontDelete,
+                           &exception);
+    if (exception)
+        return FALSE;
+
+    return TRUE;
+}
+
+static JSValueRef
+import_directory(JSContextRef context,
+                 JSObjectRef  obj,
+                 const char   *name,
+                 const char   **full_paths)
+{
+    JSObjectRef importer = NULL;
+    gwkjs_debug(GWKJS_DEBUG_IMPORTER,
+              "Importing directory '%s'",
+              name);
+
+    /* We define a sub-importer that has only the given directories on
+     * its search path. gwkjs_define_importer() exits if it fails, so
+     * this always succeeds.
+     */
+    importer = gwkjs_define_importer(context, obj, name, full_paths, FALSE);
+
+    return importer;
+}
+
 //static JSBool
 //define_import(JSContext  *context,
 //              JSObject   *obj,
@@ -214,42 +224,34 @@ GWKJS_DEFINE_PRIV_FROM_JS(Importer, gwkjs_importer_class)
 //    }
 //}
 //
-//static JSBool
-//import_native_file(JSContext  *context,
-//                   JSObject   *obj,
-//                   const char *name)
-//{
-//    JSObject *module_obj;
-//    JSBool retval = JS_FALSE;
-//
-//    gwkjs_debug(GWKJS_DEBUG_IMPORTER, "Importing '%s'", name);
-//
-//    if (!gwkjs_import_native_module(context, name, &module_obj))
-//        goto out;
-//
-//    if (!define_meta_properties(context, module_obj, NULL, name, obj))
-//        goto out;
-//
-//    if (JS_IsExceptionPending(context)) {
-//        /* I am not sure whether this can happen, but if it does we want to trap it.
-//         */
-//        gwkjs_debug(GWKJS_DEBUG_IMPORTER,
-//                  "Module '%s' reported an exception but gwkjs_import_native_module() returned TRUE",
-//                  name);
-//        goto out;
-//    }
-//
-//    if (!JS_DefineProperty(context, obj,
-//                           name, OBJECT_TO_JSVAL(module_obj),
-//                           NULL, NULL, GWKJS_MODULE_PROP_FLAGS))
-//        goto out;
-//
-//    retval = JS_TRUE;
-//
-// out:
-//    return retval;
-//}
-//
+static JSValueRef 
+import_native_file(JSContextRef  context,
+                   JSObjectRef   obj,
+                   const char *name)
+{
+    JSObjectRef module_obj = NULL;
+    JSValueRef exception = NULL;
+    JSValueRef retval = NULL;
+
+    gwkjs_debug(GWKJS_DEBUG_IMPORTER, "Importing '%s'", name);
+
+    if (!gwkjs_import_native_module(context, name, &module_obj))
+        goto out;
+
+    if (!define_meta_properties(context, module_obj, NULL, name, obj))
+        goto out;
+
+    // XXX: So, we can't set a property to retrieve it later. Creates an infinite recursion
+    gwkjs_object_set_property(context, obj, name, module_obj, kJSPropertyAttributeReadOnly | kJSPropertyAttributeDontDelete | kJSPropertyAttributeDontEnum, &exception);
+    if (exception)
+        goto out;
+
+    retval = module_obj;
+
+ out:
+    return retval;
+}
+
 //static JSObject *
 //create_module_object(JSContext *context)
 //{
@@ -297,12 +299,15 @@ GWKJS_DEFINE_PRIV_FROM_JS(Importer, gwkjs_importer_class)
 //    g_free(full_path);
 //    return ret;
 //}
-//
-//static JSObject *
-//load_module_init(JSContext  *context,
-//                 JSObject   *in_object,
-//                 const char *full_path)
-//{
+
+static JSObjectRef
+load_module_init(JSContextRef  context,
+                 JSObjectRef   in_object,
+                 const char *full_path)
+{
+    g_warning("NOT IMPLEMENTED");
+    return NULL;
+// TODO: implement
 //    JSObject *module_obj;
 //    JSBool found;
 //    jsid module_init_name;
@@ -335,8 +340,8 @@ GWKJS_DEFINE_PRIV_FROM_JS(Importer, gwkjs_importer_class)
 // out:
 //    g_object_unref (file);
 //    return module_obj;
-//}
-//
+}
+
 //static void
 //load_module_elements(JSContext *context,
 //                     JSObject *in_object,
@@ -377,12 +382,15 @@ GWKJS_DEFINE_PRIV_FROM_JS(Importer, gwkjs_importer_class)
 //    }
 //}
 //
-//static JSBool
-//import_file_on_module(JSContext  *context,
-//                      JSObject   *obj,
-//                      const char *name,
-//                      GFile      *file)
-//{
+static JSValueRef
+import_file_on_module(JSContextRef context,
+                      JSObjectRef  obj,
+                      const char *name,
+                      GFile      *file)
+{
+    g_warning("NOT IMPLEMENTED");
+    return NULL;
+//TODO: IMPLEMENT
 //    JSObject *module_obj;
 //    JSBool retval = JS_FALSE;
 //    char *full_path = NULL;
@@ -410,222 +418,213 @@ GWKJS_DEFINE_PRIV_FROM_JS(Importer, gwkjs_importer_class)
 //
 //    g_free (full_path);
 //    return retval;
-//}
-//
-//static JSBool
-//do_import(JSContext  *context,
-//          JSObject   *obj,
-//          Importer   *priv,
-//          const char *name)
-//{
-//    char *filename;
-//    char *full_path;
-//    char *dirname = NULL;
-//    jsval search_path_val;
-//    JSObject *search_path;
-//    JSObject *module_obj = NULL;
-//    guint32 search_path_len;
-//    guint32 i;
-//    JSBool result;
-//    GPtrArray *directories;
-//    jsid search_path_name;
-//    GFile *gfile;
-//    gboolean exists;
-//
-//    search_path_name = gwkjs_context_get_const_string(context, GWKJS_STRING_SEARCH_PATH);
-//    if (!gwkjs_object_require_property(context, obj, "importer", search_path_name, &search_path_val)) {
-//        return JS_FALSE;
-//    }
-//
-//    if (!JSVAL_IS_OBJECT(search_path_val)) {
-//        gwkjs_throw(context, "searchPath property on importer is not an object");
-//        return JS_FALSE;
-//    }
-//
-//    search_path = JSVAL_TO_OBJECT(search_path_val);
-//
-//    if (!JS_IsArrayObject(context, search_path)) {
-//        gwkjs_throw(context, "searchPath property on importer is not an array");
-//        return JS_FALSE;
-//    }
-//
-//    if (!JS_GetArrayLength(context, search_path, &search_path_len)) {
-//        gwkjs_throw(context, "searchPath array has no length");
-//        return JS_FALSE;
-//    }
-//
-//    result = JS_FALSE;
-//
-//    filename = g_strdup_printf("%s.js", name);
-//    full_path = NULL;
-//    directories = NULL;
-//
-//    /* First try importing an internal module like byteArray */
-//    if (priv->is_root &&
-//        gwkjs_is_registered_native_module(context, obj, name) &&
-//        import_native_file(context, obj, name)) {
-//        gwkjs_debug(GWKJS_DEBUG_IMPORTER,
-//                  "successfully imported module '%s'", name);
-//        result = JS_TRUE;
-//        goto out;
-//    }
-//
-//    for (i = 0; i < search_path_len; ++i) {
-//        jsval elem;
-//
-//        elem = JSVAL_VOID;
-//        if (!JS_GetElement(context, search_path, i, &elem)) {
-//            /* this means there was an exception, while elem == JSVAL_VOID
-//             * means no element found
-//             */
-//            goto out;
-//        }
-//
-//        if (JSVAL_IS_VOID(elem))
-//            continue;
-//
-//        if (!JSVAL_IS_STRING(elem)) {
-//            gwkjs_throw(context, "importer searchPath contains non-string");
-//            goto out;
-//        }
-//
-//        g_free(dirname);
-//        dirname = NULL;
-//
-//        if (!gwkjs_string_to_utf8(context, elem, &dirname))
-//            goto out; /* Error message already set */
-//
-//        /* Ignore empty path elements */
-//        if (dirname[0] == '\0')
-//            continue;
-//
-//        /* Try importing __init__.js and loading the symbol from it */
-//        if (full_path)
-//            g_free(full_path);
-//        full_path = g_build_filename(dirname, MODULE_INIT_FILENAME,
-//                                     NULL);
-//
-//        module_obj = load_module_init(context, obj, full_path);
-//        if (module_obj != NULL) {
-//            jsval obj_val;
-//
-//            if (JS_GetProperty(context,
-//                               module_obj,
-//                               name,
-//                               &obj_val)) {
-//                if (!JSVAL_IS_VOID(obj_val) &&
-//                    JS_DefineProperty(context, obj,
-//                                      name, obj_val,
-//                                      NULL, NULL,
-//                                      GWKJS_MODULE_PROP_FLAGS & ~JSPROP_PERMANENT)) {
-//                    result = JS_TRUE;
-//                    goto out;
-//                }
-//            }
-//        }
-//
-//        /* Second try importing a directory (a sub-importer) */
-//        if (full_path)
-//            g_free(full_path);
-//        full_path = g_build_filename(dirname, name,
-//                                     NULL);
-//        gfile = g_file_new_for_commandline_arg(full_path);
-//
-//        if (g_file_query_file_type(gfile, (GFileQueryInfoFlags) 0, NULL) == G_FILE_TYPE_DIRECTORY) {
-//            gwkjs_debug(GWKJS_DEBUG_IMPORTER,
-//                      "Adding directory '%s' to child importer '%s'",
-//                      full_path, name);
-//            if (directories == NULL) {
-//                directories = g_ptr_array_new();
-//            }
-//            g_ptr_array_add(directories, full_path);
-//            /* don't free it twice - pass ownership to ptr array */
-//            full_path = NULL;
-//        }
-//
-//        g_object_unref(gfile);
-//
-//        /* If we just added to directories, we know we don't need to
-//         * check for a file.  If we added to directories on an earlier
-//         * iteration, we want to ignore any files later in the
-//         * path. So, always skip the rest of the loop block if we have
-//         * directories.
-//         */
-//        if (directories != NULL) {
-//            continue;
-//        }
-//
-//        /* Third, if it's not a directory, try importing a file */
-//        g_free(full_path);
-//        full_path = g_build_filename(dirname, filename,
-//                                     NULL);
-//        gfile = g_file_new_for_commandline_arg(full_path);
-//        exists = g_file_query_exists(gfile, NULL);
-//
-//        if (!exists) {
-//            gwkjs_debug(GWKJS_DEBUG_IMPORTER,
-//                      "JS import '%s' not found in %s",
-//                      name, dirname);
-//
-//            g_object_unref(gfile);
-//            continue;
-//        }
-//
-//        if (import_file_on_module (context, obj, name, gfile)) {
-//            gwkjs_debug(GWKJS_DEBUG_IMPORTER,
-//                      "successfully imported module '%s'", name);
-//            result = JS_TRUE;
-//        }
-//
-//        g_object_unref(gfile);
-//
-//        /* Don't keep searching path if we fail to load the file for
-//         * reasons other than it doesn't exist... i.e. broken files
-//         * block searching for nonbroken ones
-//         */
-//        goto out;
-//    }
-//
-//    if (directories != NULL) {
-//        /* NULL-terminate the char** */
-//        g_ptr_array_add(directories, NULL);
-//
-//        if (import_directory(context, obj, name,
-//                             (const char**) directories->pdata)) {
-//            gwkjs_debug(GWKJS_DEBUG_IMPORTER,
-//                      "successfully imported directory '%s'", name);
-//            result = JS_TRUE;
-//        }
-//    }
-//
-// out:
-//    if (directories != NULL) {
-//        char **str_array;
-//
-//        /* NULL-terminate the char**
-//         * (maybe for a second time, but doesn't matter)
-//         */
-//        g_ptr_array_add(directories, NULL);
-//
-//        str_array = (char**) directories->pdata;
-//        g_ptr_array_free(directories, FALSE);
-//        g_strfreev(str_array);
-//    }
-//
-//    g_free(full_path);
-//    g_free(filename);
-//    g_free(dirname);
-//
-//    if (!result &&
-//        !JS_IsExceptionPending(context)) {
-//        /* If no exception occurred, the problem is just that we got to the
-//         * end of the path. Be sure an exception is set.
-//         */
-//        gwkjs_throw(context, "No JS module '%s' found in search path", name);
-//    }
-//
-//    return result;
-//}
+}
+
+static JSValueRef
+do_import(JSContextRef context,
+          JSObjectRef  obj,
+          Importer   *priv,
+          const char *name)
+{
+    char *filename;
+    char *full_path;
+    char *dirname = NULL;
+    JSValueRef search_path_val = NULL;
+    JSObjectRef search_path = NULL;
+    JSObjectRef module_obj = NULL;
+    guint32 search_path_len;
+    guint32 i;
+    JSValueRef result = NULL;
+    GPtrArray *directories;
+    const gchar * search_path_name;
+    GFile *gfile;
+    gboolean exists;
+
+    search_path_name = gwkjs_context_get_const_string(context, GWKJS_STRING_SEARCH_PATH);
+    if (!gwkjs_object_require_property(context, obj, "importer", search_path_name, &search_path_val)) {
+        return result;
+    }
+
+    if (!JSValueIsObject(context, search_path_val)) {
+        gwkjs_throw(context, "searchPath property on importer is not an object");
+        return result;
+    }
+
+    if (!JSValueIsArray(context, search_path_val)) {
+        gwkjs_throw(context, "searchPath property on importer is not an array");
+        return result;
+    }
+
+    search_path = JSValueToObject(context, search_path_val, NULL);
+    g_assert(search_path != NULL);
+
+    if (!gwkjs_array_get_length(context, search_path, &search_path_len)) {
+        gwkjs_throw(context, "searchPath array has no length");
+        return result;
+    }
+
+    filename = g_strdup_printf("%s.js", name);
+    full_path = NULL;
+    directories = NULL;
+
+    /* First try importing an internal module like byteArray */
+    if (priv->is_root &&
+        gwkjs_is_registered_native_module(context, obj, name) &&
+        (result = import_native_file(context, obj, name))) {
+        gwkjs_debug(GWKJS_DEBUG_IMPORTER,
+                  "successfully imported module '%s'", name);
+        goto out;
+    }
+
+    for (i = 0; i < search_path_len; ++i) {
+        JSValueRef elem = NULL;
+
+        if (!gwkjs_array_get_element(context, search_path, i, &elem)) {
+            /* this means there was an exception, while elem == JSVAL_VOID
+             * means no element found
+             */
+            goto out;
+        }
+
+        if (JSVAL_IS_VOID(context, elem))
+            continue;
+
+        if (!JSVAL_IS_STRING(context, elem)) {
+            gwkjs_throw(context, "importer searchPath contains non-string");
+            goto out;
+        }
+
+        g_free(dirname);
+        dirname = NULL;
+
+        if (!(dirname == gwkjs_jsvalue_to_cstring(context, elem, NULL)))
+            goto out; /* Error message already set */
+
+        /* Ignore empty path elements */
+        if (dirname[0] == '\0')
+            continue;
+
+        /* Try importing __init__.js and loading the symbol from it */
+        if (full_path)
+            g_free(full_path);
+        full_path = g_build_filename(dirname, MODULE_INIT_FILENAME,
+                                     NULL);
+
+        module_obj = load_module_init(context, obj, full_path);
+        if (module_obj != NULL) {
+            JSValueRef obj_val = NULL;
+
+            if ((obj_val = gwkjs_object_get_property(context,
+                                                     module_obj,
+                                                     name,
+                                                     NULL))) {
+                if (!JSVAL_IS_VOID(context, obj_val)) {
+                    gwkjs_object_set_property(context, obj, name, obj_val, kJSPropertyAttributeNone, NULL);
+                    result = obj_val;
+                    goto out;
+                }
+            }
+        }
+
+        /* Second try importing a directory (a sub-importer) */
+        if (full_path)
+            g_free(full_path);
+        full_path = g_build_filename(dirname, name,
+                                     NULL);
+        gfile = g_file_new_for_commandline_arg(full_path);
+
+        if (g_file_query_file_type(gfile, (GFileQueryInfoFlags) 0, NULL) == G_FILE_TYPE_DIRECTORY) {
+            gwkjs_debug(GWKJS_DEBUG_IMPORTER,
+                      "Adding directory '%s' to child importer '%s'",
+                      full_path, name);
+            if (directories == NULL) {
+                directories = g_ptr_array_new();
+            }
+            g_ptr_array_add(directories, full_path);
+            /* don't free it twice - pass ownership to ptr array */
+            full_path = NULL;
+        }
+
+        g_object_unref(gfile);
+
+        /* If we just added to directories, we know we don't need to
+         * check for a file.  If we added to directories on an earlier
+         * iteration, we want to ignore any files later in the
+         * path. So, always skip the rest of the loop block if we have
+         * directories.
+         */
+        if (directories != NULL) {
+            continue;
+        }
+
+        /* Third, if it's not a directory, try importing a file */
+        g_free(full_path);
+        full_path = g_build_filename(dirname, filename,
+                                     NULL);
+        gfile = g_file_new_for_commandline_arg(full_path);
+        exists = g_file_query_exists(gfile, NULL);
+
+        if (!exists) {
+            gwkjs_debug(GWKJS_DEBUG_IMPORTER,
+                      "JS import '%s' not found in %s",
+                      name, dirname);
+
+            g_object_unref(gfile);
+            continue;
+        }
+
+        if ((result = import_file_on_module (context, obj, name, gfile))) {
+            gwkjs_debug(GWKJS_DEBUG_IMPORTER,
+                      "successfully imported module '%s'", name);
+        }
+
+        g_object_unref(gfile);
+
+        /* Don't keep searching path if we fail to load the file for
+         * reasons other than it doesn't exist... i.e. broken files
+         * block searching for nonbroken ones
+         */
+        goto out;
+    }
+
+    if (directories != NULL) {
+        /* NULL-terminate the char** */
+        g_ptr_array_add(directories, NULL);
+
+        if ((result = import_directory(context, obj, name,
+                             (const char**) directories->pdata))) {
+            gwkjs_debug(GWKJS_DEBUG_IMPORTER,
+                      "successfully imported directory '%s'", name);
+        }
+    }
+
+ out:
+    if (directories != NULL) {
+        char **str_array;
+
+        /* NULL-terminate the char**
+         * (maybe for a second time, but doesn't matter)
+         */
+        g_ptr_array_add(directories, NULL);
+
+        str_array = (char**) directories->pdata;
+        g_ptr_array_free(directories, FALSE);
+        g_strfreev(str_array);
+    }
+
+    g_free(full_path);
+    g_free(filename);
+    g_free(dirname);
+
+    if (!result) {
+        /* If no exception occurred, the problem is just that we got to the
+         * end of the path. Be sure an exception is set.
+         */
+        gwkjs_throw(context, "No JS module '%s' found in search path", name);
+    }
+
+    return result;
+}
 //
 //static ImporterIterator *
 //importer_iterator_new(void)
@@ -661,15 +660,15 @@ GWKJS_DEFINE_PRIV_FROM_JS(Importer, gwkjs_importer_class)
 // * then on its prototype.
 // *
 // */
-static void
-importer_new_enumerate(JSContextRef ctx,
-                       JSObjectRef object,
-                       JSPropertyNameAccumulatorRef propertyNames)
-{
-// TODO: IMPLEMENT
-return;
-
-}
+//static void
+//importer_new_enumerate(JSContextRef ctx,
+//                       JSObjectRef object,
+//                       JSPropertyNameAccumulatorRef propertyNames)
+//{
+//// TODO: IMPLEMENT
+//return;
+//
+//}
 //static JSBool
 //importer_new_enumerate(JSContext  *context,
 //                       JS::HandleObject object,
@@ -858,10 +857,10 @@ return;
 // */
 
 static JSValueRef
-importer_new_resolve(JSContextRef ctx,
-                     JSObjectRef object,
-                     JSStringRef property_name,
-                     JSValueRef* exception)
+importer_get_property(JSContextRef ctx,
+                      JSObjectRef object,
+                      JSStringRef property_name,
+                      JSValueRef* exception)
 {
     JSValueRef ret = NULL;
     gchar *name = NULL;
@@ -870,24 +869,43 @@ importer_new_resolve(JSContextRef ctx,
     const gchar *module_init_name = gwkjs_context_get_const_string(ctx, GWKJS_STRING_MODULE_INIT);
     name = gwkjs_jsstring_to_cstring(property_name);
 
+    if (g_strcmp0(name, module_init_name) == 0) {
+        ret = JSValueMakeUndefined(ctx);
+        goto out;
+    }
+
     /* let Object.prototype resolve these */
     if (strcmp(name, "valueOf") == 0 ||
         strcmp(name, "toString") == 0 ||
+        strcmp(name, "searchPath") == 0 ||
+        strcmp(name, "__filename__") == 0 ||
+        strcmp(name, "__moduleName__") == 0 ||
+        strcmp(name, "__parentModule__") == 0 ||
         strcmp(name, "__iterator__") == 0)
         goto out;
 
     priv = priv_from_js(object);
+    if (priv == NULL) /* we are the prototype, or have the wrong class */
+        goto out;
+
+    // If the module was already included, the default proto system
+    // should return the property, not this method.
+    if (g_hash_table_contains(priv->modules, name))
+        goto out;
+
 
     gwkjs_debug_jsprop(GWKJS_DEBUG_IMPORTER,
                      "Resolve prop '%s' hook obj %p priv %p",
                      name, (void *)object, priv);
-    if (priv == NULL) /* we are the prototype, or have the wrong class */
-        goto out;
 
-    // TODO: proper implement dir import
-    //if (do_import(context, obj, priv, name)) {
-    //    objp.set(obj);
-    //}
+    // We need to add the module BEFORE trying to import it.
+    // Otherwise, there will be an infinite recursing in SET/GET methods.
+    g_hash_table_replace(priv->modules, g_strdup(name), NULL);
+    if ((ret = do_import(ctx, object, priv, name))) {
+        g_warning("Module imported");
+    } else {
+        g_hash_table_remove(priv->modules, name);
+    }
 
 out:
     g_free(name);
@@ -979,7 +997,7 @@ importer_finalize(JSObjectRef obj)
 
 JSClassDefinition gwkjs_importer_class = {
     0,                         //     Version
-    0,                         //     JSClassAttributes
+    kJSPropertyAttributeNone,  //     JSClassAttributes
     "GwkjsFileImporter",       //     const char* className;
     NULL,                      //     JSClassRef parentClass;
     NULL,                      //     const JSStaticValue*                staticValues;
@@ -988,18 +1006,17 @@ JSClassDefinition gwkjs_importer_class = {
     importer_finalize,         //     JSObjectFinalizeCallback            finalize;
     NULL,                      //     JSObjectHasPropertyCallback         hasProperty;
 
-    importer_new_resolve,      //TODO: is this really resolve?
+    importer_get_property,     //TODO: is this really resolve?
                                //     JSObjectGetPropertyCallback         getProperty;
 
     NULL,                      //     JSObjectSetPropertyCallback         setProperty;
     NULL,                      //     JSObjectDeletePropertyCallback      deleteProperty;
-    importer_new_enumerate,    //     JSObjectGetPropertyNamesCallback    getPropertyNames;
+    NULL, //importer_new_enumerate,    //     JSObjectGetPropertyNamesCallback    getPropertyNames;
     NULL,                      //     JSObjectCallAsFunctionCallback      callAsFunction;
     gwkjs_importer_constructor,//     JSObjectCallAsConstructorCallback   callAsConstructor;
     NULL,                      //     JSObjectHasInstanceCallback         hasInstance;
     NULL,                      //     JSObjectConvertToTypeCallback       convertToType;
 };
-static JSClassRef gwkjs_importer_class_ref = NULL;
 
 //
 //JSPropertySpec gwkjs_importer_proto_props[] = {
@@ -1022,11 +1039,13 @@ importer_new(JSContextRef context,
     }
 
     ret = JSObjectMake(context, gwkjs_importer_class_ref, NULL);
+
     if (ret == NULL)
         return ret;
 
     Importer *priv = g_slice_new0(Importer);
     priv->is_root = is_root;
+    priv->modules = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
     g_assert(priv_from_js(ret) == NULL);
     JSObjectSetPrivate(ret, priv);
@@ -1158,7 +1177,7 @@ gwkjs_create_importer(JSContextRef context,
                     const char  **initial_search_path,
                     gboolean      add_standard_search_path,
                     gboolean      is_root,
-                    JSObjectRef     *in_object)
+                    JSObjectRef   in_object)
 {
     JSObjectRef importer;
     char **paths[2] = {0};
@@ -1183,35 +1202,41 @@ gwkjs_create_importer(JSContextRef context,
 
     g_strfreev(search_path);
 
-    //if (!define_meta_properties(context, importer, NULL, importer_name, in_object))
-    //    g_error("failed to define meta properties on importer");
+    if (!define_meta_properties(context, importer, NULL, importer_name, in_object))
+        g_error("failed to define meta properties on importer");
 
     return importer;
 }
 
-//JSObject*
-//gwkjs_define_importer(JSContext    *context,
-//                    JSObject     *in_object,
-//                    const char   *importer_name,
-//                    const char  **initial_search_path,
-//                    gboolean      add_standard_search_path)
-//
-//{
-//    JSObject *importer;
-//
-//    importer = gwkjs_create_importer(context, importer_name, initial_search_path, add_standard_search_path, FALSE, in_object);
-//
-//    if (!JS_DefineProperty(context, in_object,
-//                           importer_name, OBJECT_TO_JSVAL(importer),
-//                           NULL, NULL,
-//                           GWKJS_MODULE_PROP_FLAGS))
-//        g_error("no memory to define importer property");
-//
-//    gwkjs_debug(GWKJS_DEBUG_IMPORTER,
-//              "Defined importer '%s' %p in %p", importer_name, importer, in_object);
-//
-//    return importer;
-//}
+JSObjectRef
+gwkjs_define_importer(JSContextRef  context,
+                    JSObjectRef     in_object,
+                    const char      *importer_name,
+                    const char      **initial_search_path,
+                    gboolean        add_standard_search_path)
+
+{
+    JSObjectRef importer;
+    JSValueRef exception = NULL;
+
+    importer = gwkjs_create_importer(context, importer_name, initial_search_path, add_standard_search_path, FALSE, in_object);
+
+    if(importer == NULL) {
+        g_warning("No importer");
+        return NULL;
+    }
+
+    gwkjs_object_set_property(context, in_object, importer_name, importer, kJSPropertyAttributeReadOnly | kJSPropertyAttributeDontDelete | kJSPropertyAttributeDontEnum, &exception);
+ 
+    if (exception == NULL) {
+        g_error("Problems to define importer property");
+    }
+
+    gwkjs_debug(GWKJS_DEBUG_IMPORTER,
+              "Defined importer '%s' %p in %p", importer_name, importer, in_object);
+
+    return importer;
+}
 
 /* If this were called twice for the same runtime with different args it
  * would basically be a bug, but checking for that is a lot of code so

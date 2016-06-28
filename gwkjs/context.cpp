@@ -289,7 +289,8 @@ gwkjs_context_class_init(GwkjsContextClass *klass)
     //gwkjs_register_native_module("byteArray", gwkjs_define_byte_array_stuff);
     //gwkjs_register_native_module("_gi", gwkjs_define_private_gi_stuff);
     //gwkjs_register_native_module("gi", gwkjs_define_gi_stuff);
-    //gwkjs_register_static_modules();
+
+    gwkjs_register_static_modules();
 }
 //
 //static void

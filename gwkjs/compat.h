@@ -59,6 +59,11 @@ G_BEGIN_DECLS
 // XXX: remove
 #define JSVAL_IS_OBJECT(obj) (JSVAL_IS_NULL(obj) || !JSVAL_IS_PRIMITIVE(obj))
 
+// XXX: remove eventually
+#define JSVAL_IS_VOID(context, elem) (elem == NULL || JSValueIsUndefined(context, elem))
+
+#define JSVAL_IS_STRING(context, elem) (!JSVAL_IS_VOID(context, elem) && JSValueIsString(context, elem))
+
 
 #define JS_GetGlobalObject(cx) gwkjs_get_global_object(cx)
 

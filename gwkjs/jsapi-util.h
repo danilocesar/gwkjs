@@ -199,18 +199,27 @@ G_BEGIN_DECLS
 //}
 //
 
+JSValueRef
+gwkjs_cstring_to_jsvalue(JSContextRef context, const gchar *str);
+
 guint
 gwkjs_jsvalue_to_uint(JSContextRef ctx, JSValueRef val, JSValueRef* exception);
 
+gint
+gwkjs_jsvalue_to_int(JSContextRef ctx, JSValueRef val, JSValueRef* exception);
+
 gchar*
 gwkjs_jsvalue_to_cstring(JSContextRef ctx, JSValueRef val, JSValueRef* exception);
+
+JSStringRef
+gwkjs_cstring_to_jsstring(const gchar* str);
 
 JSValueRef
 gwkjs_object_get_property(JSContextRef ctx,
                           JSObjectRef object,
                           const gchar* propertyName,
                           JSValueRef* exception);
-gboolean
+const gboolean
 gwkjs_object_has_property(JSContextRef ctx,
                           JSObjectRef object,
                           const gchar* propertyName);
@@ -226,6 +235,17 @@ gwkjs_object_set_property(JSContextRef ctx,
 
 gchar *     gwkjs_jsstring_to_cstring          (JSStringRef     property_name);
 
+gboolean
+gwkjs_array_get_length(JSContextRef context,
+                       JSObjectRef array,
+                       guint32 *result_out);
+
+gboolean
+gwkjs_array_get_element(JSContextRef context,
+                        JSObjectRef obj,
+                        guint pos,
+                        JSValueRef *out);
+
 //gboolean    gwkjs_init_context_standard        (JSContextRef    context,
 //                                                JSObjectRef     *global_out);
 //
@@ -236,13 +256,13 @@ gchar *     gwkjs_jsstring_to_cstring          (JSStringRef     property_name);
 //void        gwkjs_set_global_slot              (JSContextRef       context,
 //                                                GwkjsGlobalSlot    slot,
 //                                                jsval            value);
-//
-//gboolean    gwkjs_object_require_property      (JSContextRef     context,
-//                                              JSObjectRef        obj,
-//                                              const char         *obj_description,
-//                                              jsval              property_name,
-//                                              jsval              *value_p);
-//
+
+gboolean    gwkjs_object_require_property      (JSContextRef     context,
+                                                JSObjectRef      obj,
+                                                const char       *obj_description,
+                                                const char       *property_name,
+                                                JSValueRef       *value_p);
+
 //JSObjectRef gwkjs_new_object_for_constructor   (JSContextRef    context,
 //                                                JSClassRef      clasp);
 //

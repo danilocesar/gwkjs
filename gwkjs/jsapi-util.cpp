@@ -41,6 +41,12 @@
 
 static GMutex gc_lock;
 
+JSValueRef
+gwkjs_cstring_to_jsvalue(JSContextRef context, const gchar *str)
+{
+    return JSValueMakeString(context, gwkjs_cstring_to_jsstring(str));
+}
+
 gchar *
 gwkjs_jsstring_to_cstring (JSStringRef property_name)
 {
@@ -55,7 +61,6 @@ JSStringRef
 gwkjs_cstring_to_jsstring(const char* str)
 {
     return JSStringCreateWithUTF8CString(str);
-
 }
 
 void
@@ -85,6 +90,21 @@ gwkjs_jsvalue_to_uint(JSContextRef ctx, JSValueRef val, JSValueRef* exception)
     return (guint) JSValueToNumber(ctx, val, NULL);
 }
 
+gint
+gwkjs_jsvalue_to_int(JSContextRef ctx, JSValueRef val, JSValueRef* exception)
+{
+    if (!JSValueIsNumber(ctx, val) && !JSValueIsBoolean(ctx, val)) {
+        if (!JSValueIsNull(ctx, val)) {
+            gwkjs_make_exception(ctx, exception, "ConversionError",
+                                 "Can not convert Javascript value to"
+                                 " boolean");
+        }
+        return 0;
+    }
+
+    return (gint) JSValueToNumber(ctx, val, NULL);
+}
+
 JSValueRef
 gwkjs_object_get_property(JSContextRef ctx,
                           JSObjectRef object,
@@ -95,7 +115,7 @@ gwkjs_object_get_property(JSContextRef ctx,
     return (JSObjectGetProperty(ctx, object, prop, exception));
 }
 
-gboolean
+const gboolean
 gwkjs_object_has_property(JSContextRef ctx,
                           JSObjectRef object,
                           const gchar* propertyName)
@@ -242,55 +262,101 @@ gwkjs_jsvalue_to_cstring(JSContextRef ctx, JSValueRef val, JSValueRef* exception
 //    return JS_GetReservedSlot(global, JSCLASS_GLOBAL_SLOT_COUNT + slot);
 //}
 
-///* Returns whether the object had the property; if the object did
-// * not have the property, always sets an exception. Treats
-// * "the property's value is JSVAL_VOID" the same as "no such property,".
-// * Guarantees that *value_p is set to something, if only JSVAL_VOID,
-// * even if an exception is set and false is returned.
-// *
-// * Requires request.
-// */
-//gboolean
-//gwkjs_object_require_property(JSContext       *context,
-//                            JSObject        *obj,
-//                            const char      *obj_description,
-//                            jsid             property_name,
-//                            jsval           *value_p)
-//{
-//    jsval value;
-//    char *name;
-//
-//    value = JSVAL_VOID;
-//    if (value_p)
-//        *value_p = value;
-//
-//    if (G_UNLIKELY (!JS_GetPropertyById(context, obj, property_name, &value)))
-//        return JS_FALSE;
-//
-//    if (G_LIKELY (!JSVAL_IS_VOID(value))) {
-//        if (value_p)
-//            *value_p = value;
-//        return JS_TRUE;
-//    }
-//
-//    /* remember gwkjs_throw() is a no-op if JS_GetProperty()
-//     * already set an exception
-//     */
-//
-//    gwkjs_get_string_id(context, property_name, &name);
-//
-//    if (obj_description)
-//        gwkjs_throw(context,
-//                  "No property '%s' in %s (or its value was undefined)",
-//                  name, obj_description);
-//    else
-//        gwkjs_throw(context,
-//                  "No property '%s' in object %p (or its value was undefined)",
-//                  name, obj);
-//
-//    g_free(name);
-//    return JS_FALSE;
-//}
+/* Returns whether the object had the property; if the object did
+ * not have the property, always sets an exception. Treats
+ * "the property's value is JSVAL_VOID" the same as "no such property,".
+ * Guarantees that *value_p is set to something, if only JSVAL_VOID,
+ * even if an exception is set and false is returned.
+ *
+ * Requires request.
+ */
+gboolean
+gwkjs_object_require_property(JSContextRef  context,
+                              JSObjectRef   obj,
+                              const char   *obj_description,
+                              const char   *property_name,
+                              JSValueRef   *value_p)
+{
+    JSValueRef value;
+
+    value = NULL;
+    if (value_p)
+        *value_p = value;
+
+    value = gwkjs_object_get_property(context, obj, property_name, NULL);
+    if (G_UNLIKELY (value == NULL))
+        return JS_FALSE;
+
+    if (G_LIKELY (!JSValueIsNull(context, value) && !JSValueIsUndefined(context, value))) {
+        if (value_p)
+            *value_p = value;
+        return TRUE;
+    }
+
+    /* remember gwkjs_throw() is a no-op if JS_GetProperty()
+     * already set an exception
+     */
+
+    if (obj_description)
+        gwkjs_throw(context,
+                  "No property '%s' in %s (or its value was undefined)",
+                  property_name, obj_description);
+    else
+        gwkjs_throw(context,
+                  "No property '%s' in object %p (or its value was undefined)",
+                  property_name, obj);
+
+    return JS_FALSE;
+}
+
+gboolean
+gwkjs_array_get_length(JSContextRef context,
+                       JSObjectRef array,
+                       guint32 *result_out)
+{
+    gboolean ret = FALSE;
+    JSValueRef exception = NULL;
+    const gchar *lengthstr = gwkjs_context_get_const_string(context, GWKJS_STRING_LENGTH);
+
+    JSValueRef num_val = gwkjs_object_get_property(context, array, lengthstr, &exception);
+    if (exception) {
+        gwkjs_throw(context,
+                    "No length in array %p", array);
+        ret = FALSE;
+        goto out;
+    }
+    if (JSValueIsNumber(context, num_val)) {
+        if (result_out)
+            *result_out = gwkjs_jsvalue_to_uint(context, num_val, NULL);
+        ret = TRUE;
+    }
+
+out:
+    return ret;
+}
+
+gboolean
+gwkjs_array_get_element(JSContextRef context,
+                        JSObjectRef obj,
+                        guint pos,
+                        JSValueRef *out)
+{
+    JSValueRef exception = NULL;
+    gboolean ret = FALSE;
+
+    JSValueRef out_v = JSObjectGetPropertyAtIndex(context, obj, pos, &exception);
+    if (exception) {
+        // TODO: thow exception / error?
+        goto out;
+    }
+
+    *out = out_v;
+    ret = TRUE;
+
+out:
+    return ret;
+
+}
 
 //void
 //gwkjs_throw_constructor_error(JSContext *context)

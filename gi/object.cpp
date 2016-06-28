@@ -1,68 +1,68 @@
-///* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-///*
-// * Copyright (c) 2008  litl, LLC
-// *
-// * Permission is hereby granted, free of charge, to any person obtaining a copy
-// * of this software and associated documentation files (the "Software"), to
-// * deal in the Software without restriction, including without limitation the
-// * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-// * sell copies of the Software, and to permit persons to whom the Software is
-// * furnished to do so, subject to the following conditions:
-// *
-// * The above copyright notice and this permission notice shall be included in
-// * all copies or substantial portions of the Software.
-// *
-// * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-// * IN THE SOFTWARE.
-// */
-//
-//#include <config.h>
-//
-//#include <string.h>
-//
-//#include <gwkjs/gi.h>
-//#include "object.h"
-//#include "gtype.h"
-//#include "interface.h"
-//#include "arg.h"
-//#include "repo.h"
-//#include "gtype.h"
-//#include "function.h"
-//#include "proxyutils.h"
-//#include "param.h"
-//#include "value.h"
-//#include "keep-alive.h"
-//#include "closure.h"
-//#include "gwkjs_gi_trace.h"
-//
-//#include <gwkjs/gwkjs-module.h>
-//#include <gwkjs/compat.h>
-//#include <gwkjs/type-module.h>
-//#include <gwkjs/context-private.h>
-//
-//#include <util/log.h>
-//#include <util/hash-x32.h>
-//#include <girepository.h>
-//
-//typedef struct {
-//    GIObjectInfo *info;
-//    GObject *gobj; /* NULL if we are the prototype and not an instance */
-//    JSObject *keep_alive; /* NULL if we are not added to it */
-//    GType gtype;
-//
-//    /* a list of all signal connections, used when tracing */
-//    GList *signals;
-//
-//    /* the GObjectClass wrapped by this JS Object (only used for
-//       prototypes) */
-//    GTypeClass *klass;
-//} ObjectInstance;
-//
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+/*
+ * Copyright (c) 2008  litl, LLC
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+#include <config.h>
+
+#include <string.h>
+
+#include <gwkjs/gi.h>
+#include "object.h"
+#include "gtype.h"
+#include "interface.h"
+#include "arg.h"
+#include "repo.h"
+#include "gtype.h"
+#include "function.h"
+#include "proxyutils.h"
+#include "param.h"
+#include "value.h"
+#include "keep-alive.h"
+#include "closure.h"
+#include "gwkjs_gi_trace.h"
+
+#include <gwkjs/gwkjs-module.h>
+#include <gwkjs/compat.h>
+#include <gwkjs/type-module.h>
+#include <gwkjs/context-private.h>
+
+#include <util/log.h>
+#include <util/hash-x32.h>
+#include <girepository.h>
+
+typedef struct {
+    GIObjectInfo *info;
+    GObject *gobj; /* NULL if we are the prototype and not an instance */
+    JSObjectRef keep_alive; /* NULL if we are not added to it */
+    GType gtype;
+
+    /* a list of all signal connections, used when tracing */
+    GList *signals;
+
+    /* the GObjectClass wrapped by this JS Object (only used for
+       prototypes) */
+    GTypeClass *klass;
+} ObjectInstance;
+
 //typedef struct {
 //    ObjectInstance *obj;
 //    GList *link;
@@ -94,7 +94,7 @@
 //static GThread *gwkjs_eval_thread;
 //static volatile gint pending_idle_toggles;
 //
-//GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
+GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //
 //static JSObject*       peek_js_obj  (GObject   *gobj);
 //static void            set_js_obj   (GObject   *gobj,
@@ -2111,20 +2111,20 @@
 // out:
 //    return obj;
 //}
-//
-//GObject*
-//gwkjs_g_object_from_object(JSContext    *context,
-//                         JSObject     *obj)
-//{
-//    ObjectInstance *priv;
-//
-//    if (obj == NULL)
-//        return NULL;
-//
-//    priv = priv_from_js(context, obj);
-//    return priv->gobj;
-//}
-//
+
+GObject*
+gwkjs_g_object_from_object(JSContextRef    context,
+                           JSObjectRef     obj)
+{
+    ObjectInstance *priv;
+
+    if (obj == NULL)
+        return NULL;
+
+    priv = priv_from_js(obj);
+    return priv->gobj;
+}
+
 //JSBool
 //gwkjs_typecheck_is_object(JSContext     *context,
 //                        JSObject      *object,
