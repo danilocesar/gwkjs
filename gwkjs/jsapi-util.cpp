@@ -164,7 +164,16 @@ gwkjs_jsvalue_to_cstring(JSContextRef ctx, JSValueRef val, JSValueRef* exception
     }
 
     return buf;
-}   
+}
+
+JSObjectRef
+gwkjs_make_function(JSContextRef ctx, const gchar *name, JSObjectCallAsFunctionCallback cb)
+{
+    JSObjectRef ret = NULL;
+    JSStringRef str_name = gwkjs_cstring_to_jsstring(name);
+
+    return JSObjectMakeFunctionWithCallback(ctx, str_name, cb);
+}
 
 
 //
@@ -1405,9 +1414,16 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 //    gwkjs_gc_if_needed(context);
 //}
 //
-//void
-//gwkjs_schedule_gc_if_needed (JSContext *context)
-//{
+
+void
+gwkjs_schedule_gc_if_needed (JSContextRef context)
+{
+
+    JSGarbageCollect(context);
+//TODO: Check if it's OK. we don't have a 
+//      Maybe_GC in JSC
+//
+//
 //    GwkjsContext *gwkjs_context;
 //
 //    /* We call JS_MaybeGC immediately, but defer a check for a full
@@ -1418,7 +1434,7 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 //    gwkjs_context = (GwkjsContext *) JS_GetContextPrivate(context);
 //    if (gwkjs_context)
 //        _gwkjs_context_schedule_gc_if_needed(gwkjs_context);
-//}
+}
 
 
 /**

@@ -214,6 +214,9 @@ gwkjs_jsvalue_to_cstring(JSContextRef ctx, JSValueRef val, JSValueRef* exception
 JSStringRef
 gwkjs_cstring_to_jsstring(const gchar* str);
 
+JSObjectRef
+gwkjs_make_function(JSContextRef ctx, const gchar *name, JSObjectCallAsFunctionCallback cb);
+
 JSValueRef
 gwkjs_object_get_property(JSContextRef ctx,
                           JSObjectRef object,

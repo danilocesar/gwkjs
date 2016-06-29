@@ -40,11 +40,11 @@
 
 static JSValueRef
 gwkjs_address_of(JSContextRef ctx,
-                    JSObjectRef function,
-                    JSObjectRef this_object,
-                    size_t argumentCount,
+                 JSObjectRef function,
+                 JSObjectRef this_object,
+                 size_t argumentCount,
                  const JSValueRef arguments[],
-                    JSValueRef* exception)
+                 JSValueRef* exception)
 {
     if (argumentCount != 1) {
         NUMARG_EXPECTED_EXCEPTION("addressOf", "1 argument")
@@ -64,13 +64,13 @@ gwkjs_address_of(JSContextRef ctx,
     return ret;
 }
 
-static JSValueRef 
+static JSValueRef
 gwkjs_refcount(JSContextRef ctx,
-             JSObjectRef function,
-             JSObjectRef this_object,
-             size_t argumentCount,
-             const JSValueRef arguments[],
-             JSValueRef* exception)
+               JSObjectRef function,
+               JSObjectRef this_object,
+               size_t argumentCount,
+               const JSValueRef arguments[],
+               JSValueRef* exception)
 {
     if (argumentCount != 1) {
         NUMARG_EXPECTED_EXCEPTION("refcount", "1 argument");
@@ -116,13 +116,13 @@ gwkjs_gc(JSContextRef ctx,
     return JSValueMakeUndefined(ctx);
 }
 
-static JSValueRef 
+static JSValueRef
 gwkjs_exit(JSContextRef ctx,
-         JSObjectRef function,
-         JSObjectRef this_object,
-         size_t argumentCount,
-         const JSValueRef arguments[],
-         JSValueRef* exception)
+           JSObjectRef function,
+           JSObjectRef this_object,
+           size_t argumentCount,
+           const JSValueRef arguments[],
+           JSValueRef* exception)
 {
     gint32 ret = EXIT_SUCCESS;
     if (argumentCount > 1) {

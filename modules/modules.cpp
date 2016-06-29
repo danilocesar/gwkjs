@@ -40,6 +40,5 @@ gwkjs_register_static_modules (void)
     gwkjs_register_native_module("cairoNative", gwkjs_js_define_cairo_stuff);
 #endif
     gwkjs_register_native_module("system", gwkjs_js_define_system_stuff);
-// TODO: implement console_stuff
-//    gwkjs_register_native_module("console", gwkjs_define_console_stuff);
+    gwkjs_register_native_module("console", gwkjs_define_console_stuff);
 }
