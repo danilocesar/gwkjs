@@ -1,55 +1,55 @@
-///* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-///*
-// * Copyright (c) 2008  litl, LLC
-// *
-// * Permission is hereby granted, free of charge, to any person obtaining a copy
-// * of this software and associated documentation files (the "Software"), to
-// * deal in the Software without restriction, including without limitation the
-// * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-// * sell copies of the Software, and to permit persons to whom the Software is
-// * furnished to do so, subject to the following conditions:
-// *
-// * The above copyright notice and this permission notice shall be included in
-// * all copies or substantial portions of the Software.
-// *
-// * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-// * IN THE SOFTWARE.
-// */
-//
-//#include <config.h>
-//
-//#include "repo.h"
-//#include "ns.h"
-//#include "function.h"
-//#include "object.h"
-//#include "param.h"
-//#include "boxed.h"
-//#include "union.h"
-//#include "enumeration.h"
-//#include "arg.h"
-//#include "foreign.h"
-//#include "fundamental.h"
-//#include "interface.h"
-//#include "gerror.h"
-//
-//#include <gwkjs/compat.h>
-//#include <gwkjs/jsapi-private.h>
-//
-//#include <util/misc.h>
-//
-//#include <girepository.h>
-//#include <string.h>
-//
-//typedef struct {
-//    void *dummy;
-//
-//} Repo;
-//
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+/*
+ * Copyright (c) 2008  litl, LLC
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+#include <config.h>
+
+#include "repo.h"
+#include "ns.h"
+#include "function.h"
+#include "object.h"
+#include "param.h"
+#include "boxed.h"
+#include "union.h"
+#include "enumeration.h"
+#include "arg.h"
+#include "foreign.h"
+#include "fundamental.h"
+#include "interface.h"
+#include "gerror.h"
+
+#include <gwkjs/compat.h>
+#include <gwkjs/jsapi-private.h>
+
+#include <util/misc.h>
+
+#include <girepository.h>
+#include <string.h>
+
+typedef struct {
+    void *dummy;
+
+} Repo;
+
 //extern struct JSClass gwkjs_repo_class;
 //
 //GWKJS_DEFINE_PRIV_FROM_JS(Repo, gwkjs_repo_class)
@@ -252,14 +252,15 @@
 //    { NULL }
 //};
 //
-//static JSObject*
-//repo_new(JSContext *context)
+//
+//static JSObjectRef
+//repo_new(JSContextRef context)
 //{
 //    Repo *priv;
-//    JSObject *repo;
-//    JSObject *global;
-//    JSObject *versions;
-//    JSObject *private_ns;
+//    JSObjectRef repo;
+//    JSObjectRef global;
+//    JSObjectRef versions;
+//    JSObjectRef private_ns;
 //    JSBool found;
 //    jsid versions_name, private_ns_name;
 //
@@ -267,6 +268,7 @@
 //
 //    if (!JS_HasProperty(context, global, gwkjs_repo_class.name, &found))
 //        return NULL;
+//
 //    if (!found) {
 //        JSObject *prototype;
 //        prototype = JS_InitClass(context, global,
@@ -339,20 +341,23 @@
 //
 //    return repo;
 //}
-//
-//JSBool
-//gwkjs_define_repo(JSContext  *context,
-//                JSObject  **module_out,
-//                const char *name)
-//{
-//    JSObject *repo;
-//
-//    repo = repo_new(context);
-//    *module_out = repo;
-//
-//    return JS_TRUE;
-//}
-//
+
+
+JSBool
+gwkjs_define_repo(JSContextRef context,
+                  JSObjectRef  *module_out,
+                  const char *name)
+{
+    JSObjectRef repo;
+
+    // TODO: FIXME
+    //repo = repo_new(context);
+    repo = JSObjectMake(context, NULL, NULL);
+    *module_out = repo;
+
+    return JS_TRUE;
+}
+// TODO: IMPLEMENT
 //static JSBool
 //gwkjs_define_constant(JSContext      *context,
 //                    JSObject       *in_object,

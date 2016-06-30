@@ -282,13 +282,13 @@ gwkjs_context_class_init(GwkjsContextClass *klass)
     {
         char *priv_typelib_dir = g_build_filename (PKGLIBDIR, "girepository-1.0", NULL);
         g_irepository_prepend_search_path(priv_typelib_dir);
-    g_free (priv_typelib_dir);
+        g_free (priv_typelib_dir);
     }
 
     // TODO: Register Native MODULES
     //gwkjs_register_native_module("byteArray", gwkjs_define_byte_array_stuff);
     //gwkjs_register_native_module("_gi", gwkjs_define_private_gi_stuff);
-    //gwkjs_register_native_module("gi", gwkjs_define_gi_stuff);
+    gwkjs_register_native_module("gi", gwkjs_define_gi_stuff);
 
     gwkjs_register_static_modules();
 }
@@ -403,10 +403,16 @@ gwkjs_context_constructed(GObject *object)
 //        js_context->const_strings[i] = gwkjs_intern_string_to_id(js_context->context, const_strings[i]);
 
     /* set ourselves as the private data */
-    // TODO: do the context needs a private return?
+    // XXX: Works for now, but it might be the root of future issues:
+    // SpiderMonkey sets the JSContext private to be the GwkjsContext. JSC doesn't
+    // have a JSContextSetPrivate. So, as the global doesn't have a private object
+    // we can set the GwkjsContext in the global object
     //JSObjectSetPrivate(js_context->context, js_context);
 
     js_context->global = JSContextGetGlobalObject(js_context->context);
+
+    // XXX: ^^ here we're setting the private object mentioned before.
+    JSObjectSetPrivate(js_context->global, js_context);
 
     JSValueRef exception = NULL;
     gwkjs_object_set_property(js_context->context, js_context->global,
@@ -747,28 +753,31 @@ gwkjs_context_get_const_string(JSContextRef      context,
 //    return JS_GetPropertyById(context, obj, pname, value_p);
 //}
 //
-///**
-// * gwkjs_get_import_global:
-// * @context: a #JSContext
-// *
-// * Gets the "import global" for the context's runtime. The import
-// * global object is the global object for the context. It is used
-// * as the root object for the scope of modules loaded by GWKJS in this
-// * runtime, and should also be used as the globals 'obj' argument passed
-// * to JS_InitClass() and the parent argument passed to JS_ConstructObject()
-// * when creating a native classes that are shared between all contexts using
-// * the runtime. (The standard JS classes are not shared, but we share
-// * classes such as GObject proxy classes since objects of these classes can
-// * easily migrate between contexts and having different classes depending
-// * on the context where they were first accessed would be confusing.)
-// *
-// * Return value: the "import global" for the context's
-// *  runtime. Will never return %NULL while GWKJS has an active context
-// *  for the runtime.
-// */
-//JSObject*
-//gwkjs_get_import_global(JSContext *context)
-//{
-//    GwkjsContext *gwkjs_context = (GwkjsContext *) JS_GetContextPrivate(context);
-//    return gwkjs_context->global;
-//}
+
+/**
+ * gwkjs_get_import_global:
+ * @context: a #JSContext
+ *
+ * Gets the "import global" for the context's runtime. The import
+ * global object is the global object for the context. It is used
+ * as the root object for the scope of modules loaded by GWKJS in this
+ * runtime, and should also be used as the globals 'obj' argument passed
+ * to JS_InitClass() and the parent argument passed to JS_ConstructObject()
+ * when creating a native classes that are shared between all contexts using
+ * the runtime. (The standard JS classes are not shared, but we share
+ * classes such as GObject proxy classes since objects of these classes can
+ * easily migrate between contexts and having different classes depending
+ * on the context where they were first accessed would be confusing.)
+ *
+ * Return value: the "import global" for the context's
+ *  runtime. Will never return %NULL while GWKJS has an active context
+ *  for the runtime.
+ */
+JSObjectRef
+gwkjs_get_import_global(JSContextRef context)
+{
+    // TODO: Might want to check the logic here.
+    //GwkjsContext *gwkjs_context = (GwkjsContext *) JS_GetContextPrivate(context);
+    //return gwkjs_context->global;
+    return JSContextGetGlobalObject(context);
+}

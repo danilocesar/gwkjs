@@ -62,6 +62,9 @@ G_BEGIN_DECLS
 // * ENUMERATE: allows copyProperties to work among other reasons to have it
 // */
 //#define GWKJS_MODULE_PROP_FLAGS (JSPROP_PERMANENT | JSPROP_ENUMERATE)
+//
+
+#define GWKJS_PROTO_PROP_FLAGS (kJSPropertyAttributeDontEnum | kJSPropertyAttributeDontDelete)
 
 /*
  * Helper methods to access private data:
@@ -251,9 +254,9 @@ gwkjs_array_get_element(JSContextRef context,
 
 //gboolean    gwkjs_init_context_standard        (JSContextRef    context,
 //                                                JSObjectRef     *global_out);
-//
-//JSObjectRef gwkjs_get_import_global            (JSContextRef    context);
-//
+
+JSObjectRef gwkjs_get_import_global              (JSContextRef    context);
+
 //jsval       gwkjs_get_global_slot              (JSContextRef       context,
 //                                                GwkjsGlobalSlot    slot);
 //void        gwkjs_set_global_slot              (JSContextRef       context,

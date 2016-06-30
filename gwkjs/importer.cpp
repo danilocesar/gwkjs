@@ -67,8 +67,8 @@ define_meta_properties(JSContextRef context,
     /* We define both __moduleName__ and __parentModule__ to null
      * on the root importer
      */
-    // TODO: IMplement this
-    // parent_is_module = parent && JS_InstanceOf(context, parent, &gwkjs_importer_class, NULL);
+    // XXX: review this later if it's the same functionality
+    parent_is_module = parent && JSValueIsObjectOfClass(context, parent, gwkjs_importer_class_ref);
 
     gwkjs_debug(GWKJS_DEBUG_IMPORTER, "Defining parent %p of %p '%s' is mod %d",
               parent, module_obj, module_name ? module_name : "<root>", parent_is_module);
@@ -1031,25 +1031,53 @@ static JSObjectRef
 importer_new(JSContextRef context,
              gboolean   is_root)
 {
-    JSObjectRef ret;
+    JSObjectRef ret = NULL;
+    JSObjectRef global = NULL;
+    Importer *priv = NULL;
+    gboolean found = FALSE;
+    JSObjectRef proto = NULL;
+    JSValueRef exception = NULL;
 
     // XXX: NOT THREAD SAFE?
     if (!gwkjs_importer_class_ref) {
         gwkjs_importer_class_ref = JSClassCreate(&gwkjs_importer_class);
     }
 
+    global = gwkjs_get_import_global(context);
+    if (!(found = gwkjs_object_has_property(context, global, gwkjs_importer_class.className))) {
+        proto = JSObjectMake(context, gwkjs_importer_class_ref, NULL);
+
+        gwkjs_object_set_property(context, global, gwkjs_importer_class.className, proto,
+                                 GWKJS_PROTO_PROP_FLAGS, &exception);
+
+        if (exception)
+           g_error("Can't init class %s", gwkjs_importer_class.className);
+
+        gwkjs_debug(GWKJS_DEBUG_IMPORTER, "Initialized class %s prototype %p",
+                    gwkjs_importer_class.className, proto);
+    } else {
+        JSValueRef proto_val = gwkjs_object_get_property(context, global, gwkjs_importer_class.className, &exception);
+
+        if (exception || proto_val == NULL || !JSValueIsObject(context, proto_val))
+            g_error("Can't get protoType for class %s", gwkjs_importer_class.className);
+
+        proto = JSValueToObject(context, proto_val, NULL);
+    }
+    g_assert(proto != NULL);
+
     ret = JSObjectMake(context, gwkjs_importer_class_ref, NULL);
 
     if (ret == NULL)
         return ret;
 
-    Importer *priv = g_slice_new0(Importer);
+    JSObjectSetPrototype(context, ret, proto);
+
+    priv = g_slice_new0(Importer);
     priv->is_root = is_root;
     priv->modules = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
     g_assert(priv_from_js(ret) == NULL);
-    JSObjectSetPrivate(ret, priv);
-    g_assert(priv_from_js(ret) == priv);
+    GWKJS_INC_COUNTER(importer);
 
     gwkjs_debug_lifecycle(GWKJS_DEBUG_IMPORTER,
                         "importer constructor, obj %p priv %p", ret, priv);

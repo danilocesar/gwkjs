@@ -30,8 +30,8 @@
 
 G_BEGIN_DECLS
 
-JSObject* gwkjs_create_ns(JSContext    *context,
-                        const char   *ns_name);
+JSObjectRef gwkjs_create_ns(JSContextRef    context,
+                            const char   *ns_name);
 
 G_END_DECLS
 
