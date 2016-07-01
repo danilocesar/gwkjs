@@ -877,6 +877,7 @@ importer_get_property(JSContextRef ctx,
     /* let Object.prototype resolve these */
     if (strcmp(name, "valueOf") == 0 ||
         strcmp(name, "toString") == 0 ||
+        strcmp(name, "toStringTag") == 0 ||
         strcmp(name, "searchPath") == 0 ||
         strcmp(name, "__filename__") == 0 ||
         strcmp(name, "__moduleName__") == 0 ||

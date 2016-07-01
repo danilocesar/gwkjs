@@ -148,7 +148,8 @@ resolve_namespace_object(JSContextRef context,
 //        goto out;
 //
     gwkjs_debug(GWKJS_DEBUG_GNAMESPACE,
-              "Defined namespace '%s' %p in GIRepository %p", ns_name, gi_namespace, repo_obj);
+                "Defined namespace '%s' %p in GIRepository %p",
+                ns_name, gi_namespace, repo_obj);
 
     gwkjs_schedule_gc_if_needed(context);
 
@@ -170,6 +171,9 @@ repo_get_property(JSContextRef ctx,
     name = gwkjs_jsstring_to_cstring(property_name);
 
     if (strcmp(name, "valueOf") == 0 ||
+        strcmp(name, "__filename__") == 0 ||
+        strcmp(name, "__moduleName__") == 0 ||
+        strcmp(name, "__parentModule__") == 0 ||
         strcmp(name, "toString") == 0)
         goto out;
 
@@ -270,7 +274,7 @@ JSClassDefinition gwkjs_repo_class = {
 static JSObjectRef
 repo_new(JSContextRef context)
 {
-    Repo *priv;
+    Repo *priv = NULL;
     JSObjectRef repo = NULL;
     JSObjectRef global = NULL;
     JSObjectRef versions = NULL;
@@ -335,6 +339,8 @@ repo_new(JSContextRef context)
 
     versions = JSObjectMake(context, NULL, NULL);
     versions_name = gwkjs_context_get_const_string(context, GWKJS_STRING_GI_VERSIONS);
+
+    g_hash_table_replace(priv->modules, g_strdup(versions_name), NULL);
     gwkjs_object_set_property(context, repo,
                               versions_name,
                               versions,
@@ -343,6 +349,7 @@ repo_new(JSContextRef context)
 
     private_ns = JSObjectMake(context, NULL, NULL);
     private_ns_name = gwkjs_context_get_const_string(context, GWKJS_STRING_PRIVATE_NS_MARKER);
+    g_hash_table_replace(priv->modules, g_strdup(private_ns_name), NULL);
     gwkjs_object_set_property(context, repo,
                               private_ns_name,
                               private_ns,
@@ -352,7 +359,7 @@ repo_new(JSContextRef context)
      * gobject-introspection does not yet search a path properly.
      */
     {
-        JSValueRef val = gwkjs_object_get_property(context, repo, "GLib", NULL);
+        //JSValueRef val = gwkjs_object_get_property(context, repo, "GLib", NULL);
     }
 
     return repo;
@@ -468,12 +475,21 @@ gwkjs_define_repo(JSContextRef context,
 //}
 //#endif /* GWKJS_VERBOSE_ENABLE_GI_USAGE */
 //
-//JSBool
-//gwkjs_define_info(JSContext  *context,
-//                JSObject   *in_object,
-//                GIBaseInfo *info,
-//                gboolean   *defined)
-//{
+
+//TODO:  RENAME the following methods to DEFINE_AND_RETURN
+JSObjectRef
+gwkjs_define_info(JSContextRef context,
+                  JSObjectRef  in_object,
+                  GIBaseInfo   *info,
+                  gboolean     *defined)
+{
+// TODO: IMPLEMENT
+    g_warning("DEFINE INFO: %s, %u", g_base_info_get_name(info), g_base_info_get_type(info),
+              g_base_info_get_type(info));
+
+    return JSObjectMake(context, NULL, NULL);
+
+//    JSObjectRef ret;
 //#if GWKJS_VERBOSE_ENABLE_GI_USAGE
 //    _gwkjs_log_info_usage(info);
 //#endif
@@ -483,10 +499,9 @@ gwkjs_define_repo(JSContextRef context,
 //    switch (g_base_info_get_type(info)) {
 //    case GI_INFO_TYPE_FUNCTION:
 //        {
-//            JSObject *f;
-//            f = gwkjs_define_function(context, in_object, 0, (GICallableInfo*) info);
-//            if (f == NULL)
-//                return JS_FALSE;
+//            ret = gwkjs_define_function(context, in_object, 0, (GICallableInfo*) info);
+//            if (ret == NULL)
+//                return NULL;
 //        }
 //        break;
 //    case GI_INFO_TYPE_OBJECT:
@@ -561,7 +576,7 @@ gwkjs_define_repo(JSContextRef context,
 //    }
 //
 //    return JS_TRUE;
-//}
+}
 //
 ///* Get the "unknown namespace", which should be used for unnamespaced types */
 //JSObject*
@@ -686,57 +701,58 @@ lookup_override_function(JSContextRef  context,
 //    JS_EndRequest(context);
 //    return NULL;
 //}
-//
-//const char*
-//gwkjs_info_type_name(GIInfoType type)
-//{
-//    switch (type) {
-//    case GI_INFO_TYPE_INVALID:
-//        return "INVALID";
-//    case GI_INFO_TYPE_FUNCTION:
-//        return "FUNCTION";
-//    case GI_INFO_TYPE_CALLBACK:
-//        return "CALLBACK";
-//    case GI_INFO_TYPE_STRUCT:
-//        return "STRUCT";
-//    case GI_INFO_TYPE_BOXED:
-//        return "BOXED";
-//    case GI_INFO_TYPE_ENUM:
-//        return "ENUM";
-//    case GI_INFO_TYPE_FLAGS:
-//        return "FLAGS";
-//    case GI_INFO_TYPE_OBJECT:
-//        return "OBJECT";
-//    case GI_INFO_TYPE_INTERFACE:
-//        return "INTERFACE";
-//    case GI_INFO_TYPE_CONSTANT:
-//        return "CONSTANT";
-//    case GI_INFO_TYPE_UNION:
-//        return "UNION";
-//    case GI_INFO_TYPE_VALUE:
-//        return "VALUE";
-//    case GI_INFO_TYPE_SIGNAL:
-//        return "SIGNAL";
-//    case GI_INFO_TYPE_VFUNC:
-//        return "VFUNC";
-//    case GI_INFO_TYPE_PROPERTY:
-//        return "PROPERTY";
-//    case GI_INFO_TYPE_FIELD:
-//        return "FIELD";
-//    case GI_INFO_TYPE_ARG:
-//        return "ARG";
-//    case GI_INFO_TYPE_TYPE:
-//        return "TYPE";
-//    case GI_INFO_TYPE_UNRESOLVED:
-//        return "UNRESOLVED";
-//    case GI_INFO_TYPE_INVALID_0:
-//        g_assert_not_reached();
-//        break;
-//    }
-//
-//    return "???";
-//}
-//
+
+const char*
+gwkjs_info_type_name(GIInfoType type)
+{
+    switch (type) {
+    case GI_INFO_TYPE_INVALID:
+        return "INVALID";
+    case GI_INFO_TYPE_FUNCTION:
+        return "FUNCTION";
+    case GI_INFO_TYPE_CALLBACK:
+        return "CALLBACK";
+    case GI_INFO_TYPE_STRUCT:
+        return "STRUCT";
+    case GI_INFO_TYPE_BOXED:
+        return "BOXED";
+    case GI_INFO_TYPE_ENUM:
+        return "ENUM";
+    case GI_INFO_TYPE_FLAGS:
+        return "FLAGS";
+    case GI_INFO_TYPE_OBJECT:
+        return "OBJECT";
+    case GI_INFO_TYPE_INTERFACE:
+        return "INTERFACE";
+    case GI_INFO_TYPE_CONSTANT:
+        return "CONSTANT";
+    case GI_INFO_TYPE_UNION:
+        return "UNION";
+    case GI_INFO_TYPE_VALUE:
+        return "VALUE";
+    case GI_INFO_TYPE_SIGNAL:
+        return "SIGNAL";
+    case GI_INFO_TYPE_VFUNC:
+        return "VFUNC";
+    case GI_INFO_TYPE_PROPERTY:
+        return "PROPERTY";
+    case GI_INFO_TYPE_FIELD:
+        return "FIELD";
+    case GI_INFO_TYPE_ARG:
+        return "ARG";
+    case GI_INFO_TYPE_TYPE:
+        return "TYPE";
+    case GI_INFO_TYPE_UNRESOLVED:
+        return "UNRESOLVED";
+    case GI_INFO_TYPE_INVALID_0:
+        g_assert_not_reached();
+        break;
+    }
+
+    return "???";
+}
+
+// TODO: implement
 //char*
 //gwkjs_camel_from_hyphen(const char *hyphen_name)
 //{

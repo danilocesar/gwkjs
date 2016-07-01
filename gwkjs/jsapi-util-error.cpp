@@ -47,7 +47,9 @@ gwkjs_throw_valist(JSContextRef  context,
                    const char      *format,
                    va_list          args)
 {
-    g_warning("UNIMPLEMENTED gwkjs_throw_valist: %s", format);
+    gchar *s = g_strdup_vprintf(format, args);
+    g_warning("UNIMPLEMENTED gwkjs_throw_valist: %s", s);
+    g_free(s);
 // TODO: Make a real implementation
 //    char *s;
 //    JSBool result;

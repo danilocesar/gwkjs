@@ -53,7 +53,7 @@ JSObjectRef gwkjs_lookup_generic_constructor      (JSContextRef context,
 JSObjectRef gwkjs_lookup_generic_prototype        (JSContextRef context,
                                                    GIBaseInfo     *info);
 
-JSBool      gwkjs_define_info                     (JSContextRef context,
+JSObjectRef gwkjs_define_info                     (JSContextRef context,
                                                    JSObjectRef    in_object,
                                                    GIBaseInfo     *info,
                                                    gboolean       *defined);
