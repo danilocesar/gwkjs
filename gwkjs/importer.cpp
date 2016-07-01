@@ -971,6 +971,8 @@ importer_finalize(JSObjectRef obj)
     if (priv == NULL)
         return; /* we are the prototype, not a real instance */
 
+    //TODO: should finalize modules?
+
     GWKJS_DEC_COUNTER(importer);
     g_slice_free(Importer, priv);
 }
@@ -1031,9 +1033,9 @@ static JSObjectRef
 importer_new(JSContextRef context,
              gboolean   is_root)
 {
+    Importer *priv = NULL;
     JSObjectRef ret = NULL;
     JSObjectRef global = NULL;
-    Importer *priv = NULL;
     gboolean found = FALSE;
     JSObjectRef proto = NULL;
     JSValueRef exception = NULL;
@@ -1044,11 +1046,18 @@ importer_new(JSContextRef context,
     }
 
     global = gwkjs_get_import_global(context);
-    if (!(found = gwkjs_object_has_property(context, global, gwkjs_importer_class.className))) {
-        proto = JSObjectMake(context, gwkjs_importer_class_ref, NULL);
+    if (!(found = gwkjs_object_has_property(context,
+                                            global,
+                                            gwkjs_importer_class.className))) {
+        proto = JSObjectMake(context,
+                             gwkjs_importer_class_ref,
+                             NULL);
 
-        gwkjs_object_set_property(context, global, gwkjs_importer_class.className, proto,
-                                 GWKJS_PROTO_PROP_FLAGS, &exception);
+        gwkjs_object_set_property(context, global,
+                                  gwkjs_importer_class.className,
+                                  proto,
+                                  GWKJS_PROTO_PROP_FLAGS,
+                                  &exception);
 
         if (exception)
            g_error("Can't init class %s", gwkjs_importer_class.className);
@@ -1056,7 +1065,10 @@ importer_new(JSContextRef context,
         gwkjs_debug(GWKJS_DEBUG_IMPORTER, "Initialized class %s prototype %p",
                     gwkjs_importer_class.className, proto);
     } else {
-        JSValueRef proto_val = gwkjs_object_get_property(context, global, gwkjs_importer_class.className, &exception);
+        JSValueRef proto_val = gwkjs_object_get_property(context,
+                                                         global,
+                                                         gwkjs_importer_class.className,
+                                                         &exception);
 
         if (exception || proto_val == NULL || !JSValueIsObject(context, proto_val))
             g_error("Can't get protoType for class %s", gwkjs_importer_class.className);
@@ -1106,7 +1118,7 @@ importer_new(JSContextRef context,
 //                                  */
 //                                 NULL,
 //                                 &gwkjs_importer_class,
-//                                 /* constructor for instances (NULL for
+//                                 /* constructor or instances (NULL for
 //                                  * none - just name the prototype like
 //                                  * Math - rarely correct)
 //                                  */
@@ -1255,7 +1267,7 @@ gwkjs_define_importer(JSContextRef  context,
     }
 
     gwkjs_object_set_property(context, in_object, importer_name, importer, kJSPropertyAttributeReadOnly | kJSPropertyAttributeDontDelete | kJSPropertyAttributeDontEnum, &exception);
- 
+
     if (exception == NULL) {
         g_error("Problems to define importer property");
     }

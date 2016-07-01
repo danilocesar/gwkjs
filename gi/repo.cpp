@@ -47,183 +47,176 @@
 
 typedef struct {
     void *dummy;
-
+    GHashTable *modules;
 } Repo;
 
-//extern struct JSClass gwkjs_repo_class;
-//
-//GWKJS_DEFINE_PRIV_FROM_JS(Repo, gwkjs_repo_class)
-//
-//static JSObject * lookup_override_function(JSContext *, jsid);
-//
-//static JSBool
-//get_version_for_ns (JSContext *context,
-//                    JSObject  *repo_obj,
-//                    jsid       ns_id,
-//                    char     **version)
-//{
-//    jsid versions_name;
-//    jsval versions_val;
-//    JSObject *versions;
-//    jsval version_val;
-//
-//    versions_name = gwkjs_context_get_const_string(context, GWKJS_STRING_GI_VERSIONS);
-//    if (!gwkjs_object_require_property(context, repo_obj, "GI repository object", versions_name, &versions_val) ||
-//        !JSVAL_IS_OBJECT(versions_val)) {
-//        gwkjs_throw(context, "No 'versions' property in GI repository object");
-//        return JS_FALSE;
-//    }
-//
-//    versions = JSVAL_TO_OBJECT(versions_val);
-//
-//    *version = NULL;
-//    if (JS_GetPropertyById(context, versions, ns_id, &version_val) &&
-//        JSVAL_IS_STRING(version_val)) {
-//        gwkjs_string_to_utf8(context, version_val, version);
-//    }
-//
-//    return JS_TRUE;
-//}
-//
-//static JSBool
-//resolve_namespace_object(JSContext  *context,
-//                         JSObject   *repo_obj,
-//                         jsid        ns_id,
-//                         const char *ns_name)
-//{
-//    GIRepository *repo;
-//    GError *error;
-//    char *version;
-//    JSObject *override;
-//    jsval result;
-//    JSObject *gi_namespace = NULL;
-//    JSBool ret = JS_FALSE;
-//
-//    JS_BeginRequest(context);
-//
-//    if (!get_version_for_ns(context, repo_obj, ns_id, &version))
-//        goto out;
-//
-//    repo = g_irepository_get_default();
-//
-//    error = NULL;
-//    g_irepository_require(repo, ns_name, version, (GIRepositoryLoadFlags) 0, &error);
-//    if (error != NULL) {
-//        gwkjs_throw(context,
-//                  "Requiring %s, version %s: %s",
-//                  ns_name, version?version:"none", error->message);
-//
-//        g_error_free(error);
-//        g_free(version);
-//        goto out;
-//    }
-//
-//    g_free(version);
-//
-//    /* Defines a property on "obj" (the javascript repo object)
-//     * with the given namespace name, pointing to that namespace
-//     * in the repo.
-//     */
-//    gi_namespace = gwkjs_create_ns(context, ns_name);
-//    JS_AddObjectRoot(context, &gi_namespace);
-//
-//    /* Define the property early, to avoid reentrancy issues if
-//       the override module looks for namespaces that import this */
-//    if (!JS_DefineProperty(context, repo_obj,
-//                           ns_name, OBJECT_TO_JSVAL(gi_namespace),
-//                           NULL, NULL,
-//                           GWKJS_MODULE_PROP_FLAGS))
-//        g_error("no memory to define ns property");
-//
-//    override = lookup_override_function(context, ns_id);
+extern JSClassDefinition gwkjs_repo_class;
+JSClassRef gwkjs_repo_class_ref = NULL;
+
+GWKJS_DEFINE_PRIV_FROM_JS(Repo, gwkjs_repo_class)
+
+static JSObjectRef lookup_override_function(JSContextRef, const gchar*);
+
+static JSBool
+get_version_for_ns (JSContextRef context,
+                    JSObjectRef  repo_obj,
+                    const gchar* nameid,
+                    char     **version)
+{
+    const gchar* versions_name;
+    JSValueRef versions_val = NULL;
+    JSObjectRef versions;
+    JSValueRef version_val = NULL;
+    JSValueRef exception = NULL;
+
+    versions_name = gwkjs_context_get_const_string(context, GWKJS_STRING_GI_VERSIONS);
+    if (!gwkjs_object_require_property(context, repo_obj, "GI repository object",
+                                       versions_name, &versions_val)
+        || !JSValueIsObject(context, versions_val)) {
+        gwkjs_throw(context, "No 'versions' property in GI repository object");
+        return FALSE;
+    }
+
+    versions = JSValueToObject(context, versions_val, NULL);
+
+    *version = NULL;
+    version_val = gwkjs_object_get_property(context, versions, nameid, &exception);
+
+    if (exception == NULL &&
+        JSVAL_IS_STRING(context, version_val)) {
+        *version = gwkjs_jsvalue_to_cstring(context, version_val, NULL);
+    }
+
+    return JS_TRUE;
+}
+
+static JSValueRef
+resolve_namespace_object(JSContextRef context,
+                         JSObjectRef  repo_obj,
+                         const char  *ns_name)
+{
+    GIRepository *repo;
+    GError *error;
+    char *version;
+    JSObjectRef override = NULL;
+    JSValueRef result = NULL;
+    JSValueRef exception = NULL;
+    JSObjectRef gi_namespace = NULL;
+    JSValueRef ret = NULL;
+
+    if (!get_version_for_ns(context, repo_obj, ns_name, &version))
+        goto out;
+
+    repo = g_irepository_get_default();
+
+    error = NULL;
+    g_irepository_require(repo, ns_name, version, (GIRepositoryLoadFlags) 0, &error);
+    if (error != NULL) {
+        gwkjs_throw(context,
+                  "Requiring %s, version %s: %s",
+                  ns_name, version?version:"none", error->message);
+
+        g_error_free(error);
+        g_free(version);
+        goto out;
+    }
+
+    g_free(version);
+
+    /* Defines a property on "obj" (the javascript repo object)
+     * with the given namespace name, pointing to that namespace
+     * in the repo.
+     */
+    gi_namespace = gwkjs_create_ns(context, ns_name);
+
+    /* Define the property early, to avoid reentrancy issues if
+       the override module looks for namespaces that import this */
+    gwkjs_object_set_property(context, repo_obj,
+                              ns_name, gi_namespace,
+                              kJSPropertyAttributeDontDelete, &exception);
+    if (exception)
+        g_error("no memory to define ns property %s", ns_name);
+
+    override = lookup_override_function(context, ns_name);
+// TODO: IMPLEMENT
 //    if (override && !JS_CallFunctionValue (context,
-//                                           gi_namespace, /* thisp */
-//                                           OBJECT_TO_JSVAL(override), /* callee */
-//                                           0, /* argc */
-//                                           NULL, /* argv */
+//                                           gi_namespace, // thisp
+//                                           OBJECT_TO_JSVAL(override), // callee
+//                                           0, // argc
+//                                           NULL, // argv
 //                                           &result))
 //        goto out;
 //
-//    gwkjs_debug(GWKJS_DEBUG_GNAMESPACE,
-//              "Defined namespace '%s' %p in GIRepository %p", ns_name, gi_namespace, repo_obj);
-//
-//    ret = JS_TRUE;
-//    gwkjs_schedule_gc_if_needed(context);
-//
-// out:
-//    if (gi_namespace)
-//        JS_RemoveObjectRoot(context, &gi_namespace);
-//    JS_EndRequest(context);
-//    return ret;
-//}
-//
-///*
-// * Like JSResolveOp, but flags provide contextual information as follows:
-// *
-// *  JSRESOLVE_QUALIFIED   a qualified property id: obj.id or obj[id], not id
-// *  JSRESOLVE_ASSIGNING   obj[id] is on the left-hand side of an assignment
-// *  JSRESOLVE_DETECTING   'if (o.p)...' or similar detection opcode sequence
-// *  JSRESOLVE_DECLARING   var, const, or function prolog declaration opcode
-// *  JSRESOLVE_CLASSNAME   class name used when constructing
-// *
-// * The *objp out parameter, on success, should be null to indicate that id
-// * was not resolved; and non-null, referring to obj or one of its prototypes,
-// * if id was resolved.
-// */
-//static JSBool
-//repo_new_resolve(JSContext *context,
-//                 JS::HandleObject obj,
-//                 JS::HandleId id,
-//                 unsigned flags,
-//                 JS::MutableHandleObject objp)
-//{
-//    Repo *priv;
-//    char *name;
-//    JSBool ret = JS_TRUE;
-//
-//    if (!gwkjs_get_string_id(context, id, &name))
-//        return JS_TRUE; /* not resolved, but no error */
-//
-//    /* let Object.prototype resolve these */
-//    if (strcmp(name, "valueOf") == 0 ||
-//        strcmp(name, "toString") == 0)
-//        goto out;
-//
-//    priv = priv_from_js(context, obj);
-//    gwkjs_debug_jsprop(GWKJS_DEBUG_GREPO, "Resolve prop '%s' hook obj %p priv %p",
-//                     name, (void *)obj, priv);
-//
-//    if (priv == NULL) /* we are the prototype, or have the wrong class */
-//        goto out;
-//
-//    if (!resolve_namespace_object(context, obj, id, name)) {
-//        ret = JS_FALSE;
-//    } else {
-//        objp.set(obj); /* store the object we defined the prop in */
-//    }
-//
-// out:
-//    g_free(name);
-//    return ret;
-//}
-//
-//GWKJS_NATIVE_CONSTRUCTOR_DEFINE_ABSTRACT(repo)
-//
-//static void
-//repo_finalize(JSFreeOp *fop,
-//              JSObject *obj)
-//{
-//    Repo *priv;
-//
-//    priv = (Repo*) JS_GetPrivate(obj);
-//    gwkjs_debug_lifecycle(GWKJS_DEBUG_GREPO,
-//                        "finalize, obj %p priv %p", obj, priv);
-//    if (priv == NULL)
-//        return; /* we are the prototype, not a real instance */
-//
-//    GWKJS_DEC_COUNTER(repo);
-//    g_slice_free(Repo, priv);
-//}
+    gwkjs_debug(GWKJS_DEBUG_GNAMESPACE,
+              "Defined namespace '%s' %p in GIRepository %p", ns_name, gi_namespace, repo_obj);
+
+    gwkjs_schedule_gc_if_needed(context);
+
+ out:
+    return ret;
+}
+
+
+static JSValueRef
+repo_get_property(JSContextRef ctx,
+                  JSObjectRef obj,
+                  JSStringRef property_name,
+                  JSValueRef* exception)
+{
+    JSValueRef ret = NULL;
+    gchar *name = NULL;
+    Repo *priv = NULL;
+
+    name = gwkjs_jsstring_to_cstring(property_name);
+
+    if (strcmp(name, "valueOf") == 0 ||
+        strcmp(name, "toString") == 0)
+        goto out;
+
+    priv = priv_from_js(obj);
+    if (priv == NULL) // We're the prototype
+        goto out;
+
+    // Let default handler deal with already loaded modules
+    if (g_hash_table_contains(priv->modules, name))
+        goto out;
+
+    gwkjs_debug_jsprop(GWKJS_DEBUG_GREPO, "Resolve prop '%s' hook obj %p priv %p"
+                       name, (void *)obj, priv);
+
+    if (priv == NULL) /* we are the prototype, or have the wrong class */
+        goto out;
+
+    // We need to add the module to the list of having modules before trying
+    // to import it.
+    g_hash_table_replace(priv->modules, g_strdup(name), NULL);
+    if ((ret = resolve_namespace_object(ctx, obj, name))) {
+        g_warning("Module GI:%s imported", name);
+    } else {
+        g_hash_table_remove(priv->modules, name);
+    }
+
+out:
+    g_free(name);
+    return ret;
+}
+
+GWKJS_NATIVE_CONSTRUCTOR_DEFINE_ABSTRACT(repo)
+
+static void
+repo_finalize(JSObjectRef obj)
+{
+    Repo *priv;
+
+    priv = (Repo*) JSObjectGetPrivate(obj);
+    gwkjs_debug_lifecycle(GWKJS_DEBUG_GREPO,
+                        "finalize, obj %p priv %p", obj, priv);
+    if (priv == NULL)
+        return; /* we are the prototype, not a real instance */
+
+    GWKJS_DEC_COUNTER(repo);
+    g_slice_free(Repo, priv);
+}
 //
 ///* The bizarre thing about this vtable is that it applies to both
 // * instances of the object, and to the prototype that instances of the
@@ -252,95 +245,118 @@ typedef struct {
 //    { NULL }
 //};
 //
-//
-//static JSObjectRef
-//repo_new(JSContextRef context)
-//{
-//    Repo *priv;
-//    JSObjectRef repo;
-//    JSObjectRef global;
-//    JSObjectRef versions;
-//    JSObjectRef private_ns;
-//    JSBool found;
-//    jsid versions_name, private_ns_name;
-//
-//    global = gwkjs_get_import_global(context);
-//
-//    if (!JS_HasProperty(context, global, gwkjs_repo_class.name, &found))
-//        return NULL;
-//
-//    if (!found) {
-//        JSObject *prototype;
-//        prototype = JS_InitClass(context, global,
-//                                 /* parent prototype JSObject* for
-//                                  * prototype; NULL for
-//                                  * Object.prototype
-//                                  */
-//                                 NULL,
-//                                 &gwkjs_repo_class,
-//                                 /* constructor for instances (NULL for
-//                                  * none - just name the prototype like
-//                                  * Math - rarely correct)
-//                                  */
-//                                 gwkjs_repo_constructor,
-//                                 /* number of constructor args */
-//                                 0,
-//                                 /* props of prototype */
-//                                 &gwkjs_repo_proto_props[0],
-//                                 /* funcs of prototype */
-//                                 &gwkjs_repo_proto_funcs[0],
-//                                 /* props of constructor, MyConstructor.myprop */
-//                                 NULL,
-//                                 /* funcs of constructor, MyConstructor.myfunc() */
-//                                 NULL);
-//        if (prototype == NULL)
-//            g_error("Can't init class %s", gwkjs_repo_class.name);
-//
-//        gwkjs_debug(GWKJS_DEBUG_GREPO, "Initialized class %s prototype %p",
-//                  gwkjs_repo_class.name, prototype);
-//    }
-//
-//    repo = JS_NewObject(context, &gwkjs_repo_class, NULL, global);
-//    if (repo == NULL) {
-//        gwkjs_throw(context, "No memory to create repo object");
-//        return NULL;
-//    }
-//
-//    priv = g_slice_new0(Repo);
-//
-//    GWKJS_INC_COUNTER(repo);
-//
-//    g_assert(priv_from_js(context, repo) == NULL);
-//    JS_SetPrivate(repo, priv);
-//
-//    gwkjs_debug_lifecycle(GWKJS_DEBUG_GREPO,
-//                        "repo constructor, obj %p priv %p", repo, priv);
-//
-//    versions = JS_NewObject(context, NULL, NULL, global);
-//    versions_name = gwkjs_context_get_const_string(context, GWKJS_STRING_GI_VERSIONS);
-//    JS_DefinePropertyById(context, repo,
-//                          versions_name,
-//                          OBJECT_TO_JSVAL(versions),
-//                          NULL, NULL,
-//                          JSPROP_PERMANENT);
-//
-//    private_ns = JS_NewObject(context, NULL, NULL, global);
-//    private_ns_name = gwkjs_context_get_const_string(context, GWKJS_STRING_PRIVATE_NS_MARKER);
-//    JS_DefinePropertyById(context, repo,
-//                          private_ns_name,
-//                          OBJECT_TO_JSVAL(private_ns),
-//                          NULL, NULL, JSPROP_PERMANENT);
-//
-//    /* FIXME - hack to make namespaces load, since
-//     * gobject-introspection does not yet search a path properly.
-//     */
-//    {
-//        jsval value;
-//        JS_GetProperty(context, repo, "GLib", &value);
-//    }
-//
-//    return repo;
-//}
+JSClassDefinition gwkjs_repo_class = {
+    0,                         //     Version
+    kJSPropertyAttributeNone,  //     JSClassAttributes
+    "GIRepository",            //     const char* className;
+    NULL,                      //     JSClassRef parentClass;
+    NULL,                      //     const JSStaticValue*                staticValues;
+    NULL,                      //     const JSStaticFunction*             staticFunctions;
+    NULL,                      //     JSObjectInitializeCallback          initialize;
+    repo_finalize,             //     JSObjectFinalizeCallback            finalize;
+    NULL,                      //     JSObjectHasPropertyCallback         hasProperty;
+    repo_get_property,         //     JSObjectGetPropertyCallback         getProperty;
+    NULL,                      //     JSObjectSetPropertyCallback         setProperty;
+    NULL,                      //     JSObjectDeletePropertyCallback      deleteProperty;
+    NULL,                      //     JSObjectGetPropertyNamesCallback    getPropertyNames;
+    NULL,                      //     JSObjectCallAsFunctionCallback      callAsFunction;
+    gwkjs_repo_constructor,    //     JSObjectCallAsConstructorCallback   callAsConstructor;
+    NULL,                      //     JSObjectHasInstanceCallback         hasInstance;
+    NULL,                      //     JSObjectConvertToTypeCallback       convertToType;
+};
+
+
+
+static JSObjectRef
+repo_new(JSContextRef context)
+{
+    Repo *priv;
+    JSObjectRef repo = NULL;
+    JSObjectRef global = NULL;
+    JSObjectRef versions = NULL;
+    JSObjectRef private_ns = NULL;
+    JSObjectRef proto = NULL;
+    JSValueRef exception = NULL;
+    gboolean found;
+
+    const gchar* versions_name;
+    const gchar* private_ns_name;
+
+    global = gwkjs_get_import_global(context);
+    if (!gwkjs_repo_class_ref) {
+         gwkjs_repo_class_ref = JSClassCreate(&gwkjs_repo_class);
+    }
+    if (!(found = gwkjs_object_has_property(context,
+                                            global, gwkjs_repo_class.className))) {
+        proto = JSObjectMake(context,
+                             gwkjs_repo_class_ref,
+                             NULL);
+
+        gwkjs_object_set_property(context, global,
+                                  gwkjs_repo_class.className,
+                                  proto,
+                                  GWKJS_PROTO_PROP_FLAGS,
+                                  &exception);
+
+        if (exception)
+           g_error("Can't init class %s", gwkjs_repo_class.className);
+
+        gwkjs_debug(GWKJS_DEBUG_IMPORTER, "Initialized class %s prototype %p",
+            gwkjs_repo_class.className, proto);
+    } else {
+        JSValueRef proto_val = gwkjs_object_get_property(context,
+                                                         global,
+                                                         gwkjs_repo_class.className,
+                                                         &exception);
+
+        if (exception || proto_val == NULL || !JSValueIsObject(context, proto_val))
+            g_error("Can't get protoType for class %s", gwkjs_repo_class.className);
+
+        proto = JSValueToObject(context, proto_val, NULL);
+    }
+    g_assert(proto != NULL);
+
+    repo = JSObjectMake(context, gwkjs_repo_class_ref, NULL);
+    if (repo == NULL)
+        return repo;
+    JSObjectSetPrototype(context, repo, proto);
+
+
+    priv = g_slice_new0(Repo);
+    priv->modules = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+
+    GWKJS_INC_COUNTER(repo);
+
+    g_assert(priv_from_js(repo) == NULL);
+    JSObjectSetPrivate(repo, priv);
+
+    gwkjs_debug_lifecycle(GWKJS_DEBUG_GREPO,
+                         "repo constructor, obj %p priv %p", repo, priv);
+
+    versions = JSObjectMake(context, NULL, NULL);
+    versions_name = gwkjs_context_get_const_string(context, GWKJS_STRING_GI_VERSIONS);
+    gwkjs_object_set_property(context, repo,
+                              versions_name,
+                              versions,
+                              kJSPropertyAttributeDontDelete,
+                              NULL);
+
+    private_ns = JSObjectMake(context, NULL, NULL);
+    private_ns_name = gwkjs_context_get_const_string(context, GWKJS_STRING_PRIVATE_NS_MARKER);
+    gwkjs_object_set_property(context, repo,
+                              private_ns_name,
+                              private_ns,
+                              kJSPropertyAttributeDontDelete, NULL);
+
+    /* FIXME - hack to make namespaces load, since
+     * gobject-introspection does not yet search a path properly.
+     */
+    {
+        JSValueRef val = gwkjs_object_get_property(context, repo, "GLib", NULL);
+    }
+
+    return repo;
+}
 
 
 JSBool
@@ -349,10 +365,7 @@ gwkjs_define_repo(JSContextRef context,
                   const char *name)
 {
     JSObjectRef repo;
-
-    // TODO: FIXME
-    //repo = repo_new(context);
-    repo = JSObjectMake(context, NULL, NULL);
+    repo = repo_new(context);
     *module_out = repo;
 
     return JS_TRUE;
@@ -581,10 +594,12 @@ gwkjs_define_repo(JSContextRef context,
 //    return gwkjs_lookup_namespace_object_by_name(context, ns_name);
 //}
 //
-//static JSObject*
-//lookup_override_function(JSContext  *context,
-//                         jsid        ns_name)
-//{
+static JSObjectRef
+lookup_override_function(JSContextRef  context,
+                         const gchar   *ns_name)
+{
+    return NULL;
+//TODO: IMPLEMENT
 //    jsval importer;
 //    jsval overridespkg;
 //    jsval module;
@@ -621,7 +636,7 @@ gwkjs_define_repo(JSContextRef context,
 //    JS_ClearPendingException(context);
 //    JS_EndRequest(context);
 //    return NULL;
-//}
+}
 //
 //JSObject*
 //gwkjs_lookup_namespace_object_by_name(JSContext      *context,
