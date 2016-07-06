@@ -49,7 +49,8 @@
 //    PROP_MESSAGE
 //};
 //
-//extern struct JSClass gwkjs_error_class;
+//extern JSClassDefinition gwkjs_error_class;
+//static JSClassRef gwkjs_errorclass_ref = NULL;
 //
 //static void define_error_properties(JSContextRef , JSObjectRef );
 //

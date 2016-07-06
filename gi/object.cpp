@@ -90,7 +90,8 @@ typedef struct {
 //static GSList *object_init_list;
 //static GHashTable *class_init_properties;
 //
-//extern struct JSClass gwkjs_object_instance_class;
+//extern JSClassDefinition gwkjs_object_instance_class;
+//static JSClassRef gwkjs_object_instanceclass_ref = NULL;
 //static GThread *gwkjs_eval_thread;
 //static volatile gint pending_idle_toggles;
 //

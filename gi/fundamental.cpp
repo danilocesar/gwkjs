@@ -67,7 +67,8 @@
 //    struct _Fundamental          *prototype;
 //} FundamentalInstance;
 //
-//extern struct JSClass gwkjs_fundamental_instance_class;
+//extern JSClassDefinition gwkjs_fundamental_instance_class;
+//static JSClassRef gwkjs_fundamental_instanceclass_ref = NULL;
 //
 //GWKJS_DEFINE_PRIV_FROM_JS(FundamentalInstance, gwkjs_fundamental_instance_class)
 //

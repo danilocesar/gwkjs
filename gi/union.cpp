@@ -45,7 +45,8 @@
 //    GType gtype;
 //} Union;
 //
-//extern struct JSClass gwkjs_union_class;
+//extern JSClassDefinition gwkjs_union_class;
+//static JSClassRef gwkjs_unionclass_ref = NULL;
 //
 //GWKJS_DEFINE_PRIV_FROM_JS(Union, gwkjs_union_class)
 //

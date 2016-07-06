@@ -43,7 +43,8 @@
 //    GTypeInterface *vtable;
 //} Interface;
 //
-//extern struct JSClass gwkjs_interface_class;
+//extern JSClassDefinition gwkjs_interface_class;
+//static JSClassRef gwkjs_interfaceclass_ref = NULL;
 //
 //GWKJS_DEFINE_PRIV_FROM_JS(Interface, gwkjs_interface_class)
 //

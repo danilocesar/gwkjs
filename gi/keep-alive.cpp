@@ -43,7 +43,8 @@
 //    unsigned int inside_trace : 1;
 //} KeepAlive;
 //
-//extern struct JSClass gwkjs_keep_alive_class;
+//extern JSClassDefinition gwkjs_keep_alive_class;
+//static JSClassRef gwkjs_keep_aliveclass_ref = NULL;
 //
 //GWKJS_DEFINE_PRIV_FROM_JS(KeepAlive, gwkjs_keep_alive_class)
 //

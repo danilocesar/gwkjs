@@ -40,7 +40,8 @@
 //    GParamSpec *gparam; /* NULL if we are the prototype and not an instance */
 //} Param;
 //
-//extern struct JSClass gwkjs_param_class;
+//extern JSClassDefinition gwkjs_param_class;
+//static JSClassRef gwkjs_paramclass_ref = NULL;
 //
 //GWKJS_DEFINE_PRIV_FROM_JS(Param, gwkjs_param_class)
 //

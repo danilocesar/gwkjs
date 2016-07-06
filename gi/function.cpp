@@ -60,7 +60,8 @@
 //    GIFunctionInvoker invoker;
 //} Function;
 //
-//extern struct JSClass gwkjs_function_class;
+//extern JSClassDefinition gwkjs_function_class;
+//static JSClassRef gwkjs_functionclass_ref = NULL;
 //
 ///* Because we can't free the mmap'd data for a callback
 // * while it's in use, this list keeps track of ones that

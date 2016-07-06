@@ -64,7 +64,8 @@
 //                                         GIFieldInfo *field_info,
 //                                         jsval        value);
 //
-//extern struct JSClass gwkjs_boxed_class;
+//extern JSClassDefinition gwkjs_boxed_class;
+//static JSClassRef gwkjs_boxedclass_ref = NULL;
 //
 //GWKJS_DEFINE_PRIV_FROM_JS(Boxed, gwkjs_boxed_class)
 //
