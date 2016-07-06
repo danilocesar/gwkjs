@@ -40,6 +40,28 @@
 #include <math.h>
 
 static GMutex gc_lock;
+static JSClassRef empty_class_ref = NULL;
+
+JSObjectRef gwkjs_new_object(JSContextRef context,
+                             JSClassRef clas,
+                             JSObjectRef proto,
+                             JSObjectRef parent)
+{
+    JSObjectRef ret = NULL;
+    if (!empty_class_ref) {
+        JSClassDefinition definition = kJSClassDefinitionEmpty;
+        empty_class_ref = JSClassCreate(&definition);
+    }
+
+    ret = JSObjectMake(context, empty_class_ref, NULL);
+
+    if (parent)
+        gwkjs_object_set_property(context, ret,
+                                  "__parent__", parent,
+                                  kJSPropertyAttributeDontDelete, NULL);
+
+    return ret;
+}
 
 JSValueRef
 gwkjs_cstring_to_jsvalue(JSContextRef context, const gchar *str)
@@ -63,7 +85,7 @@ gwkjs_cstring_to_jsstring(const char* str)
     return JSStringCreateWithUTF8CString(str);
 }
 
-void
+gboolean
 gwkjs_object_set_property(JSContextRef ctx,
                           JSObjectRef object,
                           const gchar* propertyName,
@@ -71,8 +93,16 @@ gwkjs_object_set_property(JSContextRef ctx,
                           JSPropertyAttributes attributes,
                           JSValueRef* exception)
 {
+    JSValueRef localEx = NULL;
     JSStringRef prop = gwkjs_cstring_to_jsstring(propertyName);
-    JSObjectSetProperty(ctx, object, prop, value, attributes, exception);
+
+    JSObjectSetProperty(ctx, object, prop, value, attributes, &localEx);
+    if (localEx) {
+        *exception = localEx;
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 guint

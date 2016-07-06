@@ -78,7 +78,7 @@ ns_get_property(JSContextRef context,
     // If the module was already included, the default proto system
     // should return the property, not this method.
     if (g_hash_table_contains(priv->modules, name))
-        goto out;   
+        goto out;
 
     repo = g_irepository_get_default();
 
@@ -97,7 +97,7 @@ ns_get_property(JSContextRef context,
 
     g_hash_table_replace(priv->modules, g_strdup(name), NULL);
     if ((ret = gwkjs_define_info(context, obj, info, &defined))) {
-        g_warning("Repo imported: %s");
+        g_warning("Namespace imported: %s", name);
         g_base_info_unref(info);
 //XXX: Does it return THIS?!
 //        if (defined)

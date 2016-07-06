@@ -1,66 +1,65 @@
-///* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-///*
-// * Copyright (c) 2008  litl, LLC
-// * Copyright (c) 2012  Red Hat, Inc.
-// *
-// * Permission is hereby granted, free of charge, to any person obtaining a copy
-// * of this software and associated documentation files (the "Software"), to
-// * deal in the Software without restriction, including without limitation the
-// * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-// * sell copies of the Software, and to permit persons to whom the Software is
-// * furnished to do so, subject to the following conditions:
-// *
-// * The above copyright notice and this permission notice shall be included in
-// * all copies or substantial portions of the Software.
-// *
-// * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-// * IN THE SOFTWARE.
-// */
-//
-//#include <config.h>
-//
-//#include "gtype.h"
-//
-//#include <gwkjs/gwkjs-module.h>
-//#include <gwkjs/compat.h>
-//#include <util/log.h>
-//#include <girepository.h>
-//
-//GWKJS_DEFINE_PROTO_ABSTRACT("GIRepositoryGType", gtype, 0);
-//
-///* priv_from_js adds a "*", so this returns "void *" */
-//GWKJS_DEFINE_PRIV_FROM_JS(void, gwkjs_gtype_class);
-//
-//static GQuark
-//gwkjs_get_gtype_wrapper_quark(void)
-//{
-//    static gsize once_init = 0;
-//    static GQuark value = 0;
-//    if (g_once_init_enter(&once_init)) {
-//        value = g_quark_from_string("gwkjs-gtype-wrapper");
-//        g_once_init_leave(&once_init, 1);
-//    }
-//    return value;
-//}
-//
-//static void
-//gwkjs_gtype_finalize(JSFreeOp *fop,
-//                   JSObject *obj)
-//{
-//    GType gtype = GPOINTER_TO_SIZE(JS_GetPrivate(obj));
-//
-//    /* proto doesn't have a private set */
-//    if (G_UNLIKELY(gtype == 0))
-//        return;
-//
-//    g_type_set_qdata(gtype, gwkjs_get_gtype_wrapper_quark(), NULL);
-//}
-//
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+/*
+ * Copyright (c) 2008  litl, LLC
+ * Copyright (c) 2012  Red Hat, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+#include <config.h>
+
+#include "gtype.h"
+
+#include <gwkjs/gwkjs-module.h>
+#include <gwkjs/compat.h>
+#include <util/log.h>
+#include <girepository.h>
+
+GWKJS_DEFINE_PROTO_ABSTRACT("GIRepositoryGType", gtype, 0);
+
+/* priv_from_js adds a "*", so this returns "void *" */
+GWKJS_DEFINE_PRIV_FROM_JS(void, gwkjs_gtype_class);
+
+static GQuark
+gwkjs_get_gtype_wrapper_quark(void)
+{
+    static gsize once_init = 0;
+    static GQuark value = 0;
+    if (g_once_init_enter(&once_init)) {
+        value = g_quark_from_string("gwkjs-gtype-wrapper");
+        g_once_init_leave(&once_init, 1);
+    }
+    return value;
+}
+
+static void
+gwkjs_gtype_finalize(JSObjectRef obj)
+{
+    GType gtype = GPOINTER_TO_SIZE(JSObjectGetPrivate(obj));
+
+    /* proto doesn't have a private set */
+    if (G_UNLIKELY(gtype == 0))
+        return;
+
+    g_type_set_qdata(gtype, gwkjs_get_gtype_wrapper_quark(), NULL);
+}
+
 //static JSBool
 //to_string_func(JSContext *context,
 //               unsigned   argc,
@@ -126,36 +125,35 @@
 //    { "toString", JSOP_WRAPPER((JSNative)to_string_func), 0, 0 },
 //    { NULL }
 //};
-//
-//JSObject *
-//gwkjs_gtype_create_gtype_wrapper (JSContext *context,
-//                                GType      gtype)
-//{
-//    JSObject *object;
-//    JSObject *global;
-//
-//    JS_BeginRequest(context);
-//
-//    /* put constructor for GIRepositoryGType() in the global namespace */
-//    global = gwkjs_get_import_global(context);
-//    gwkjs_gtype_create_proto(context, global, "GIRepositoryGType", NULL);
-//
-//    object = (JSObject*) g_type_get_qdata(gtype, gwkjs_get_gtype_wrapper_quark());
-//    if (object != NULL)
-//        goto out;
-//
-//    object = JS_NewObject(context, &gwkjs_gtype_class, NULL, NULL);
-//    if (object == NULL)
-//        goto out;
-//
-//    JS_SetPrivate(object, GSIZE_TO_POINTER(gtype));
-//    g_type_set_qdata(gtype, gwkjs_get_gtype_wrapper_quark(), object);
-//
-// out:
-//    JS_EndRequest(context);
-//    return object;
-//}
-//
+
+
+JSObjectRef
+gwkjs_gtype_create_gtype_wrapper (JSContextRef context,
+                                  GType      gtype)
+{
+    JSObjectRef object;
+    JSObjectRef global;
+
+
+    /* put constructor for GIRepositoryGType() in the global namespace */
+    global = gwkjs_get_import_global(context);
+    gwkjs_gtype_create_proto(context, global, "GIRepositoryGType", NULL);
+
+    object = (JSObjectRef) g_type_get_qdata(gtype, gwkjs_get_gtype_wrapper_quark());
+    if (object != NULL)
+        goto out;
+
+    object = JSObjectMake(context, gwkjs_gtype_class_ref, NULL);
+    if (object == NULL)
+        goto out;
+
+    JSObjectSetPrivate(object, GSIZE_TO_POINTER(gtype));
+    g_type_set_qdata(gtype, gwkjs_get_gtype_wrapper_quark(), object);
+
+ out:
+    return object;
+}
+
 //static GType
 //_gwkjs_gtype_get_actual_gtype (JSContext *context,
 //                             JSObject  *object,

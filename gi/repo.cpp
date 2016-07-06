@@ -376,38 +376,48 @@ gwkjs_define_repo(JSContextRef context,
     *module_out = repo;
 
     return JS_TRUE;
+
 }
-// TODO: IMPLEMENT
-//static JSBool
-//gwkjs_define_constant(JSContext      *context,
-//                    JSObject       *in_object,
-//                    GIConstantInfo *info)
-//{
-//    jsval value;
-//    GArgument garg = { 0, };
-//    GITypeInfo *type_info;
-//    const char *name;
-//    JSBool ret = JS_FALSE;
-//
-//    type_info = g_constant_info_get_type(info);
-//    g_constant_info_get_value(info, &garg);
-//
-//    if (!gwkjs_value_from_g_argument(context, &value, type_info, &garg, TRUE))
-//        goto out;
-//
-//    name = g_base_info_get_name((GIBaseInfo*) info);
-//
-//    if (JS_DefineProperty(context, in_object,
-//                          name, value,
-//                          NULL, NULL,
-//                          GWKJS_MODULE_PROP_FLAGS))
-//        ret = JS_TRUE;
-//
-// out:
-//    g_constant_info_free_value (info, &garg);
-//    g_base_info_unref((GIBaseInfo*) type_info);
-//    return ret;
-//}
+static JSObjectRef
+gwkjs_define_constant(JSContextRef   context,
+                     JSObjectRef       in_object,
+                     GIConstantInfo *info)
+{
+    JSValueRef value = NULL;
+    JSValueRef exception = NULL;
+    GArgument garg = { 0, };
+    GITypeInfo *type_info;
+    const char *name;
+
+    type_info = g_constant_info_get_type(info);
+    g_constant_info_get_value(info, &garg);
+
+    if (!gwkjs_value_from_g_argument(context, &value, type_info, &garg, TRUE))
+        goto out;
+
+    if (!value)
+        goto out;
+
+    name = g_base_info_get_name((GIBaseInfo*) info);
+
+    gwkjs_object_set_property(context, in_object, name, value, kJSPropertyAttributeDontDelete,
+                              &exception);
+
+    // FIXME: propert exception handling
+    if (exception)
+        gwkjs_throw(context, "gwkjs_define_constant FAILED for %s", name);
+
+
+out:
+    g_constant_info_free_value (info, &garg);
+    g_base_info_unref((GIBaseInfo*) type_info);
+
+    if (!JSValueIsObject(context, value)) {
+        gwkjs_throw(context, "gwkjs_define_constant VALUE is NOT Object in %p:%s", value, name);
+        return NULL;
+    }
+    return JSValueToObject(context, value, NULL);
+}
 //
 //#if GWKJS_VERBOSE_ENABLE_GI_USAGE
 //void
@@ -483,99 +493,116 @@ gwkjs_define_info(JSContextRef context,
                   GIBaseInfo   *info,
                   gboolean     *defined)
 {
+    JSObjectRef ret = NULL;
+#if GWKJS_VERBOSE_ENABLE_GI_USAGE
+    _gwkjs_log_info_usage(info);
+#endif
+
+    *defined = TRUE;
+
+    switch (g_base_info_get_type(info)) {
+    case GI_INFO_TYPE_FUNCTION:
+        {
+                gwkjs_throw(context, "Thing was a FUNCTION!");
 // TODO: IMPLEMENT
-    g_warning("DEFINE INFO: %s, %u", g_base_info_get_name(info), g_base_info_get_type(info),
-              g_base_info_get_type(info));
-
-    return JSObjectMake(context, NULL, NULL);
-
-//    JSObjectRef ret;
-//#if GWKJS_VERBOSE_ENABLE_GI_USAGE
-//    _gwkjs_log_info_usage(info);
-//#endif
-//
-//    *defined = TRUE;
-//
-//    switch (g_base_info_get_type(info)) {
-//    case GI_INFO_TYPE_FUNCTION:
-//        {
 //            ret = gwkjs_define_function(context, in_object, 0, (GICallableInfo*) info);
-//            if (ret == NULL)
-//                return NULL;
-//        }
-//        break;
-//    case GI_INFO_TYPE_OBJECT:
-//        {
-//            GType gtype;
-//            gtype = g_registered_type_info_get_g_type((GIRegisteredTypeInfo*)info);
-//
-//            if (g_type_is_a (gtype, G_TYPE_PARAM)) {
-//                gwkjs_define_param_class(context, in_object);
-//            } else if (g_type_is_a (gtype, G_TYPE_OBJECT)) {
-//                gwkjs_define_object_class(context, in_object, (GIObjectInfo*) info, gtype, NULL);
-//            } else if (G_TYPE_IS_INSTANTIATABLE(gtype)) {
-//                if (!gwkjs_define_fundamental_class(context, in_object, (GIObjectInfo*)info, NULL, NULL)) {
-//                    gwkjs_throw (context,
-//                               "Unsupported fundamental class creation for type %s",
-//                               g_type_name(gtype));
-//                    return JS_FALSE;
-//                }
-//            } else {
-//                gwkjs_throw (context,
-//                           "Unsupported type %s, deriving from fundamental %s",
-//                           g_type_name(gtype), g_type_name(g_type_fundamental(gtype)));
-//                return JS_FALSE;
-//            }
-//        }
-//        break;
-//    case GI_INFO_TYPE_STRUCT:
-//        /* We don't want GType structures in the namespace,
-//           we expose their fields as vfuncs and their methods
-//           as static methods
-//        */
-//        if (g_struct_info_is_gtype_struct((GIStructInfo*) info)) {
-//            *defined = FALSE;
-//            break;
-//        }
-//        /* Fall through */
-//
-//    case GI_INFO_TYPE_BOXED:
-//        gwkjs_define_boxed_class(context, in_object, (GIBoxedInfo*) info);
-//        break;
-//    case GI_INFO_TYPE_UNION:
-//        if (!gwkjs_define_union_class(context, in_object, (GIUnionInfo*) info))
-//            return JS_FALSE;
-//        break;
-//    case GI_INFO_TYPE_ENUM:
-//        if (g_enum_info_get_error_domain((GIEnumInfo*) info)) {
-//            /* define as GError subclass */
-//            gwkjs_define_error_class(context, in_object, (GIEnumInfo*) info);
-//            break;
-//        }
-//        /* fall through */
-//
-//    case GI_INFO_TYPE_FLAGS:
-//        if (!gwkjs_define_enumeration(context, in_object, (GIEnumInfo*) info))
-//            return JS_FALSE;
-//        break;
-//    case GI_INFO_TYPE_CONSTANT:
-//        if (!gwkjs_define_constant(context, in_object, (GIConstantInfo*) info))
-//            return JS_FALSE;
-//        break;
-//    case GI_INFO_TYPE_INTERFACE:
-//        gwkjs_define_interface_class(context, in_object, (GIInterfaceInfo *) info,
+            if (ret == NULL)
+                return NULL;
+        }
+        break;
+    case GI_INFO_TYPE_OBJECT:
+        {
+            GType gtype;
+            gtype = g_registered_type_info_get_g_type((GIRegisteredTypeInfo*)info);
+
+            if (g_type_is_a (gtype, G_TYPE_PARAM)) {
+                gwkjs_throw(context, "Thing was a PARAM!");
+// TODO: IMPLEMENT
+//                ret = gwkjs_define_param_class(context, in_object);
+            } else if (g_type_is_a (gtype, G_TYPE_OBJECT)) {
+                gwkjs_throw(context, "Thing was a OBJECT!");
+// TODO: IMPLEMENT
+//                ret = gwkjs_define_object_class(context, in_object, (GIObjectInfo*) info, gtype, NULL);
+            } else if (G_TYPE_IS_INSTANTIATABLE(gtype)) {
+                gwkjs_throw(context, "Thing was a INSTANTIABLE!");
+//TODO: IMPLEMENT
+//                ret = gwkjs_define_fundamental_class(context, in_object, (GIObjectInfo*)info, NULL, NULL);
+                if (!ret) {
+                    gwkjs_throw (context,
+                               "Unsupported fundamental class creation for type %s",
+                               g_type_name(gtype));
+                    return JS_FALSE;
+                }
+            } else {
+                gwkjs_throw (context,
+                           "Unsupported type %s, deriving from fundamental %s",
+                           g_type_name(gtype), g_type_name(g_type_fundamental(gtype)));
+                return JS_FALSE;
+            }
+        }
+        break;
+    case GI_INFO_TYPE_STRUCT:
+        /* We don't want GType structures in the namespace,
+           we expose their fields as vfuncs and their methods
+           as static methods
+        */
+        if (g_struct_info_is_gtype_struct((GIStructInfo*) info)) {
+            *defined = FALSE;
+            break;
+        }
+        /* Fall through */
+
+    case GI_INFO_TYPE_BOXED:
+         gwkjs_throw(context, "Thing was a Boxed!");
+// TODO: IMPLEMENT
+//        ret = gwkjs_define_boxed_class(context, in_object, (GIBoxedInfo*) info);
+        break;
+    case GI_INFO_TYPE_UNION:
+         gwkjs_throw(context, "Thing was a Union!");
+// TODO: IMPLEMENT
+//        ret = gwkjs_define_union_class(context, in_object, (GIUnionInfo*) info);
+        if (ret == NULL)
+            return ret;
+        break;
+    case GI_INFO_TYPE_ENUM:
+         gwkjs_throw(context, "Thing was a ENUM!");
+// TODO: IMPLEMENT
+        if (g_enum_info_get_error_domain((GIEnumInfo*) info)) {
+            /* define as GError subclass */
+//            ret = gwkjs_define_error_class(context, in_object, (GIEnumInfo*) info);
+            break;
+        }
+        /* fall through */
+
+    case GI_INFO_TYPE_FLAGS:
+         gwkjs_throw(context, "Thing was a TYPE FLAGS!");
+// TODO: IMPLEMENT
+//        ret = gwkjs_define_enumeration(context, in_object, (GIEnumInfo*) info);
+        if (!ret)
+            return ret;
+        break;
+    case GI_INFO_TYPE_CONSTANT:
+         gwkjs_throw(context, "Thing was a TYPE constant!");
+// TODO: IMPLEMENT
+//        ret = gwkjs_define_constant(context, in_object, (GIConstantInfo*) info);
+        if (ret)
+            return ret;
+        break;
+    case GI_INFO_TYPE_INTERFACE:
+         gwkjs_throw(context, "Thing was a interface!");
+// TODO: IMPLEMENT
+//        ret = gwkjs_define_interface_class(context, in_object, (GIInterfaceInfo *) info,
 //                                   g_registered_type_info_get_g_type((GIRegisteredTypeInfo *) info),
 //                                   NULL);
-//        break;
-//    default:
-//        gwkjs_throw(context, "API of type %s not implemented, cannot define %s.%s",
-//                  gwkjs_info_type_name(g_base_info_get_type(info)),
-//                  g_base_info_get_namespace(info),
-//                  g_base_info_get_name(info));
-//        return JS_FALSE;
-//    }
-//
-//    return JS_TRUE;
+        break;
+    default:
+        gwkjs_throw(context, "API of type %s not implemented, cannot define %s.%s",
+                  gwkjs_info_type_name(g_base_info_get_type(info)),
+                  g_base_info_get_namespace(info),
+                  g_base_info_get_name(info));
+    }
+
+    return ret;
 }
 //
 ///* Get the "unknown namespace", which should be used for unnamespaced types */
@@ -752,54 +779,53 @@ gwkjs_info_type_name(GIInfoType type)
     return "???";
 }
 
-// TODO: implement
-//char*
-//gwkjs_camel_from_hyphen(const char *hyphen_name)
-//{
-//    GString *s;
-//    const char *p;
-//    gboolean next_upper;
-//
-//    s = g_string_sized_new(strlen(hyphen_name) + 1);
-//
-//    next_upper = FALSE;
-//    for (p = hyphen_name; *p; ++p) {
-//        if (*p == '-' || *p == '_') {
-//            next_upper = TRUE;
-//        } else {
-//            if (next_upper) {
-//                g_string_append_c(s, g_ascii_toupper(*p));
-//                next_upper = FALSE;
-//            } else {
-//                g_string_append_c(s, *p);
-//            }
-//        }
-//    }
-//
-//    return g_string_free(s, FALSE);
-//}
-//
-//char*
-//gwkjs_hyphen_from_camel(const char *camel_name)
-//{
-//    GString *s;
-//    const char *p;
-//
-//    /* four hyphens should be reasonable guess */
-//    s = g_string_sized_new(strlen(camel_name) + 4 + 1);
-//
-//    for (p = camel_name; *p; ++p) {
-//        if (g_ascii_isupper(*p)) {
-//            g_string_append_c(s, '-');
-//            g_string_append_c(s, g_ascii_tolower(*p));
-//        } else {
-//            g_string_append_c(s, *p);
-//        }
-//    }
-//
-//    return g_string_free(s, FALSE);
-//}
-//
+char*
+gwkjs_camel_from_hyphen(const char *hyphen_name)
+{
+    GString *s;
+    const char *p;
+    gboolean next_upper;
+
+    s = g_string_sized_new(strlen(hyphen_name) + 1);
+
+    next_upper = FALSE;
+    for (p = hyphen_name; *p; ++p) {
+        if (*p == '-' || *p == '_') {
+            next_upper = TRUE;
+        } else {
+            if (next_upper) {
+                g_string_append_c(s, g_ascii_toupper(*p));
+                next_upper = FALSE;
+            } else {
+                g_string_append_c(s, *p);
+            }
+        }
+    }
+
+    return g_string_free(s, FALSE);
+}
+
+char*
+gwkjs_hyphen_from_camel(const char *camel_name)
+{
+    GString *s;
+    const char *p;
+
+    /* four hyphens should be reasonable guess */
+    s = g_string_sized_new(strlen(camel_name) + 4 + 1);
+
+    for (p = camel_name; *p; ++p) {
+        if (g_ascii_isupper(*p)) {
+            g_string_append_c(s, '-');
+            g_string_append_c(s, g_ascii_tolower(*p));
+        } else {
+            g_string_append_c(s, *p);
+        }
+    }
+
+    return g_string_free(s, FALSE);
+}
+
 //JSObject *
 //gwkjs_lookup_generic_constructor(JSContext  *context,
 //                               GIBaseInfo *info)

@@ -30,15 +30,15 @@
 
 G_BEGIN_DECLS
 
-void      gwkjs_define_object_class       (JSContextRef     context,
-                                           JSObjectRef      in_object,
-                                           GIObjectInfo  *info,
-                                           GType          gtype,
-                                           JSObjectRef   *constructor_p);
+JSObjectRef  gwkjs_define_object_class       (JSContextRef     context,
+                                              JSObjectRef      in_object,
+                                              GIObjectInfo  *info,
+                                              GType          gtype,
+                                              JSObjectRef   *constructor_p);
 
 JSBool    gwkjs_lookup_object_constructor (JSContextRef context,
-                                         GType          gtype,
-                                         JSValueRef         *value_p);
+                                           GType          gtype,
+                                           JSValueRef         *value_p);
 
 JSObjectRef* gwkjs_object_from_g_object      (JSContextRef     context,
                                               GObject       *gobj);
@@ -47,19 +47,19 @@ GObject*  gwkjs_g_object_from_object      (JSContextRef    context,
                                            JSObjectRef      obj);
 
 JSBool    gwkjs_typecheck_object          (JSContextRef     context,
-                                         JSObjectRef      obj,
-                                         GType          expected_type,
-                                         JSBool         throw_error);
+                                           JSObjectRef      obj,
+                                           GType          expected_type,
+                                           JSBool         throw_error);
 JSBool    gwkjs_typecheck_is_object       (JSContextRef     context,
-                                         JSObjectRef      obj,
-                                         JSBool         throw_error);
+                                           JSObjectRef      obj,
+                                           JSBool         throw_error);
 
 void      gwkjs_object_prepare_shutdown   (JSContextRef     context);
 
 JSBool    gwkjs_object_define_static_methods(JSContextRef   context,
-                                           JSObjectRef     constructor,
-                                           GType         gtype,
-                                           GIObjectInfo *object_info);
+                                             JSObjectRef     constructor,
+                                             GType         gtype,
+                                             GIObjectInfo *object_info);
 
 G_END_DECLS
 

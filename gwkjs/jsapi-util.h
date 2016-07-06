@@ -104,103 +104,106 @@ G_BEGIN_DECLS
 //        return JS_TRUE;                                                 \
 //    }
 
-///**
-// * GWKJS_DEFINE_PROTO:
-// * @tn: The name of the prototype, as a string
-// * @cn: The name of the prototype, separated by _
-// * @flags: additional JSClass flags, such as JSCLASS_BACKGROUND_FINALIZE
-// *
-// * A convenience macro for prototype implementations.
-// */
-//#define GWKJS_DEFINE_PROTO(tn, cn, flags) \
-//GWKJS_NATIVE_CONSTRUCTOR_DECLARE(cn); \
-//_GWKJS_DEFINE_PROTO_FULL(tn, cn, gwkjs_##cn##_constructor, G_TYPE_NONE, flags)
-//
-///**
-// * GWKJS_DEFINE_PROTO_ABSTRACT:
-// * @tn: The name of the prototype, as a string
-// * @cn: The name of the prototype, separated by _
-// *
-// * A convenience macro for prototype implementations.
-// * Similar to GWKJS_DEFINE_PROTO but marks the prototype as abstract,
-// * you won't be able to instantiate it using the new keyword
-// */
-//#define GWKJS_DEFINE_PROTO_ABSTRACT(tn, cn, flags) \
-//_GWKJS_DEFINE_PROTO_FULL(tn, cn, NULL, G_TYPE_NONE, flags)
-//
-//#define GWKJS_DEFINE_PROTO_WITH_GTYPE(tn, cn, gtype, flags)   \
-//GWKJS_NATIVE_CONSTRUCTOR_DECLARE(cn); \
-//_GWKJS_DEFINE_PROTO_FULL(tn, cn, gwkjs_##cn##_constructor, gtype, flags)
-//
-//#define GWKJS_DEFINE_PROTO_ABSTRACT_WITH_GTYPE(tn, cn, gtype, flags)   \
-//_GWKJS_DEFINE_PROTO_FULL(tn, cn, NULL, gtype, flags)
-//
-//#define _GWKJS_DEFINE_PROTO_FULL(type_name, cname, ctor, gtype, jsclass_flags)     \
-//extern JSPropertySpec gwkjs_##cname##_proto_props[]; \
-//extern JSFunctionSpec gwkjs_##cname##_proto_funcs[]; \
-//static void gwkjs_##cname##_finalize(JSFreeOp *fop, JSObject *obj); \
-//static JSBool gwkjs_##cname##_new_resolve(JSContext *context, \
-//                                        JSObject  *obj, \
-//                                        jsval      id, \
-//                                        unsigned   flags, \
-//                                        JSObject **objp) \
-//{ \
-//    return JS_TRUE; \
-//} \
-//static struct JSClassDefinition gwkjs_##cname##_class = { \
-//    type_name, \
-//    JSCLASS_HAS_PRIVATE | \
-//    JSCLASS_NEW_RESOLVE | jsclass_flags, \
-//    JS_PropertyStub, \
-//    JS_DeletePropertyStub, \
-//    JS_PropertyStub, \
-//    JS_StrictPropertyStub, \
-//    JS_EnumerateStub,\
-//    (JSResolveOp) gwkjs_##cname##_new_resolve, \
-//    JS_ConvertStub, \
-//    gwkjs_##cname##_finalize, \
-//    NULL, \
-//    NULL, \
-//    NULL, NULL, NULL \
-//}; \
-//jsval gwkjs_##cname##_create_proto(JSContext *context, JSObject *module, const char *proto_name, JSObject *parent) \
-//{ \
-//    jsval rval; \
-//    JSObject *global = gwkjs_get_import_global(context); \
-//    jsid class_name = gwkjs_intern_string_to_id(context, gwkjs_##cname##_class.name); \
-//    if (!JS_GetPropertyById(context, global, class_name, &rval))                       \
-//        return JSVAL_NULL; \
-//    if (JSVAL_IS_VOID(rval)) { \
-//        jsval value; \
-//        JSObject *prototype = JS_InitClass(context, global,     \
-//                                 parent, \
-//                                 &gwkjs_##cname##_class, \
-//                                 ctor, \
-//                                 0, \
-//                                 &gwkjs_##cname##_proto_props[0], \
-//                                 &gwkjs_##cname##_proto_funcs[0], \
-//                                 NULL, \
-//                                 NULL); \
-//        if (prototype == NULL) { \
-//            return JSVAL_NULL; \
-//        } \
-//        if (!gwkjs_object_require_property( \
-//                context, global, NULL, \
-//                class_name, &rval)) { \
-//            return JSVAL_NULL; \
-//        } \
-//        if (!JS_DefineProperty(context, module, proto_name, \
-//                               rval, NULL, NULL, GWKJS_MODULE_PROP_FLAGS)) \
-//            return JSVAL_NULL; \
-//        if (gtype != G_TYPE_NONE) { \
-//            value = OBJECT_TO_JSVAL(gwkjs_gtype_create_gtype_wrapper(context, gtype)); \
-//            JS_DefineProperty(context, JSVAL_TO_OBJECT(rval), "$gtype", value, \
-//                              NULL, NULL, JSPROP_PERMANENT);            \
-//        } \
-//    } \
-//    return rval; \
-//}
-//
+/**
+ * GWKJS_DEFINE_PROTO:
+ * @tn: The name of the prototype, as a string
+ * @cn: The name of the prototype, separated by _
+ * @flags: additional JSClass flags, such as JSCLASS_BACKGROUND_FINALIZE
+ *
+ * A convenience macro for prototype implementations.
+ */
+#define GWKJS_DEFINE_PROTO(tn, cn, flags) \
+GWKJS_NATIVE_CONSTRUCTOR_DECLARE(cn); \
+_GWKJS_DEFINE_PROTO_FULL(tn, cn, gwkjs_##cn##_constructor, G_TYPE_NONE, flags)
+
+/**
+ * GWKJS_DEFINE_PROTO_ABSTRACT:
+ * @tn: The name of the prototype, as a string
+ * @cn: The name of the prototype, separated by _
+ *
+ * A convenience macro for prototype implementations.
+ * Similar to GWKJS_DEFINE_PROTO but marks the prototype as abstract,
+ * you won't be able to instantiate it using the new keyword
+ */
+#define GWKJS_DEFINE_PROTO_ABSTRACT(tn, cn, flags) \
+_GWKJS_DEFINE_PROTO_FULL(tn, cn, NULL, G_TYPE_NONE, flags)
+
+#define GWKJS_DEFINE_PROTO_WITH_GTYPE(tn, cn, gtype, flags)   \
+GWKJS_NATIVE_CONSTRUCTOR_DECLARE(cn); \
+_GWKJS_DEFINE_PROTO_FULL(tn, cn, gwkjs_##cn##_constructor, gtype, flags)
+
+#define GWKJS_DEFINE_PROTO_ABSTRACT_WITH_GTYPE(tn, cn, gtype, flags)   \
+_GWKJS_DEFINE_PROTO_FULL(tn, cn, NULL, gtype, flags)
+
+#define _GWKJS_DEFINE_PROTO_FULL(type_name, cname, ctor, gtype, jsclass_flags)     \
+extern JSStaticValue gjs_##cname##_proto_props[]; \
+extern JSStaticFunction gjs_##cname##_proto_funcs[]; \
+static void gwkjs_##cname##_finalize(JSObjectRef obj); \
+JSClassDefinition gwkjs_##cname##_class = { \
+    0,                         \
+    kJSPropertyAttributeNone | jsclass_flags, \
+    type_name,                  \
+    NULL,                      \
+    NULL,                      \
+    NULL,                      \
+    NULL,                      \
+    gwkjs_##cname##_finalize,  \
+    NULL,                      /* hasProperty */\
+    NULL,                      /* TODO: getProperty is NULL \
+                                but it used to have a  new_resolve in gjs; */ \
+    NULL,                      \
+    NULL,                      \
+    NULL,                      \
+    NULL,                      \
+    ctor,                      \
+    NULL,                      \
+    NULL,                      \
+}; \
+JSClassRef gwkjs_##cname##_class_ref = NULL; \
+JSObjectRef gwkjs_##cname##_create_proto(JSContextRef context, JSObjectRef module, const char *proto_name, JSObjectRef parent) \
+{ \
+    JSValueRef exception = NULL; \
+    JSValueRef rval = NULL; \
+    if (!gwkjs_##cname##_class_ref) {  \
+        gwkjs_##cname##_class_ref = JSClassCreate(&gwkjs_##cname##_class); \
+    } \
+    JSObjectRef global = gwkjs_get_import_global(context); \
+    rval = gwkjs_object_get_property(context, global, gwkjs_##cname##_class.className, &exception); \
+    if (JSVAL_IS_VOID(context, rval)) { \
+        JSValueRef value; \
+        JSObjectRef prototype = JSObjectMake (context, gwkjs_##cname##_class_ref, \
+                                              NULL); \
+        if (prototype == NULL) { \
+            gwkjs_throw(context, "Couldn't create object for %s", proto_name); \
+            return NULL; \
+        } \
+        if (!gwkjs_object_require_property( \
+                context, global, NULL, \
+                gwkjs_##cname##_class.className, &rval)) { \
+            return NULL; \
+        } \
+        if (!gwkjs_object_set_property(context, module, proto_name, \
+                               rval, GWKJS_PROTO_PROP_FLAGS, NULL)) \
+            return NULL; \
+        if (!JSValueIsObject(context, rval)) \
+            return NULL;  \
+        if (gtype != G_TYPE_NONE) { \
+            value = gwkjs_gtype_create_gtype_wrapper(context, gtype); \
+            gwkjs_object_set_property(context, JSValueToObject(context, rval, NULL), \
+                                      "$gtype", value,                               \
+                                      kJSPropertyAttributeDontDelete, NULL);         \
+        } \
+    } \
+    if (!JSValueIsObject(context, rval)) {\
+        gwkjs_throw(context, "gwkjs_##cname##_create_proto returning NULL for %s", type_name); \
+        return NULL;  \
+    } \
+    return JSValueToObject(context, rval, NULL); \
+}
+
+JSObjectRef gwkjs_new_object(JSContextRef context,
+                             JSClassRef clas, JSObjectRef proto,
+                             JSObjectRef parent);
 
 JSValueRef
 gwkjs_cstring_to_jsvalue(JSContextRef context, const gchar *str);
@@ -231,7 +234,7 @@ gwkjs_object_has_property(JSContextRef ctx,
                           const gchar* propertyName);
 
 
-void
+gboolean
 gwkjs_object_set_property(JSContextRef ctx,
                           JSObjectRef object,
                           const gchar* propertyName,
