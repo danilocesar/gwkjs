@@ -29,8 +29,8 @@
 //
 //G_BEGIN_DECLS
 //
-//JSBool _gwkjs_proxy_to_string_func(JSContext  *context,
-//                                 JSObject   *this_obj,
+//JSBool _gwkjs_proxy_to_string_func(JSContextRef  context,
+//                                 JSObjectRef   this_obj,
 //                                 const char *objtype,
 //                                 GIBaseInfo *info,
 //                                 GType       gtype,

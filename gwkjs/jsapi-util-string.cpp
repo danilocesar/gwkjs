@@ -29,7 +29,7 @@
 //#include "compat.h"
 //
 //gboolean
-//gwkjs_string_to_utf8 (JSContext  *context,
+//gwkjs_string_to_utf8 (JSContextRef  context,
 //                    const jsval value,
 //                    char      **utf8_string_p)
 //{
@@ -65,7 +65,7 @@
 //}
 //
 //JSBool
-//gwkjs_string_from_utf8(JSContext  *context,
+//gwkjs_string_from_utf8(JSContextRef  context,
 //                     const char *utf8_string,
 //                     gssize      n_bytes,
 //                     jsval      *value_p)
@@ -107,7 +107,7 @@
 //}
 //
 //gboolean
-//gwkjs_string_to_filename(JSContext    *context,
+//gwkjs_string_to_filename(JSContextRef    context,
 //                       const jsval   filename_val,
 //                       char        **filename_string_p)
 //{
@@ -135,7 +135,7 @@
 //}
 //
 //JSBool
-//gwkjs_string_from_filename(JSContext  *context,
+//gwkjs_string_from_filename(JSContextRef  context,
 //                         const char *filename_string,
 //                         gssize      n_bytes,
 //                         jsval      *value_p)
@@ -179,7 +179,7 @@
 // * Returns: JS_FALSE if exception thrown
 // **/
 //JSBool
-//gwkjs_string_get_uint16_data(JSContext       *context,
+//gwkjs_string_get_uint16_data(JSContextRef       context,
 //                           jsval            value,
 //                           guint16        **data_p,
 //                           gsize           *len_p)
@@ -219,7 +219,7 @@
 // * Returns: true if *name_p is non-%NULL
 // **/
 //JSBool
-//gwkjs_get_string_id (JSContext       *context,
+//gwkjs_get_string_id (JSContextRef       context,
 //                   jsid             id,
 //                   char           **name_p)
 //{
@@ -249,7 +249,7 @@
 // * be thrown if @string can not be represented as UTF-8.
 // */
 //gboolean
-//gwkjs_unichar_from_string (JSContext *context,
+//gwkjs_unichar_from_string (JSContextRef context,
 //                         jsval      value,
 //                         gunichar  *result)
 //{
@@ -263,7 +263,7 @@
 //}
 //
 //jsid
-//gwkjs_intern_string_to_id (JSContext  *context,
+//gwkjs_intern_string_to_id (JSContextRef  context,
 //                         const char *string)
 //{
 //    JSString *str;

@@ -30,7 +30,7 @@
 //struct _GwkjsCoveragePrivate {
 //    gchar **prefixes;
 //    GwkjsContext *context;
-//    JSObject *coverage_statistics;
+//    JSObjectRef coverage_statistics;
 //
 //    char *cache_path;
 //};
@@ -390,11 +390,11 @@
 //}
 //
 //typedef gboolean (*ConvertAndInsertJSVal) (GArray    *array,
-//                                           JSContext *context,
+//                                           JSContextRef context,
 //                                           jsval     *element);
 //
 //static gboolean
-//get_array_from_js_value(JSContext             *context,
+//get_array_from_js_value(JSContextRef             context,
 //                        jsval                 *value,
 //                        size_t                 array_element_size,
 //                        GDestroyNotify         element_clear_func,
@@ -404,7 +404,7 @@
 //    g_return_val_if_fail(out_array != NULL, FALSE);
 //    g_return_val_if_fail(*out_array == NULL, FALSE);
 //
-//    JSObject *js_array = JSVAL_TO_OBJECT(*value);
+//    JSObjectRef js_array = JSVAL_TO_OBJECT(*value);
 //
 //    if (!JS_IsArrayObject(context, js_array)) {
 //        g_critical("Returned object from is not an array");
@@ -445,7 +445,7 @@
 //
 //static gboolean
 //convert_and_insert_unsigned_int(GArray    *array,
-//                                JSContext *context,
+//                                JSContextRef context,
 //                                jsval     *element)
 //{
 //    if (!JSVAL_IS_INT(*element) &&
@@ -467,7 +467,7 @@
 //}
 //
 //static GArray *
-//get_executed_lines_for(JSContext        *context,
+//get_executed_lines_for(JSContextRef        context,
 //                       JS::HandleObject  coverage_statistics,
 //                       jsval            *filename_value)
 //{
@@ -507,10 +507,10 @@
 //
 //static gboolean
 //convert_and_insert_function_decl(GArray    *array,
-//                                 JSContext *context,
+//                                 JSContextRef context,
 //                                 jsval     *element)
 //{
-//    JSObject *object = JSVAL_TO_OBJECT(*element);
+//    JSObjectRef object = JSVAL_TO_OBJECT(*element);
 //
 //    if (!object) {
 //        gwkjs_throw(context, "Converting element to object failed");
@@ -569,7 +569,7 @@
 //}
 //
 //static GArray *
-//get_functions_for(JSContext        *context,
+//get_functions_for(JSContextRef        context,
 //                  JS::HandleObject  coverage_statistics,
 //                  jsval            *filename_value)
 //{
@@ -609,7 +609,7 @@
 //
 //static gboolean
 //convert_and_insert_branch_exit(GArray    *array,
-//                               JSContext *context,
+//                               JSContextRef context,
 //                               jsval     *element)
 //{
 //    if (!JSVAL_IS_OBJECT(*element)) {
@@ -617,7 +617,7 @@
 //        return FALSE;
 //    }
 //
-//    JSObject *object = JSVAL_TO_OBJECT(*element);
+//    JSObjectRef object = JSVAL_TO_OBJECT(*element);
 //
 //    if (!object) {
 //        gwkjs_throw(context, "Converting element to object failed");
@@ -658,7 +658,7 @@
 //
 //static gboolean
 //convert_and_insert_branch_info(GArray    *array,
-//                               JSContext *context,
+//                               JSContextRef context,
 //                               jsval     *element)
 //{
 //    if (!JSVAL_IS_OBJECT(*element) &&
@@ -668,7 +668,7 @@
 //    }
 //
 //    if (JSVAL_IS_OBJECT(*element)) {
-//        JSObject *object = JSVAL_TO_OBJECT(*element);
+//        JSObjectRef object = JSVAL_TO_OBJECT(*element);
 //
 //        if (!object) {
 //            gwkjs_throw(context, "Converting element to object failed");
@@ -729,7 +729,7 @@
 //}
 //
 //static GArray *
-//get_branches_for(JSContext        *context,
+//get_branches_for(JSContextRef        context,
 //                 JS::HandleObject  coverage_statistics,
 //                 jsval            *filename_value)
 //{
@@ -757,7 +757,7 @@
 //} GwkjsCoverageFileStatistics;
 //
 //static gboolean
-//fetch_coverage_file_statistics_from_js(JSContext                 *context,
+//fetch_coverage_file_statistics_from_js(JSContextRef                 context,
 //                                       JS::HandleObject           coverage_statistics,
 //                                       const char                *filename,
 //                                       GwkjsCoverageFileStatistics *statistics)
@@ -859,11 +859,11 @@
 //get_covered_files(GwkjsCoverage *coverage)
 //{
 //    GwkjsCoveragePrivate *priv = (GwkjsCoveragePrivate *) gwkjs_coverage_get_instance_private(coverage);
-//    JSContext *context = (JSContext *) gwkjs_context_get_native_context(priv->context);
+//    JSContextRef context = (JSContextRef ) gwkjs_context_get_native_context(priv->context);
 //    JSAutoRequest ar(context);
 //    JSAutoCompartment ac(context, priv->coverage_statistics);
 //    jsval rval;
-//    JSObject *files_obj;
+//    JSObjectRef files_obj;
 //
 //    char **files = NULL;
 //    uint32_t n_files;
@@ -1019,7 +1019,7 @@
 //gwkjs_serialize_statistics(GwkjsCoverage *coverage)
 //{
 //    GwkjsCoveragePrivate *priv = (GwkjsCoveragePrivate *) gwkjs_coverage_get_instance_private(coverage);
-//    JSContext *js_context = (JSContext *) gwkjs_context_get_native_context(priv->context);
+//    JSContextRef js_context = (JSContextRef ) gwkjs_context_get_native_context(priv->context);
 //    JSRuntime *js_runtime = JS_GetRuntime(js_context);
 //
 //    JSAutoRequest ar(js_context);
@@ -1056,8 +1056,8 @@
 //                            strlen(statistics_as_json_string));
 //}
 //
-//static JSObject *
-//gwkjs_get_generic_object_constructor(JSContext        *context,
+//static JSObjectRef 
+//gwkjs_get_generic_object_constructor(JSContextRef        context,
 //                                   JSRuntime        *runtime,
 //                                   JS::HandleObject  global_object)
 //{
@@ -1073,7 +1073,7 @@
 //}
 //
 //static JSString *
-//gwkjs_deserialize_cache_to_object_for_compartment(JSContext        *context,
+//gwkjs_deserialize_cache_to_object_for_compartment(JSContextRef        context,
 //                                                JS::HandleObject global_object,
 //                                                GBytes           *cache_data)
 //{
@@ -1112,7 +1112,7 @@
 //     */
 //
 //    GwkjsCoveragePrivate *priv = (GwkjsCoveragePrivate *) gwkjs_coverage_get_instance_private(coverage);
-//    JSContext *context = (JSContext *) gwkjs_context_get_native_context(priv->context);
+//    JSContextRef context = (JSContextRef ) gwkjs_context_get_native_context(priv->context);
 //    JSAutoRequest ar(context);
 //    JSAutoCompartment ac(context, priv->coverage_statistics);
 //    JS::RootedObject global_object(JS_GetRuntime(context),
@@ -1125,7 +1125,7 @@
 //                             gchar       **coverage_files)
 //{
 //    GwkjsCoveragePrivate *priv = (GwkjsCoveragePrivate *) gwkjs_coverage_get_instance_private(coverage);
-//    JSContext          *js_context = (JSContext *) gwkjs_context_get_native_context(priv->context);
+//    JSContextRef          js_context = (JSContextRef ) gwkjs_context_get_native_context(priv->context);
 //
 //    GArray *file_statistics_array = g_array_new(FALSE,
 //                                                FALSE,
@@ -1198,7 +1198,7 @@
 //coverage_statistics_has_stale_cache(GwkjsCoverage *coverage)
 //{
 //    GwkjsCoveragePrivate *priv = (GwkjsCoveragePrivate *) gwkjs_coverage_get_instance_private(coverage);
-//    JSContext          *js_context = (JSContext *) gwkjs_context_get_native_context(priv->context);
+//    JSContextRef          js_context = (JSContextRef ) gwkjs_context_get_native_context(priv->context);
 //
 //    JSAutoRequest ar(js_context);
 //    JSAutoCompartment ac(js_context, priv->coverage_statistics);
@@ -1226,7 +1226,7 @@
 //    GwkjsCoveragePrivate *priv = (GwkjsCoveragePrivate *) gwkjs_coverage_get_instance_private(coverage);
 //    GError *error = NULL;
 //
-//    JSContext *context = (JSContext *) gwkjs_context_get_native_context(priv->context);
+//    JSContextRef context = (JSContextRef ) gwkjs_context_get_native_context(priv->context);
 //    JSAutoCompartment compartment(context, priv->coverage_statistics);
 //    JSAutoRequest ar(context);
 //
@@ -1304,7 +1304,7 @@
 //static gboolean
 //gwkjs_context_eval_file_in_compartment(GwkjsContext *context,
 //                                     const char *filename,
-//                                     JSObject   *compartment_object,
+//                                     JSObjectRef   compartment_object,
 //                                     GError     **error)
 //{
 //    char  *script = NULL;
@@ -1326,7 +1326,7 @@
 //
 //    jsval return_value;
 //
-//    JSContext *js_context = (JSContext *) gwkjs_context_get_native_context(context);
+//    JSContextRef js_context = (JSContextRef ) gwkjs_context_get_native_context(context);
 //
 //    JSAutoCompartment compartment(js_context, compartment_object);
 //
@@ -1347,7 +1347,7 @@
 //}
 //
 //static JSBool
-//coverage_log(JSContext *context,
+//coverage_log(JSContextRef context,
 //             unsigned   argc,
 //             jsval     *vp)
 //{
@@ -1394,7 +1394,7 @@
 //}
 //
 //static char *
-//get_filename_from_filename_as_js_string(JSContext    *context,
+//get_filename_from_filename_as_js_string(JSContextRef    context,
 //                                        JS::CallArgs &args) {
 //    char *filename = NULL;
 //
@@ -1406,7 +1406,7 @@
 //}
 //
 //static GFile *
-//get_file_from_filename_as_js_string(JSContext    *context,
+//get_file_from_filename_as_js_string(JSContextRef    context,
 //                                    JS::CallArgs &args) {
 //    char *filename = get_filename_from_filename_as_js_string(context, args);
 //
@@ -1422,7 +1422,7 @@
 //}
 //
 //static JSBool
-//coverage_get_file_modification_time(JSContext *context,
+//coverage_get_file_modification_time(JSContextRef context,
 //                                    unsigned  argc,
 //                                    jsval     *vp)
 //{
@@ -1455,7 +1455,7 @@
 //}
 //
 //static JSBool
-//coverage_get_file_checksum(JSContext *context,
+//coverage_get_file_checksum(JSContextRef context,
 //                           unsigned  argc,
 //                           jsval     *vp)
 //{
@@ -1485,7 +1485,7 @@
 //}
 //
 //static JSBool
-//coverage_get_file_contents(JSContext *context,
+//coverage_get_file_contents(JSContextRef context,
 //                           unsigned   argc,
 //                           jsval     *vp)
 //{
@@ -1551,7 +1551,7 @@
 //                                       const char  *script)
 //{
 //    GwkjsCoveragePrivate *priv = (GwkjsCoveragePrivate *) gwkjs_coverage_get_instance_private(coverage);
-//    JSContext          *js_context = (JSContext *) gwkjs_context_get_native_context(priv->context);
+//    JSContextRef          js_context = (JSContextRef ) gwkjs_context_get_native_context(priv->context);
 //    JSAutoCompartment ac(js_context, priv->coverage_statistics);
 //    jsval rval;
 //    if (!gwkjs_eval_with_scope(js_context,
@@ -1575,7 +1575,7 @@
 //{
 //    GwkjsCoveragePrivate *priv = (GwkjsCoveragePrivate *) gwkjs_coverage_get_instance_private(coverage);
 //
-//    JSContext     *js_context = (JSContext *) gwkjs_context_get_native_context(priv->context);
+//    JSContextRef     js_context = (JSContextRef ) gwkjs_context_get_native_context(priv->context);
 //    JSAutoRequest ar(js_context);
 //    JSAutoCompartment ac(js_context, priv->coverage_statistics);
 //
@@ -1593,8 +1593,8 @@
 //
 ///* Gets the root import and wraps it into a cross-compartment
 // * object so that it can be used in the debugger compartment */
-//static JSObject *
-//gwkjs_wrap_root_importer_in_compartment(JSContext *context,
+//static JSObjectRef 
+//gwkjs_wrap_root_importer_in_compartment(JSContextRef context,
 //                                      JS::HandleObject compartment)
 //{
 //    JSAutoRequest ar(context);
@@ -1622,10 +1622,10 @@
 //    GBytes             *cache_bytes = NULL;
 //    GError             *error = NULL;
 //
-//    JSContext *context = (JSContext *) gwkjs_context_get_native_context(priv->context);
+//    JSContextRef context = (JSContextRef ) gwkjs_context_get_native_context(priv->context);
 //    JSAutoRequest ar(context);
 //
-//    JSObject *debuggee = JS_GetGlobalObject(context);
+//    JSObjectRef debuggee = JS_GetGlobalObject(context);
 //    JS::CompartmentOptions options;
 //    options.setVersion(JSVERSION_LATEST);
 //    JS::RootedObject debugger_compartment(JS_GetRuntime(context),
@@ -1710,17 +1710,17 @@
 //            cache_value.set(JS::UndefinedValue());
 //        }
 //
-//        JSObject *coverage_statistics_constructor = JSVAL_TO_OBJECT(coverage_statistics_prototype_value);
+//        JSObjectRef coverage_statistics_constructor = JSVAL_TO_OBJECT(coverage_statistics_prototype_value);
 //
 //        /* Now create the array to pass the desired prefixes over */
-//        JSObject *prefixes = gwkjs_build_string_array(context, -1, priv->prefixes);
+//        JSObjectRef prefixes = gwkjs_build_string_array(context, -1, priv->prefixes);
 //
 //        jsval coverage_statistics_constructor_arguments[] = {
 //            OBJECT_TO_JSVAL(prefixes),
 //            cache_value.get()
 //        };
 //
-//        JSObject *coverage_statistics = JS_New(context,
+//        JSObjectRef coverage_statistics = JS_New(context,
 //                                               coverage_statistics_constructor,
 //                                               2,
 //                                               coverage_statistics_constructor_arguments);
@@ -1749,14 +1749,14 @@
 //    GwkjsCoverage *coverage = GWKJS_COVERAGE(object);
 //    GwkjsCoveragePrivate *priv = (GwkjsCoveragePrivate *) gwkjs_coverage_get_instance_private(coverage);
 //
-//    JSContext *context = (JSContext *) gwkjs_context_get_native_context(priv->context);
+//    JSContextRef context = (JSContextRef ) gwkjs_context_get_native_context(priv->context);
 //
 //    /* Before bootstrapping, turn off the JIT on the context */
 //    guint32 options_flags = JS_GetOptions(context) & ~(JSOPTION_ION | JSOPTION_BASELINE | JSOPTION_ASMJS);
 //    JS_SetOptions(context, options_flags);
 //
 //    if (!bootstrap_coverage(coverage)) {
-//        JSContext *context = (JSContext *) gwkjs_context_get_native_context(priv->context);
+//        JSContextRef context = (JSContextRef ) gwkjs_context_get_native_context(priv->context);
 //        JSAutoCompartment compartment(context, JS_GetGlobalObject(context));
 //        gwkjs_log_exception(context);
 //    }
@@ -1794,7 +1794,7 @@
 //
 //    if (priv->coverage_statistics) {
 //        /* Remove tracer before disposing the context */
-//        JSContext *js_context = (JSContext *) gwkjs_context_get_native_context(priv->context);
+//        JSContextRef js_context = (JSContextRef ) gwkjs_context_get_native_context(priv->context);
 //        JSAutoRequest ar(js_context);
 //        JSAutoCompartment ac(js_context, priv->coverage_statistics);
 //        JS::RootedValue rval(JS_GetRuntime(js_context));

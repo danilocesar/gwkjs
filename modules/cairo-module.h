@@ -23,7 +23,7 @@
 #ifndef __CAIRO_MODULE_H__
 #define __CAIRO_MODULE_H__
 
-JSBool           gwkjs_js_define_cairo_stuff              (JSContext       *context,
-                                                         JSObject       **module_out);
+JSBool           gwkjs_js_define_cairo_stuff              (JSContextRef       context,
+                                                         JSObjectRef       *module_out);
 
 #endif /* __CAIRO_MODULE_H__ */

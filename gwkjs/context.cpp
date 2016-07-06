@@ -743,8 +743,8 @@ gwkjs_context_get_const_string(JSContextRef      context,
 }
 //
 //gboolean
-//gwkjs_object_get_property_const(JSContext      *context,
-//                              JSObject       *obj,
+//gwkjs_object_get_property_const(JSContextRef      context,
+//                              JSObjectRef       obj,
 //                              GwkjsConstString  property_name,
 //                              jsval          *value_p)
 //{

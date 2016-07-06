@@ -390,7 +390,7 @@
 //
 //static void
 //byte_array_finalize(JSFreeOp *fop,
-//                    JSObject *obj)
+//                    JSObjectRef obj)
 //{
 //    ByteArrayInstance *priv;
 //
@@ -411,12 +411,12 @@
 //
 ///* implement toString() with an optional encoding arg */
 //static JSBool
-//to_string_func(JSContext *context,
+//to_string_func(JSContextRef context,
 //               unsigned   argc,
 //               jsval     *vp)
 //{
 //    JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-//    JSObject *object = JSVAL_TO_OBJECT(argv.thisv());
+//    JSObjectRef object = JSVAL_TO_OBJECT(argv.thisv());
 //    ByteArrayInstance *priv;
 //    char *encoding;
 //    gboolean encoding_is_utf8;
@@ -510,14 +510,14 @@
 //}
 //
 //static JSBool
-//to_gbytes_func(JSContext *context,
+//to_gbytes_func(JSContextRef context,
 //               unsigned   argc,
 //               jsval     *vp)
 //{
 //    JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-//    JSObject *object = JSVAL_TO_OBJECT(rec.thisv());
+//    JSObjectRef object = JSVAL_TO_OBJECT(rec.thisv());
 //    ByteArrayInstance *priv;
-//    JSObject *ret_bytes_obj;
+//    JSObjectRef ret_bytes_obj;
 //    GIBaseInfo *gbytes_info;
 //
 //    priv = priv_from_js(context, object);
@@ -536,11 +536,11 @@
 //
 ///* Ensure that the module and class objects exists, and that in turn
 // * ensures that JS_InitClass has been called. */
-//static JSObject *
-//byte_array_get_prototype(JSContext *context)
+//static JSObjectRef 
+//byte_array_get_prototype(JSContextRef context)
 //{
 //    jsval retval;
-//    JSObject *prototype;
+//    JSObjectRef prototype;
 //
 //    retval = gwkjs_get_global_slot (context, GWKJS_GLOBAL_SLOT_BYTE_ARRAY_PROTOTYPE);
 //
@@ -555,9 +555,9 @@
 //}
 //
 //static JSObject*
-//byte_array_new(JSContext *context)
+//byte_array_new(JSContextRef context)
 //{
-//    JSObject *array;
+//    JSObjectRef array;
 //    ByteArrayInstance *priv;
 //
 //    array = JS_NewObject(context, &gwkjs_byte_array_class,
@@ -573,7 +573,7 @@
 //
 ///* fromString() function implementation */
 //static JSBool
-//from_string_func(JSContext *context,
+//from_string_func(JSContextRef context,
 //                 unsigned   argc,
 //                 jsval     *vp)
 //{
@@ -581,7 +581,7 @@
 //    ByteArrayInstance *priv;
 //    char *encoding;
 //    gboolean encoding_is_utf8;
-//    JSObject *obj;
+//    JSObjectRef obj;
 //    JSBool retval = JS_FALSE;
 //
 //    obj = byte_array_new(context);
@@ -678,7 +678,7 @@
 //
 ///* fromArray() function implementation */
 //static JSBool
-//from_array_func(JSContext *context,
+//from_array_func(JSContextRef context,
 //                unsigned   argc,
 //                jsval     *vp)
 //{
@@ -686,7 +686,7 @@
 //    ByteArrayInstance *priv;
 //    guint32 len;
 //    guint32 i;
-//    JSObject *obj;
+//    JSObjectRef obj;
 //    JSBool ret = JS_FALSE;
 //
 //    obj = byte_array_new(context);
@@ -745,15 +745,15 @@
 //}
 //
 //static JSBool
-//from_gbytes_func(JSContext *context,
+//from_gbytes_func(JSContextRef context,
 //                 unsigned   argc,
 //                 jsval     *vp)
 //{
 //    JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-//    JSObject *bytes_obj;
+//    JSObjectRef bytes_obj;
 //    GBytes *gbytes;
 //    ByteArrayInstance *priv;
-//    JSObject *obj;
+//    JSObjectRef obj;
 //    JSBool ret = JS_FALSE;
 //
 //    if (!gwkjs_parse_call_args(context, "overrides_gbytes_to_array", "o", argv,
@@ -778,11 +778,11 @@
 //    return ret;
 //}
 //
-//JSObject *
-//gwkjs_byte_array_from_byte_array (JSContext *context,
+//JSObjectRef 
+//gwkjs_byte_array_from_byte_array (JSContextRef context,
 //                                GByteArray *array)
 //{
-//    JSObject *object;
+//    JSObjectRef object;
 //    ByteArrayInstance *priv;
 //
 //    g_return_val_if_fail(context != NULL, NULL);
@@ -805,11 +805,11 @@
 //    return object;
 //}
 //
-//JSObject *
-//gwkjs_byte_array_from_bytes (JSContext *context,
+//JSObjectRef 
+//gwkjs_byte_array_from_bytes (JSContextRef context,
 //                           GBytes    *bytes)
 //{
-//    JSObject *object;
+//    JSObjectRef object;
 //    ByteArrayInstance *priv;
 //
 //    g_return_val_if_fail(context != NULL, NULL);
@@ -831,8 +831,8 @@
 //}
 //
 //GBytes *
-//gwkjs_byte_array_get_bytes (JSContext  *context,
-//                          JSObject   *object)
+//gwkjs_byte_array_get_bytes (JSContextRef  context,
+//                          JSObjectRef   object)
 //{
 //    ByteArrayInstance *priv;
 //    priv = priv_from_js(context, object);
@@ -844,8 +844,8 @@
 //}
 //
 //GByteArray *
-//gwkjs_byte_array_get_byte_array (JSContext   *context,
-//                               JSObject    *obj)
+//gwkjs_byte_array_get_byte_array (JSContextRef   context,
+//                               JSObjectRef    obj)
 //{
 //    ByteArrayInstance *priv;
 //    priv = priv_from_js(context, obj);
@@ -857,8 +857,8 @@
 //}
 //
 //void
-//gwkjs_byte_array_peek_data (JSContext  *context,
-//                          JSObject   *obj,
+//gwkjs_byte_array_peek_data (JSContextRef  context,
+//                          JSObjectRef   obj,
 //                          guint8    **out_data,
 //                          gsize      *out_len)
 //{
@@ -906,8 +906,8 @@
 //};
 //
 //JSBool
-//gwkjs_define_byte_array_stuff(JSContext  *context,
-//                            JSObject  **module_out)
+//gwkjs_define_byte_array_stuff(JSContextRef  context,
+//                            JSObjectRef  *module_out)
 //{
 //    JSObjectRef module;
 //    JSObjectRef prototype;

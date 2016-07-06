@@ -33,12 +33,12 @@
 typedef struct _GwkjsUnitTestFixture GwkjsUnitTestFixture;
 
 struct _GwkjsUnitTestFixture {
-    JSContext *context;
+    JSContextRef context;
     GwkjsContext *gwkjs_context;
 };
 
 static void
-test_error_reporter(JSContext     *context,
+test_error_reporter(JSContextRef     context,
                     const char    *message,
                     JSErrorReport *report)
 {
@@ -49,7 +49,7 @@ static void
 _gwkjs_unit_test_fixture_begin (GwkjsUnitTestFixture *fixture)
 {
     fixture->gwkjs_context = gwkjs_context_new ();
-    fixture->context = (JSContext *) gwkjs_context_get_native_context (fixture->gwkjs_context);
+    fixture->context = (JSContextRef ) gwkjs_context_get_native_context (fixture->gwkjs_context);
     JS_BeginRequest(fixture->context);
     JS_SetErrorReporter(fixture->context, test_error_reporter);
 }
@@ -95,8 +95,8 @@ static void
 gwkjstest_test_func_gwkjs_jsapi_util_array(void)
 {
     GwkjsUnitTestFixture fixture;
-    JSContext *context;
-    JSObject *global;
+    JSContextRef context;
+    JSObjectRef global;
     GwkjsRootedArray *array;
     int i;
     jsval value;
@@ -138,8 +138,8 @@ static void
 gwkjstest_test_func_gwkjs_jsapi_util_string_js_string_utf8(void)
 {
     GwkjsUnitTestFixture fixture;
-    JSContext *context;
-    JSObject *global;
+    JSContextRef context;
+    JSObjectRef global;
 
     const char *utf8_string = "\303\211\303\226 foobar \343\203\237";
     char *utf8_result;
@@ -166,8 +166,8 @@ static void
 gwkjstest_test_func_gwkjs_jsapi_util_error_throw(void)
 {
     GwkjsUnitTestFixture fixture;
-    JSContext *context;
-    JSObject *global;
+    JSContextRef context;
+    JSObjectRef global;
     jsval exc, value, previous;
     char *s = NULL;
     int strcmp_result;

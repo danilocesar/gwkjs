@@ -29,20 +29,20 @@
 //
 //G_BEGIN_DECLS
 //
-//JSBool     gwkjs_value_to_g_value         (JSContext    *context,
+//JSBool     gwkjs_value_to_g_value         (JSContextRef    context,
 //                                         jsval         value,
 //                                         GValue       *gvalue);
-//JSBool     gwkjs_value_to_g_value_no_copy (JSContext    *context,
+//JSBool     gwkjs_value_to_g_value_no_copy (JSContextRef    context,
 //                                         jsval         value,
 //                                         GValue       *gvalue);
-//JSBool     gwkjs_value_from_g_value       (JSContext    *context,
+//JSBool     gwkjs_value_from_g_value       (JSContextRef    context,
 //                                         jsval        *value_p,
 //                                         const GValue *gvalue);
-//GClosure*  gwkjs_closure_new_marshaled    (JSContext    *context,
-//                                         JSObject     *callable,
+//GClosure*  gwkjs_closure_new_marshaled    (JSContextRef    context,
+//                                         JSObjectRef     callable,
 //                                         const char   *description);
-//GClosure*  gwkjs_closure_new_for_signal   (JSContext    *context,
-//                                         JSObject     *callable,
+//GClosure*  gwkjs_closure_new_for_signal   (JSContextRef    context,
+//                                         JSObjectRef     callable,
 //                                         const char   *description,
 //                                         guint         signal_id);
 //

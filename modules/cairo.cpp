@@ -41,7 +41,7 @@ static XLibConstructor constructor;
 #endif
 
 JSBool
-gwkjs_cairo_check_status(JSContext      *context,
+gwkjs_cairo_check_status(JSContextRef      context,
                        cairo_status_t  status,
                        const char     *name)
 {
@@ -57,12 +57,12 @@ gwkjs_cairo_check_status(JSContext      *context,
 }
 
 JSBool
-gwkjs_js_define_cairo_stuff(JSContext *context,
-                          JSObject **module_out)
+gwkjs_js_define_cairo_stuff(JSContextRef context,
+                          JSObjectRef *module_out)
 {
     jsval obj;
-    JSObject *module;
-    JSObject *surface_proto, *pattern_proto, *gradient_proto;
+    JSObjectRef module;
+    JSObjectRef surface_proto, *pattern_proto, *gradient_proto;
 
     module = JS_NewObject (context, NULL, NULL, NULL);
 

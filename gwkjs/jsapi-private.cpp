@@ -39,7 +39,7 @@
 //#pragma GCC diagnostic pop
 //
 //void
-//gwkjs_error_reporter(JSContext     *context,
+//gwkjs_error_reporter(JSContextRef     context,
 //                   const char    *message,
 //                   JSErrorReport *report)
 //{
@@ -76,7 +76,7 @@
 //    g_log(G_LOG_DOMAIN, level, "JS %s: [%s %d]: %s", warning, report->filename, report->lineno, message);
 //}
 //
-//JSObject *
-//gwkjs_get_global_object(JSContext *cx){
+//JSObjectRef 
+//gwkjs_get_global_object(JSContextRef cx){
 //    return js::GetDefaultGlobalForContext(cx);
 //}

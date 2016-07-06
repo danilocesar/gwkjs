@@ -33,7 +33,7 @@
 //
 //typedef struct {
 //    GwkjsUnrootedFunc notify;
-//    JSObject *child;
+//    JSObjectRef child;
 //    void *data;
 //} Child;
 //
@@ -82,7 +82,7 @@
 //
 //static void
 //keep_alive_finalize(JSFreeOp *fop,
-//                    JSObject *obj)
+//                    JSObjectRef obj)
 //{
 //    KeepAlive *priv;
 //    void *key;
@@ -130,7 +130,7 @@
 //
 //static void
 //keep_alive_trace(JSTracer *tracer,
-//                 JSObject *obj)
+//                 JSObjectRef obj)
 //{
 //    KeepAlive *priv;
 //
@@ -176,11 +176,11 @@
 //};
 //
 //JSObject*
-//gwkjs_keep_alive_new(JSContext *context)
+//gwkjs_keep_alive_new(JSContextRef context)
 //{
 //    KeepAlive *priv;
-//    JSObject *keep_alive = NULL;
-//    JSObject *global;
+//    JSObjectRef keep_alive = NULL;
+//    JSObjectRef global;
 //    JSBool found;
 //
 //    /* This function creates an unattached KeepAlive object; following our
@@ -201,7 +201,7 @@
 //        goto out;
 //
 //    if (!found) {
-//        JSObject *prototype;
+//        JSObjectRef prototype;
 //
 //        gwkjs_debug(GWKJS_DEBUG_KEEP_ALIVE,
 //                  "Initializing keep-alive class in context %p global %p",
@@ -262,9 +262,9 @@
 //}
 //
 //void
-//gwkjs_keep_alive_add_child(JSObject          *keep_alive,
+//gwkjs_keep_alive_add_child(JSObjectRef          keep_alive,
 //                         GwkjsUnrootedFunc    notify,
-//                         JSObject          *obj,
+//                         JSObjectRef          obj,
 //                         void              *data)
 //{
 //    KeepAlive *priv;
@@ -292,9 +292,9 @@
 //}
 //
 //void
-//gwkjs_keep_alive_remove_child(JSObject          *keep_alive,
+//gwkjs_keep_alive_remove_child(JSObjectRef          keep_alive,
 //                            GwkjsUnrootedFunc    notify,
-//                            JSObject          *obj,
+//                            JSObjectRef          obj,
 //                            void              *data)
 //{
 //    KeepAlive *priv;
@@ -315,9 +315,9 @@
 //}
 //
 //static JSObject*
-//gwkjs_keep_alive_create(JSContext *context)
+//gwkjs_keep_alive_create(JSContextRef context)
 //{
-//    JSObject *keep_alive;
+//    JSObjectRef keep_alive;
 //
 //    JS_BeginRequest(context);
 //
@@ -332,7 +332,7 @@
 //}
 //
 //JSObject*
-//gwkjs_keep_alive_get_global_if_exists (JSContext *context)
+//gwkjs_keep_alive_get_global_if_exists (JSContextRef context)
 //{
 //    jsval keep_alive;
 //
@@ -345,9 +345,9 @@
 //}
 //
 //JSObject*
-//gwkjs_keep_alive_get_global(JSContext *context)
+//gwkjs_keep_alive_get_global(JSContextRef context)
 //{
-//    JSObject *keep_alive = gwkjs_keep_alive_get_global_if_exists(context);
+//    JSObjectRef keep_alive = gwkjs_keep_alive_get_global_if_exists(context);
 //
 //    if (G_LIKELY(keep_alive))
 //        return keep_alive;
@@ -356,12 +356,12 @@
 //}
 //
 //void
-//gwkjs_keep_alive_add_global_child(JSContext         *context,
+//gwkjs_keep_alive_add_global_child(JSContextRef         context,
 //                                GwkjsUnrootedFunc  notify,
-//                                JSObject          *child,
+//                                JSObjectRef          child,
 //                                void              *data)
 //{
-//    JSObject *keep_alive;
+//    JSObjectRef keep_alive;
 //
 //    JS_BeginRequest(context);
 //
@@ -373,12 +373,12 @@
 //}
 //
 //void
-//gwkjs_keep_alive_remove_global_child(JSContext         *context,
+//gwkjs_keep_alive_remove_global_child(JSContextRef         context,
 //                                   GwkjsUnrootedFunc  notify,
-//                                   JSObject          *child,
+//                                   JSObjectRef          child,
 //                                   void              *data)
 //{
-//    JSObject *keep_alive;
+//    JSObjectRef keep_alive;
 //
 //    JS_BeginRequest(context);
 //
@@ -399,7 +399,7 @@
 //
 //void
 //gwkjs_keep_alive_iterator_init (GwkjsKeepAliveIter *iter,
-//                              JSObject         *keep_alive)
+//                              JSObjectRef         keep_alive)
 //{
 //    GwkjsRealKeepAliveIter *real = (GwkjsRealKeepAliveIter*)iter;
 //    KeepAlive *priv = (KeepAlive *) JS_GetPrivate(keep_alive);
@@ -410,7 +410,7 @@
 //gboolean
 //gwkjs_keep_alive_iterator_next (GwkjsKeepAliveIter  *iter,
 //                              GwkjsUnrootedFunc    notify_func,
-//                              JSObject         **out_child,
+//                              JSObjectRef         *out_child,
 //                              void             **out_data)
 //{
 //    GwkjsRealKeepAliveIter *real = (GwkjsRealKeepAliveIter*)iter;

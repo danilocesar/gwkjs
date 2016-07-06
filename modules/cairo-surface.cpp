@@ -31,8 +31,8 @@
 
 typedef struct {
     void            *dummy;
-    JSContext       *context;
-    JSObject        *object;
+    JSContextRef       context;
+    JSObjectRef        object;
     cairo_surface_t *surface;
 } GwkjsCairoSurface;
 
@@ -41,7 +41,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(GwkjsCairoSurface, gwkjs_cairo_surface_class)
 
 static void
 gwkjs_cairo_surface_finalize(JSFreeOp *fop,
-                           JSObject *obj)
+                           JSObjectRef obj)
 {
     GwkjsCairoSurface *priv;
     priv = (GwkjsCairoSurface*) JS_GetPrivate(obj);
@@ -58,12 +58,12 @@ JSPropertySpec gwkjs_cairo_surface_proto_props[] = {
 
 /* Methods */
 static JSBool
-writeToPNG_func(JSContext *context,
+writeToPNG_func(JSContextRef context,
                 unsigned   argc,
                 jsval     *vp)
 {
     JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-    JSObject *obj = JSVAL_TO_OBJECT(argv.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
 
     char *filename;
     cairo_surface_t *surface;
@@ -87,12 +87,12 @@ writeToPNG_func(JSContext *context,
 }
 
 static JSBool
-getType_func(JSContext *context,
+getType_func(JSContextRef context,
              unsigned   argc,
              jsval     *vp)
 {
     JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-    JSObject *obj = JSVAL_TO_OBJECT(rec.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(rec.thisv());
 
     cairo_surface_t *surface;
     cairo_surface_type_t type;
@@ -144,8 +144,8 @@ JSFunctionSpec gwkjs_cairo_surface_proto_funcs[] = {
  * This is mainly used for subclasses where object is already created.
  */
 void
-gwkjs_cairo_surface_construct(JSContext       *context,
-                            JSObject        *object,
+gwkjs_cairo_surface_construct(JSContextRef       context,
+                            JSObjectRef        object,
                             cairo_surface_t *surface)
 {
     GwkjsCairoSurface *priv;
@@ -175,7 +175,7 @@ gwkjs_cairo_surface_construct(JSContext       *context,
  */
 void
 gwkjs_cairo_surface_finalize_surface(JSFreeOp *fop,
-                                   JSObject *object)
+                                   JSObjectRef object)
 {
     g_return_if_fail(fop != NULL);
     g_return_if_fail(object != NULL);
@@ -192,11 +192,11 @@ gwkjs_cairo_surface_finalize_surface(JSFreeOp *fop,
  * A reference to @surface will be taken.
  *
  */
-JSObject *
-gwkjs_cairo_surface_from_surface(JSContext       *context,
+JSObjectRef 
+gwkjs_cairo_surface_from_surface(JSContextRef       context,
                                cairo_surface_t *surface)
 {
-    JSObject *object;
+    JSObjectRef object;
 
     g_return_val_if_fail(context != NULL, NULL);
     g_return_val_if_fail(surface != NULL, NULL);
@@ -234,8 +234,8 @@ gwkjs_cairo_surface_from_surface(JSContext       *context,
  *
  */
 cairo_surface_t *
-gwkjs_cairo_surface_get_surface(JSContext *context,
-                              JSObject *object)
+gwkjs_cairo_surface_get_surface(JSContextRef context,
+                              JSObjectRef object)
 {
     GwkjsCairoSurface *priv;
 
@@ -249,7 +249,7 @@ gwkjs_cairo_surface_get_surface(JSContext *context,
 }
 
 static JSBool
-surface_to_g_argument(JSContext      *context,
+surface_to_g_argument(JSContextRef      context,
                       jsval           value,
                       const char     *arg_name,
                       GwkjsArgumentType argument_type,
@@ -257,7 +257,7 @@ surface_to_g_argument(JSContext      *context,
                       gboolean        may_be_null,
                       GArgument      *arg)
 {
-    JSObject *obj;
+    JSObjectRef obj;
     cairo_surface_t *s;
 
     obj = JSVAL_TO_OBJECT(value);
@@ -272,11 +272,11 @@ surface_to_g_argument(JSContext      *context,
 }
 
 static JSBool
-surface_from_g_argument(JSContext  *context,
+surface_from_g_argument(JSContextRef  context,
                         jsval      *value_p,
                         GArgument  *arg)
 {
-    JSObject *obj;
+    JSObjectRef obj;
 
     obj = gwkjs_cairo_surface_from_surface(context, (cairo_surface_t*)arg->v_pointer);
     if (!obj)
@@ -287,7 +287,7 @@ surface_from_g_argument(JSContext  *context,
 }
 
 static JSBool
-surface_release_argument(JSContext  *context,
+surface_release_argument(JSContextRef  context,
                          GITransfer  transfer,
                          GArgument  *arg)
 {
@@ -302,7 +302,7 @@ static GwkjsForeignInfo foreign_info = {
 };
 
 void
-gwkjs_cairo_surface_init(JSContext *context)
+gwkjs_cairo_surface_init(JSContextRef context)
 {
     gwkjs_struct_foreign_register("cairo", "Surface", &foreign_info);
 }

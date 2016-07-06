@@ -59,7 +59,7 @@
 //
 //static gboolean struct_is_simple(GIStructInfo *info);
 //
-//static JSBool boxed_set_field_from_value(JSContext   *context,
+//static JSBool boxed_set_field_from_value(JSContextRef   context,
 //                                         Boxed       *priv,
 //                                         GIFieldInfo *field_info,
 //                                         jsval        value);
@@ -69,8 +69,8 @@
 //GWKJS_DEFINE_PRIV_FROM_JS(Boxed, gwkjs_boxed_class)
 //
 //static JSBool
-//gwkjs_define_static_methods(JSContext    *context,
-//                          JSObject     *constructor,
+//gwkjs_define_static_methods(JSContextRef    context,
+//                          JSObjectRef     constructor,
 //                          GType         gtype,
 //                          GIStructInfo *boxed_info)
 //{
@@ -117,7 +117,7 @@
 // * if id was resolved.
 // */
 //static JSBool
-//boxed_new_resolve(JSContext *context,
+//boxed_new_resolve(JSContextRef context,
 //                  JS::HandleObject obj,
 //                  JS::HandleId id,
 //                  unsigned flags,
@@ -145,7 +145,7 @@
 //                                                name);
 //
 //        if (method_info != NULL) {
-//            JSObject *boxed_proto;
+//            JSObjectRef boxed_proto;
 //            const char *method_name;
 //
 //#if GWKJS_VERBOSE_ENABLE_GI_USAGE
@@ -193,7 +193,7 @@
 // * and if so, retrieves the Boxed private structure for it.
 // */
 //static JSBool
-//boxed_get_copy_source(JSContext *context,
+//boxed_get_copy_source(JSContextRef context,
 //                      Boxed     *priv,
 //                      jsval      value,
 //                      Boxed    **source_priv_out)
@@ -255,13 +255,13 @@
 // * of the object be set.
 // */
 //static JSBool
-//boxed_init_from_props(JSContext   *context,
-//                      JSObject    *obj,
+//boxed_init_from_props(JSContextRef   context,
+//                      JSObjectRef    obj,
 //                      Boxed       *priv,
 //                      jsval        props_value)
 //{
-//    JSObject *props;
-//    JSObject *iter;
+//    JSObjectRef props;
+//    JSObjectRef iter;
 //    jsid prop_id;
 //    GHashTable *field_map;
 //    gboolean success;
@@ -326,8 +326,8 @@
 //}
 //
 //static JSBool
-//boxed_invoke_constructor(JSContext   *context,
-//                         JSObject    *obj,
+//boxed_invoke_constructor(JSContextRef   context,
+//                         JSObjectRef    obj,
 //                         jsid         constructor_name,
 //                         unsigned     argc,
 //                         jsval       *argv,
@@ -348,8 +348,8 @@
 //}
 //
 //static JSBool
-//boxed_new(JSContext   *context,
-//          JSObject    *obj, /* "this" for constructor */
+//boxed_new(JSContextRef   context,
+//          JSObjectRef    obj, /* "this" for constructor */
 //          Boxed       *priv,
 //          unsigned     argc,
 //          jsval       *argv,
@@ -429,7 +429,7 @@
 //    GWKJS_NATIVE_CONSTRUCTOR_VARIABLES(boxed)
 //    Boxed *priv;
 //    Boxed *proto_priv;
-//    JSObject *proto;
+//    JSObjectRef proto;
 //    Boxed *source_priv;
 //    jsval actual_rval;
 //    JSBool retval;
@@ -506,7 +506,7 @@
 //
 //static void
 //boxed_finalize(JSFreeOp *fop,
-//               JSObject *obj)
+//               JSObjectRef obj)
 //{
 //    Boxed *priv;
 //
@@ -541,7 +541,7 @@
 //}
 //
 //static GIFieldInfo *
-//get_field_info (JSContext *context,
+//get_field_info (JSContextRef context,
 //                Boxed     *priv,
 //                jsid       id)
 //{
@@ -568,16 +568,16 @@
 //}
 //
 //static JSBool
-//get_nested_interface_object (JSContext   *context,
-//                             JSObject    *parent_obj,
+//get_nested_interface_object (JSContextRef   context,
+//                             JSObjectRef    parent_obj,
 //                             Boxed       *parent_priv,
 //                             GIFieldInfo *field_info,
 //                             GITypeInfo  *type_info,
 //                             GIBaseInfo  *interface_info,
 //                             jsval       *value)
 //{
-//    JSObject *obj;
-//    JSObject *proto;
+//    JSObjectRef obj;
+//    JSObjectRef proto;
 //    int offset;
 //    Boxed *priv;
 //    Boxed *proto_priv;
@@ -625,7 +625,7 @@
 //}
 //
 //static JSBool
-//boxed_field_getter (JSContext              *context,
+//boxed_field_getter (JSContextRef              context,
 //                    JS::HandleObject        obj,
 //                    JS::HandleId            id,
 //                    JS::MutableHandleValue  value)
@@ -696,14 +696,14 @@
 //}
 //
 //static JSBool
-//set_nested_interface_object (JSContext   *context,
+//set_nested_interface_object (JSContextRef   context,
 //                             Boxed       *parent_priv,
 //                             GIFieldInfo *field_info,
 //                             GITypeInfo  *type_info,
 //                             GIBaseInfo  *interface_info,
 //                             jsval        value)
 //{
-//    JSObject *proto;
+//    JSObjectRef proto;
 //    int offset;
 //    Boxed *proto_priv;
 //    Boxed *source_priv;
@@ -723,7 +723,7 @@
 //     * to construct a new temporary object.
 //     */
 //    if (!boxed_get_copy_source(context, proto_priv, value, &source_priv)) {
-//        JSObject *tmp_object = gwkjs_construct_object_dynamic(context, proto, 1, &value);
+//        JSObjectRef tmp_object = gwkjs_construct_object_dynamic(context, proto, 1, &value);
 //        if (!tmp_object)
 //            return JS_FALSE;
 //
@@ -741,7 +741,7 @@
 //}
 //
 //static JSBool
-//boxed_set_field_from_value(JSContext   *context,
+//boxed_set_field_from_value(JSContextRef   context,
 //                           Boxed       *priv,
 //                           GIFieldInfo *field_info,
 //                           jsval        value)
@@ -805,7 +805,7 @@
 //}
 //
 //static JSBool
-//boxed_field_setter (JSContext              *context,
+//boxed_field_setter (JSContextRef              context,
 //                    JS::HandleObject        obj,
 //                    JS::HandleId            id,
 //                    JSBool                  strict,
@@ -838,9 +838,9 @@
 //}
 //
 //static JSBool
-//define_boxed_class_fields (JSContext *context,
+//define_boxed_class_fields (JSContextRef context,
 //                           Boxed     *priv,
-//                           JSObject  *proto)
+//                           JSObjectRef  proto)
 //{
 //    int n_fields = g_struct_info_get_n_fields (priv->info);
 //    int i;
@@ -891,12 +891,12 @@
 //}
 //
 //static JSBool
-//to_string_func(JSContext *context,
+//to_string_func(JSContextRef context,
 //               unsigned   argc,
 //               jsval     *vp)
 //{
 //    JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-//    JSObject *obj = JSVAL_TO_OBJECT(rec.thisv());
+//    JSObjectRef obj = JSVAL_TO_OBJECT(rec.thisv());
 //
 //    Boxed *priv;
 //    JSBool ret = JS_FALSE;
@@ -1067,7 +1067,7 @@
 //}
 //
 //static void
-//boxed_fill_prototype_info(JSContext *context,
+//boxed_fill_prototype_info(JSContextRef context,
 //                          Boxed     *priv)
 //{
 //    int i, n_methods;
@@ -1133,13 +1133,13 @@
 //}
 //
 //void
-//gwkjs_define_boxed_class(JSContext    *context,
-//                       JSObject     *in_object,
+//gwkjs_define_boxed_class(JSContextRef    context,
+//                       JSObjectRef     in_object,
 //                       GIBoxedInfo  *info)
 //{
 //    const char *constructor_name;
-//    JSObject *prototype;
-//    JSObject *constructor;
+//    JSObjectRef prototype;
+//    JSObjectRef constructor;
 //    jsval value;
 //    Boxed *priv;
 //
@@ -1193,13 +1193,13 @@
 //}
 //
 //JSObject*
-//gwkjs_boxed_from_c_struct(JSContext             *context,
+//gwkjs_boxed_from_c_struct(JSContextRef             context,
 //                        GIStructInfo          *info,
 //                        void                  *gboxed,
 //                        GwkjsBoxedCreationFlags  flags)
 //{
-//    JSObject *obj;
-//    JSObject *proto;
+//    JSObjectRef obj;
+//    JSObjectRef proto;
 //    Boxed *priv;
 //    Boxed *proto_priv;
 //
@@ -1251,8 +1251,8 @@
 //}
 //
 //void*
-//gwkjs_c_struct_from_boxed(JSContext    *context,
-//                        JSObject     *obj)
+//gwkjs_c_struct_from_boxed(JSContextRef    context,
+//                        JSObjectRef     obj)
 //{
 //    Boxed *priv;
 //
@@ -1267,8 +1267,8 @@
 //}
 //
 //JSBool
-//gwkjs_typecheck_boxed(JSContext     *context,
-//                    JSObject      *object,
+//gwkjs_typecheck_boxed(JSContextRef     context,
+//                    JSObjectRef      object,
 //                    GIStructInfo  *expected_info,
 //                    GType          expected_type,
 //                    JSBool         throw_error)

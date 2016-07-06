@@ -30,8 +30,8 @@
 
 typedef struct {
     void            *dummy;
-    JSContext       *context;
-    JSObject        *object;
+    JSContextRef       context;
+    JSObjectRef        object;
     cairo_pattern_t *pattern;
 } GwkjsCairoPattern;
 
@@ -40,7 +40,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(GwkjsCairoPattern, gwkjs_cairo_pattern_class)
 
 static void
 gwkjs_cairo_pattern_finalize(JSFreeOp *fop,
-                           JSObject *obj)
+                           JSObjectRef obj)
 {
     GwkjsCairoPattern *priv;
     priv = (GwkjsCairoPattern*) JS_GetPrivate(obj);
@@ -58,12 +58,12 @@ JSPropertySpec gwkjs_cairo_pattern_proto_props[] = {
 /* Methods */
 
 static JSBool
-getType_func(JSContext *context,
+getType_func(JSContextRef context,
              unsigned   argc,
              jsval     *vp)
 {
     JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-    JSObject *obj = JSVAL_TO_OBJECT(rec.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(rec.thisv());
 
     cairo_pattern_t *pattern;
     cairo_pattern_type_t type;
@@ -104,8 +104,8 @@ JSFunctionSpec gwkjs_cairo_pattern_proto_funcs[] = {
  * This is mainly used for subclasses where object is already created.
  */
 void
-gwkjs_cairo_pattern_construct(JSContext       *context,
-                            JSObject        *object,
+gwkjs_cairo_pattern_construct(JSContextRef       context,
+                            JSObjectRef        object,
                             cairo_pattern_t *pattern)
 {
     GwkjsCairoPattern *priv;
@@ -136,7 +136,7 @@ gwkjs_cairo_pattern_construct(JSContext       *context,
 
 void
 gwkjs_cairo_pattern_finalize_pattern(JSFreeOp *fop,
-                                   JSObject *object)
+                                   JSObjectRef object)
 {
     g_return_if_fail(fop != NULL);
     g_return_if_fail(object != NULL);
@@ -153,8 +153,8 @@ gwkjs_cairo_pattern_finalize_pattern(JSFreeOp *fop,
  * A reference to @pattern will be taken.
  *
  */
-JSObject *
-gwkjs_cairo_pattern_from_pattern(JSContext       *context,
+JSObjectRef 
+gwkjs_cairo_pattern_from_pattern(JSContextRef       context,
                                cairo_pattern_t *pattern)
 {
     g_return_val_if_fail(context != NULL, NULL);
@@ -187,8 +187,8 @@ gwkjs_cairo_pattern_from_pattern(JSContext       *context,
  *
  */
 cairo_pattern_t *
-gwkjs_cairo_pattern_get_pattern(JSContext *context,
-                              JSObject  *object)
+gwkjs_cairo_pattern_get_pattern(JSContextRef context,
+                              JSObjectRef  object)
 {
     GwkjsCairoPattern *priv;
 

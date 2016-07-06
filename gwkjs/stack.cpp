@@ -48,14 +48,14 @@
 //#include "jsapi-util.h"
 //
 //JSBool
-//gwkjs_context_get_frame_info (JSContext  *context,
+//gwkjs_context_get_frame_info (JSContextRef  context,
 //                            jsval      *stack,
 //                            jsval      *fileName,
 //                            jsval      *lineNumber)
 //{
 //    jsval v_constructor;
-//    JSObject *err_obj;
-//    JSObject *global;
+//    JSObjectRef err_obj;
+//    JSObjectRef global;
 //    JSBool ret = JS_FALSE;
 //
 //    JS_BeginRequest(context);
@@ -98,7 +98,7 @@
 //void
 //gwkjs_context_print_stack_stderr(GwkjsContext *context)
 //{
-//    JSContext *cx = (JSContext*) gwkjs_context_get_native_context(context);
+//    JSContextRef cx = (JSContext*) gwkjs_context_get_native_context(context);
 //    jsval v_stack;
 //    char *stack;
 //

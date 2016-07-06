@@ -54,7 +54,7 @@ gwkjs_throw_valist(JSContextRef  context,
 //    char *s;
 //    JSBool result;
 //    jsval v_constructor, v_message;
-//    JSObject *err_obj;
+//    JSObjectRef err_obj;
 //
 //    s = g_strdup_vprintf(format, args);
 //
@@ -138,7 +138,7 @@ gwkjs_throw(JSContextRef  context,
 // * error.
 // */
 //void
-//gwkjs_throw_custom(JSContext       *context,
+//gwkjs_throw_custom(JSContextRef       context,
 //                 const char      *error_class,
 //                 const char      *format,
 //                 ...)
@@ -157,7 +157,7 @@ gwkjs_throw(JSContextRef  context,
 // * a format string.
 // */
 //void
-//gwkjs_throw_literal(JSContext       *context,
+//gwkjs_throw_literal(JSContextRef       context,
 //                  const char      *string)
 //{
 //    gwkjs_throw(context, "%s", string);
@@ -172,10 +172,10 @@ gwkjs_throw(JSContextRef  context,
 // * to report errors from C functions.
 // */
 //void
-//gwkjs_throw_g_error (JSContext       *context,
+//gwkjs_throw_g_error (JSContextRef       context,
 //                   GError          *error)
 //{
-//    JSObject *err_obj;
+//    JSObjectRef err_obj;
 //
 //    if (error == NULL)
 //        return;

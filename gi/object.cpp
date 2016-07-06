@@ -98,7 +98,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //
 //static JSObject*       peek_js_obj  (GObject   *gobj);
 //static void            set_js_obj   (GObject   *gobj,
-//                                     JSObject  *obj);
+//                                     JSObjectRef  obj);
 //
 //static void            disassociate_js_gobject (GObject *gobj);
 //static void            invalidate_all_signals (ObjectInstance *priv);
@@ -174,7 +174,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //}
 //
 //static void
-//throw_priv_is_null_error(JSContext *context)
+//throw_priv_is_null_error(JSContextRef context)
 //{
 //    gwkjs_throw(context,
 //              "This JS object wrapper isn't wrapping a GObject."
@@ -183,7 +183,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //}
 //
 //static ValueFromPropertyResult
-//init_g_param_from_property(JSContext  *context,
+//init_g_param_from_property(JSContextRef  context,
 //                           const char *js_prop_name,
 //                           jsval       js_value,
 //                           GType       gtype,
@@ -239,10 +239,10 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //}
 //
 //static inline ObjectInstance *
-//proto_priv_from_js(JSContext *context,
-//                   JSObject  *obj)
+//proto_priv_from_js(JSContextRef context,
+//                   JSObjectRef  obj)
 //{
-//    JSObject *proto;
+//    JSObjectRef proto;
 //    JS_GetPrototype(context, obj, &proto);
 //    return priv_from_js(context, proto);
 //}
@@ -251,7 +251,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 // * Return value is JS_FALSE on OOM/exception.
 // */
 //static JSBool
-//object_instance_get_prop(JSContext              *context,
+//object_instance_get_prop(JSContextRef              context,
 //                         JS::HandleObject        obj,
 //                         JS::HandleId            id,
 //                         JS::MutableHandleValue  value_p)
@@ -321,7 +321,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 // * be set. Return value is JS_FALSE on OOM/exception.
 // */
 //static JSBool
-//object_instance_set_prop(JSContext              *context,
+//object_instance_set_prop(JSContextRef              context,
 //                         JS::HandleObject        obj,
 //                         JS::HandleId            id,
 //                         JSBool                  strict,
@@ -437,7 +437,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //}
 //
 //static JSBool
-//object_instance_new_resolve_no_info(JSContext       *context,
+//object_instance_new_resolve_no_info(JSContextRef       context,
 //                                    JS::HandleObject obj,
 //                                    JS::MutableHandleObject objp,
 //                                    ObjectInstance  *priv,
@@ -503,7 +503,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 // * if id was resolved.
 // */
 //static JSBool
-//object_instance_new_resolve(JSContext *context,
+//object_instance_new_resolve(JSContextRef context,
 //                            JS::HandleObject obj,
 //                            JS::HandleId id,
 //                            unsigned flags,
@@ -665,16 +665,16 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 // * a hash)
 // */
 //static JSBool
-//object_instance_props_to_g_parameters(JSContext   *context,
-//                                      JSObject    *obj,
+//object_instance_props_to_g_parameters(JSContextRef   context,
+//                                      JSObjectRef    obj,
 //                                      unsigned     argc,
 //                                      jsval       *argv,
 //                                      GType        gtype,
 //                                      GParameter **gparams_p,
 //                                      int         *n_gparams_p)
 //{
-//    JSObject *props;
-//    JSObject *iter;
+//    JSObjectRef props;
+//    JSObjectRef iter;
 //    jsid prop_id;
 //    GArray *gparams;
 //
@@ -772,7 +772,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //#endif
 //
 //static void
-//gobj_no_longer_kept_alive_func(JSObject *obj,
+//gobj_no_longer_kept_alive_func(JSObjectRef obj,
 //                               void     *data)
 //{
 //    ObjectInstance *priv;
@@ -848,7 +848,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //handle_toggle_down(GObject *gobj)
 //{
 //    ObjectInstance *priv;
-//    JSObject *obj;
+//    JSObjectRef obj;
 //
 //    obj = peek_js_obj(gobj);
 //
@@ -875,7 +875,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //handle_toggle_up(GObject   *gobj)
 //{
 //    ObjectInstance *priv;
-//    JSObject *obj;
+//    JSObjectRef obj;
 //
 //    /* We need to root the JSObject associated with the passed in GObject so it
 //     * doesn't get garbage collected (and lose any associated javascript state
@@ -1003,7 +1003,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //    gboolean is_main_thread, is_sweeping;
 //    gboolean toggle_up_queued, toggle_down_queued;
 //    GwkjsContext *context;
-//    JSContext *js_context;
+//    JSContextRef js_context;
 //
 //    context = gwkjs_context_get_current();
 //    if (_gwkjs_context_destroying(context)) {
@@ -1085,7 +1085,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //                        G_OBJECT_TYPE_NAME(gobj));
 //            }
 //            if (is_sweeping) {
-//                JSObject *object;
+//                JSObjectRef object;
 //
 //                object = peek_js_obj(gobj);
 //                if (JS_IsAboutToBeFinalized(&object)) {
@@ -1115,11 +1115,11 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 // * pending toggle references.
 // */
 //void
-//gwkjs_object_prepare_shutdown (JSContext *context)
+//gwkjs_object_prepare_shutdown (JSContextRef context)
 //{
-//    JSObject *keep_alive = gwkjs_keep_alive_get_global_if_exists (context);
+//    JSObjectRef keep_alive = gwkjs_keep_alive_get_global_if_exists (context);
 //    GwkjsKeepAliveIter kiter;
-//    JSObject *child;
+//    JSObjectRef child;
 //    void *data;
 //
 //    if (!keep_alive)
@@ -1147,8 +1147,8 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //}
 //
 //static ObjectInstance *
-//init_object_private (JSContext *context,
-//                     JSObject  *object)
+//init_object_private (JSContextRef context,
+//                     JSObjectRef  object)
 //{
 //    ObjectInstance *proto_priv;
 //    ObjectInstance *priv;
@@ -1178,8 +1178,8 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //}
 //
 //static void
-//associate_js_gobject (JSContext      *context,
-//                      JSObject       *object,
+//associate_js_gobject (JSContextRef      context,
+//                      JSObjectRef       object,
 //                      GObject        *gobj)
 //{
 //    ObjectInstance *priv;
@@ -1217,7 +1217,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //static void
 //disassociate_js_gobject (GObject   *gobj)
 //{
-//    JSObject *object;
+//    JSObjectRef object;
 //    ObjectInstance *priv;
 //
 //    object = peek_js_obj(gobj);
@@ -1240,8 +1240,8 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //}
 //
 //static JSBool
-//object_instance_init (JSContext *context,
-//                      JSObject **object,
+//object_instance_init (JSContextRef context,
+//                      JSObjectRef *object,
 //                      unsigned   argc,
 //                      jsval     *argv)
 //{
@@ -1250,7 +1250,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //    GParameter *params;
 //    int n_params;
 //    GTypeQuery query;
-//    JSObject *old_jsobj;
+//    JSObjectRef old_jsobj;
 //    GObject *gobj;
 //
 //    priv = (ObjectInstance *) JS_GetPrivate(*object);
@@ -1379,7 +1379,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //
 //static void
 //object_instance_trace(JSTracer *tracer,
-//                      JSObject *obj)
+//                      JSObjectRef obj)
 //{
 //    ObjectInstance *priv;
 //    GList *iter;
@@ -1395,7 +1395,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //
 //static void
 //object_instance_finalize(JSFreeOp  *fop,
-//                         JSObject  *obj)
+//                         JSObjectRef  obj)
 //{
 //    ObjectInstance *priv;
 //
@@ -1467,13 +1467,13 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //    g_slice_free(ObjectInstance, priv);
 //}
 //
-//static JSObject *
-//gwkjs_lookup_object_constructor_from_info(JSContext    *context,
+//static JSObjectRef 
+//gwkjs_lookup_object_constructor_from_info(JSContextRef    context,
 //                                        GIObjectInfo *info,
 //                                        GType         gtype)
 //{
-//    JSObject *in_object;
-//    JSObject *constructor;
+//    JSObjectRef in_object;
+//    JSObjectRef constructor;
 //    const char *constructor_name;
 //    jsval value;
 //
@@ -1508,12 +1508,12 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //    return constructor;
 //}
 //
-//static JSObject *
-//gwkjs_lookup_object_prototype_from_info(JSContext    *context,
+//static JSObjectRef 
+//gwkjs_lookup_object_prototype_from_info(JSContextRef    context,
 //                                      GIObjectInfo *info,
 //                                      GType         gtype)
 //{
-//    JSObject *constructor;
+//    JSObjectRef constructor;
 //    jsval value;
 //
 //    constructor = gwkjs_lookup_object_constructor_from_info(context, info, gtype);
@@ -1531,12 +1531,12 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //    return JSVAL_TO_OBJECT(value);
 //}
 //
-//static JSObject *
-//gwkjs_lookup_object_prototype(JSContext *context,
+//static JSObjectRef 
+//gwkjs_lookup_object_prototype(JSContextRef context,
 //                            GType      gtype)
 //{
 //    GIObjectInfo *info;
-//    JSObject *proto;
+//    JSObjectRef proto;
 //
 //    info = (GIObjectInfo*)g_irepository_find_by_gtype(g_irepository_get_default(), gtype);
 //    proto = gwkjs_lookup_object_prototype_from_info(context, info, gtype);
@@ -1558,13 +1558,13 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //}
 //
 //static JSBool
-//real_connect_func(JSContext *context,
+//real_connect_func(JSContextRef context,
 //                  unsigned   argc,
 //                  jsval     *vp,
 //                  gboolean  after)
 //{
 //    JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-//    JSObject *obj = JSVAL_TO_OBJECT(argv.thisv());
+//    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
 //
 //    ObjectInstance *priv;
 //    GClosure *closure;
@@ -1653,7 +1653,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //}
 //
 //static JSBool
-//connect_after_func(JSContext *context,
+//connect_after_func(JSContextRef context,
 //                   unsigned   argc,
 //                   jsval     *vp)
 //{
@@ -1661,7 +1661,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //}
 //
 //static JSBool
-//connect_func(JSContext *context,
+//connect_func(JSContextRef context,
 //             unsigned   argc,
 //             jsval     *vp)
 //{
@@ -1669,12 +1669,12 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //}
 //
 //static JSBool
-//emit_func(JSContext *context,
+//emit_func(JSContextRef context,
 //          unsigned   argc,
 //          jsval     *vp)
 //{
 //    JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-//    JSObject *obj = JSVAL_TO_OBJECT(argv.thisv());
+//    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
 //
 //    ObjectInstance *priv;
 //    guint signal_id;
@@ -1793,12 +1793,12 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //}
 //
 //static JSBool
-//to_string_func(JSContext *context,
+//to_string_func(JSContextRef context,
 //               unsigned   argc,
 //               jsval     *vp)
 //{
 //    JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-//    JSObject *obj = JSVAL_TO_OBJECT(rec.thisv());
+//    JSObjectRef obj = JSVAL_TO_OBJECT(rec.thisv());
 //
 //    ObjectInstance *priv;
 //    JSBool ret = JS_FALSE;
@@ -1845,12 +1845,12 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //};
 //
 //static JSBool
-//init_func (JSContext *context,
+//init_func (JSContextRef context,
 //           unsigned   argc,
 //           jsval     *vp)
 //{
 //    JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-//    JSObject *obj = JSVAL_TO_OBJECT(argv.thisv());
+//    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
 //
 //    JSBool ret;
 //
@@ -1879,8 +1879,8 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //};
 //
 //JSBool
-//gwkjs_object_define_static_methods(JSContext    *context,
-//                                 JSObject     *constructor,
+//gwkjs_object_define_static_methods(JSContextRef    context,
+//                                 JSObjectRef     constructor,
 //                                 GType         gtype,
 //                                 GIObjectInfo *object_info)
 //{
@@ -1935,17 +1935,17 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //}
 //
 //void
-//gwkjs_define_object_class(JSContext      *context,
-//                        JSObject       *in_object,
+//gwkjs_define_object_class(JSContextRef      context,
+//                        JSObjectRef       in_object,
 //                        GIObjectInfo   *info,
 //                        GType           gtype,
-//                        JSObject      **constructor_p)
+//                        JSObjectRef      *constructor_p)
 //{
 //    const char *constructor_name;
-//    JSObject *prototype;
-//    JSObject *constructor;
-//    JSObject *parent_proto;
-//    JSObject *global;
+//    JSObjectRef prototype;
+//    JSObjectRef constructor;
+//    JSObjectRef parent_proto;
+//    JSObjectRef global;
 //
 //    jsval value;
 //    ObjectInstance *priv;
@@ -2047,7 +2047,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //static JSObject*
 //peek_js_obj(GObject *gobj)
 //{
-//    JSObject *object = (JSObject*) g_object_get_qdata(gobj, gwkjs_object_priv_quark());
+//    JSObjectRef object = (JSObject*) g_object_get_qdata(gobj, gwkjs_object_priv_quark());
 //
 //    if (G_UNLIKELY (object == (JSObject*)(-1))) {
 //        g_critical ("Object %p (a %s) resurfaced after the JS wrapper was finalized. "
@@ -2061,17 +2061,17 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //
 //static void
 //set_js_obj(GObject  *gobj,
-//           JSObject *obj)
+//           JSObjectRef obj)
 //{
 //    g_object_set_qdata(gobj, gwkjs_object_priv_quark(), obj);
 //}
 //
 //JSObject*
-//gwkjs_object_from_g_object(JSContext    *context,
+//gwkjs_object_from_g_object(JSContextRef    context,
 //                         GObject      *gobj)
 //{
-//    JSObject *obj;
-//    JSObject *global;
+//    JSObjectRef obj;
+//    JSObjectRef global;
 //
 //    if (gobj == NULL)
 //        return NULL;
@@ -2080,7 +2080,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //
 //    if (obj == NULL) {
 //        /* We have to create a wrapper */
-//        JSObject *proto;
+//        JSObjectRef proto;
 //        GType gtype;
 //
 //        gwkjs_debug_marshal(GWKJS_DEBUG_GOBJECT,
@@ -2126,16 +2126,16 @@ gwkjs_g_object_from_object(JSContextRef    context,
 }
 
 //JSBool
-//gwkjs_typecheck_is_object(JSContext     *context,
-//                        JSObject      *object,
+//gwkjs_typecheck_is_object(JSContextRef     context,
+//                        JSObjectRef      object,
 //                        JSBool         throw_error)
 //{
 //    return do_base_typecheck(context, object, throw_error);
 //}
 //
 //JSBool
-//gwkjs_typecheck_object(JSContext     *context,
-//                     JSObject      *object,
+//gwkjs_typecheck_object(JSContextRef     context,
+//                     JSObjectRef      object,
 //                     GType          expected_type,
 //                     JSBool         throw_error)
 //{
@@ -2195,7 +2195,7 @@ gwkjs_g_object_from_object(JSContextRef    context,
 //
 //
 //static void
-//find_vfunc_info (JSContext *context,
+//find_vfunc_info (JSContextRef context,
 //                 GType implementor_gtype,
 //                 GIBaseInfo *vfunc_info,
 //                 gchar *vfunc_name,
@@ -2270,14 +2270,14 @@ gwkjs_g_object_from_object(JSContextRef    context,
 //}
 //
 //static JSBool
-//gwkjs_hook_up_vfunc(JSContext *cx,
+//gwkjs_hook_up_vfunc(JSContextRef cx,
 //                  unsigned   argc,
 //                  jsval     *vp)
 //{
 //    JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
 //    gchar *name;
-//    JSObject *object;
-//    JSObject *function;
+//    JSObjectRef object;
+//    JSObjectRef function;
 //    ObjectInstance *priv;
 //    GType gtype, info_gtype;
 //    GIObjectInfo *info;
@@ -2399,8 +2399,8 @@ gwkjs_g_object_from_object(JSContextRef    context,
 //                          GParamSpec *pspec)
 //{
 //    GwkjsContext *gwkjs_context;
-//    JSContext *context;
-//    JSObject *js_obj;
+//    JSContextRef context;
+//    JSObjectRef js_obj;
 //    jsval jsvalue;
 //    gchar *underscore_name;
 //
@@ -2418,8 +2418,8 @@ gwkjs_g_object_from_object(JSContextRef    context,
 //}
 //
 //static void
-//jsobj_set_gproperty (JSContext    *context,
-//                     JSObject     *object,
+//jsobj_set_gproperty (JSContextRef    context,
+//                     JSObjectRef     object,
 //                     const GValue *value,
 //                     GParamSpec   *pspec)
 //{
@@ -2454,8 +2454,8 @@ gwkjs_g_object_from_object(JSContextRef    context,
 //        gobj = G_OBJECT_CLASS(g_type_class_peek(parent_type))->constructor(type, n_construct_properties, construct_properties);
 //    } else {
 //        GwkjsContext *gwkjs_context;
-//        JSContext *context;
-//        JSObject *object, *constructor;
+//        JSContextRef context;
+//        JSObjectRef object, *constructor;
 //        ObjectInstance *priv;
 //
 //        /* The object is being constructed from native code (e.g. GtkBuilder):
@@ -2472,7 +2472,7 @@ gwkjs_g_object_from_object(JSContextRef    context,
 //          goto out;
 //
 //        if (n_construct_properties) {
-//            JSObject *args;
+//            JSObjectRef args;
 //            jsval argv;
 //            guint i;
 //
@@ -2512,8 +2512,8 @@ gwkjs_g_object_from_object(JSContextRef    context,
 //                          GParamSpec   *pspec)
 //{
 //    GwkjsContext *gwkjs_context;
-//    JSContext *context;
-//    JSObject *js_obj;
+//    JSContextRef context;
+//    JSObjectRef js_obj;
 //
 //    gwkjs_context = gwkjs_context_get_current();
 //    context = (JSContext*) gwkjs_context_get_native_context(gwkjs_context);
@@ -2523,13 +2523,13 @@ gwkjs_g_object_from_object(JSContextRef    context,
 //}
 //
 //static JSBool
-//gwkjs_override_property(JSContext *cx,
+//gwkjs_override_property(JSContextRef cx,
 //                      unsigned   argc,
 //                      jsval     *vp)
 //{
 //    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 //    gchar *name = NULL;
-//    JSObject *type;
+//    JSObjectRef type;
 //    GParamSpec *pspec;
 //    GParamSpec *new_pspec;
 //    GType gtype;
@@ -2631,8 +2631,8 @@ gwkjs_g_object_from_object(JSContextRef    context,
 //                       gpointer       klass)
 //{
 //    GwkjsContext *gwkjs_context;
-//    JSContext *context;
-//    JSObject *object;
+//    JSContextRef context;
+//    JSObjectRef object;
 //    ObjectInstance *priv;
 //    jsval v, r;
 //
@@ -2683,9 +2683,9 @@ gwkjs_g_object_from_object(JSContextRef    context,
 //}
 //
 //static gboolean
-//validate_interfaces_and_properties_args(JSContext *cx,
-//                                        JSObject  *interfaces,
-//                                        JSObject  *properties,
+//validate_interfaces_and_properties_args(JSContextRef cx,
+//                                        JSObjectRef  interfaces,
+//                                        JSObjectRef  properties,
 //                                        guint32   *n_interfaces,
 //                                        guint32   *n_properties)
 //{
@@ -2715,8 +2715,8 @@ gwkjs_g_object_from_object(JSContextRef    context,
 //}
 //
 //static gboolean
-//get_interface_gtypes(JSContext *cx,
-//                     JSObject  *interfaces,
+//get_interface_gtypes(JSContextRef cx,
+//                     JSObjectRef  interfaces,
 //                     guint32   n_interfaces,
 //                     GType    *iface_types)
 //{
@@ -2746,8 +2746,8 @@ gwkjs_g_object_from_object(JSContextRef    context,
 //}
 //
 //static gboolean
-//save_properties_for_class_init(JSContext *cx,
-//                               JSObject  *properties,
+//save_properties_for_class_init(JSContextRef cx,
+//                               JSObjectRef  properties,
 //                               guint32    n_properties,
 //                               GType      gtype)
 //{
@@ -2785,13 +2785,13 @@ gwkjs_g_object_from_object(JSContextRef    context,
 //}
 //
 //static JSBool
-//gwkjs_register_interface(JSContext *cx,
+//gwkjs_register_interface(JSContextRef cx,
 //                       unsigned   argc,
 //                       jsval     *vp)
 //{
 //    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 //    char *name = NULL;
-//    JSObject *constructor, *interfaces, *properties, *module;
+//    JSObjectRef constructor, *interfaces, *properties, *module;
 //    guint32 i, n_interfaces, n_properties;
 //    GType *iface_types;
 //    GType interface_type;
@@ -2864,13 +2864,13 @@ gwkjs_g_object_from_object(JSContextRef    context,
 //}
 //
 //static JSBool
-//gwkjs_register_type(JSContext *cx,
+//gwkjs_register_type(JSContextRef cx,
 //                  unsigned   argc,
 //                  jsval     *vp)
 //{
 //    JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
 //    gchar *name;
-//    JSObject *parent, *constructor, *interfaces, *properties, *module;
+//    JSObjectRef parent, *constructor, *interfaces, *properties, *module;
 //    GType instance_type, parent_type;
 //    GTypeQuery query;
 //    GTypeModule *type_module;
@@ -2973,12 +2973,12 @@ gwkjs_g_object_from_object(JSContextRef    context,
 //}
 //
 //static JSBool
-//gwkjs_signal_new(JSContext *cx,
+//gwkjs_signal_new(JSContextRef cx,
 //               unsigned   argc,
 //               jsval     *vp)
 //{
 //    JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-//    JSObject *obj;
+//    JSObjectRef obj;
 //    GType gtype;
 //    gchar *signal_name = NULL;
 //    GSignalAccumulator accumulator;
@@ -3073,10 +3073,10 @@ gwkjs_g_object_from_object(JSContextRef    context,
 //};
 //
 //JSBool
-//gwkjs_define_private_gi_stuff(JSContext *context,
-//                            JSObject **module_out)
+//gwkjs_define_private_gi_stuff(JSContextRef context,
+//                            JSObjectRef *module_out)
 //{
-//    JSObject *module;
+//    JSObjectRef module;
 //
 //    module = JS_NewObject (context, NULL, NULL, NULL);
 //
@@ -3089,11 +3089,11 @@ gwkjs_g_object_from_object(JSContextRef    context,
 //}
 //
 //JSBool
-//gwkjs_lookup_object_constructor(JSContext *context,
+//gwkjs_lookup_object_constructor(JSContextRef context,
 //                              GType      gtype,
 //                              jsval     *value_p)
 //{
-//    JSObject *constructor;
+//    JSObjectRef constructor;
 //    GIObjectInfo *object_info;
 //
 //    object_info = (GIObjectInfo*)g_irepository_find_by_gtype(NULL, gtype);

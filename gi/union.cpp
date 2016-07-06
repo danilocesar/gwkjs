@@ -63,7 +63,7 @@
 // * if id was resolved.
 // */
 //static JSBool
-//union_new_resolve(JSContext *context,
+//union_new_resolve(JSContextRef context,
 //                  JS::HandleObject obj,
 //                  JS::HandleId id,
 //                  unsigned flags,
@@ -93,7 +93,7 @@
 //                                               name);
 //
 //        if (method_info != NULL) {
-//            JSObject *union_proto;
+//            JSObjectRef union_proto;
 //            const char *method_name;
 //
 //#if GWKJS_VERBOSE_ENABLE_GI_USAGE
@@ -139,8 +139,8 @@
 //}
 //
 //static void*
-//union_new(JSContext   *context,
-//          JSObject    *obj, /* "this" for constructor */
+//union_new(JSContextRef   context,
+//          JSObjectRef    obj, /* "this" for constructor */
 //          GIUnionInfo *info)
 //{
 //    int n_methods;
@@ -192,7 +192,7 @@
 //    GWKJS_NATIVE_CONSTRUCTOR_VARIABLES(union)
 //    Union *priv;
 //    Union *proto_priv;
-//    JSObject *proto;
+//    JSObjectRef proto;
 //    void *gboxed;
 //
 //    GWKJS_NATIVE_CONSTRUCTOR_PRELUDE(union);
@@ -254,7 +254,7 @@
 //
 //static void
 //union_finalize(JSFreeOp *fop,
-//               JSObject *obj)
+//               JSObjectRef obj)
 //{
 //    Union *priv;
 //
@@ -280,12 +280,12 @@
 //}
 //
 //static JSBool
-//to_string_func(JSContext *context,
+//to_string_func(JSContextRef context,
 //               unsigned   argc,
 //               jsval     *vp)
 //{
 //    JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-//    JSObject *obj = JSVAL_TO_OBJECT(rec.thisv());
+//    JSObjectRef obj = JSVAL_TO_OBJECT(rec.thisv());
 //
 //    Union *priv;
 //    JSBool ret = JS_FALSE;
@@ -335,16 +335,16 @@
 //};
 //
 //JSBool
-//gwkjs_define_union_class(JSContext    *context,
-//                       JSObject     *in_object,
+//gwkjs_define_union_class(JSContextRef    context,
+//                       JSObjectRef     in_object,
 //                       GIUnionInfo  *info)
 //{
 //    const char *constructor_name;
-//    JSObject *prototype;
+//    JSObjectRef prototype;
 //    jsval value;
 //    Union *priv;
 //    GType gtype;
-//    JSObject *constructor;
+//    JSObjectRef constructor;
 //
 //    /* For certain unions, we may be able to relax this in the future by
 //     * directly allocating union memory, as we do for structures in boxed.c
@@ -399,12 +399,12 @@
 //}
 //
 //JSObject*
-//gwkjs_union_from_c_union(JSContext    *context,
+//gwkjs_union_from_c_union(JSContextRef    context,
 //                       GIUnionInfo  *info,
 //                       void         *gboxed)
 //{
-//    JSObject *obj;
-//    JSObject *proto;
+//    JSObjectRef obj;
+//    JSObjectRef proto;
 //    Union *priv;
 //    GType gtype;
 //
@@ -442,8 +442,8 @@
 //}
 //
 //void*
-//gwkjs_c_union_from_union(JSContext    *context,
-//                       JSObject     *obj)
+//gwkjs_c_union_from_union(JSContextRef    context,
+//                       JSObjectRef     obj)
 //{
 //    Union *priv;
 //
@@ -456,8 +456,8 @@
 //}
 //
 //JSBool
-//gwkjs_typecheck_union(JSContext     *context,
-//                    JSObject      *object,
+//gwkjs_typecheck_union(JSContextRef     context,
+//                    JSObjectRef      object,
 //                    GIStructInfo  *expected_info,
 //                    GType          expected_type,
 //                    JSBool         throw_error)

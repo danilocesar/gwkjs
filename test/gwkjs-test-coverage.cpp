@@ -1716,9 +1716,9 @@ test_coverage_cache_as_js_object_has_expected_properties(gpointer      fixture_d
 
     GBytes *cache = serialize_ast_to_bytes(fixture->base_fixture.coverage,
                                            coverage_paths);
-    JS::RootedString cache_results(JS_GetRuntime((JSContext *) gwkjs_context_get_native_context(fixture->base_fixture.context)),
+    JS::RootedString cache_results(JS_GetRuntime((JSContextRef ) gwkjs_context_get_native_context(fixture->base_fixture.context)),
                                    gwkjs_deserialize_cache_to_object(fixture->base_fixture.coverage, cache));
-    JS::RootedValue cache_result_value(JS_GetRuntime((JSContext *) gwkjs_context_get_native_context(fixture->base_fixture.context)),
+    JS::RootedValue cache_result_value(JS_GetRuntime((JSContextRef ) gwkjs_context_get_native_context(fixture->base_fixture.context)),
                                        STRING_TO_JSVAL(cache_results));
     gwkjs_inject_value_into_coverage_compartment(fixture->base_fixture.coverage,
                                                cache_result_value,

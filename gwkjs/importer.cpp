@@ -140,9 +140,9 @@ import_directory(JSContextRef context,
 }
 
 //static JSBool
-//define_import(JSContext  *context,
-//              JSObject   *obj,
-//              JSObject   *module_obj,
+//define_import(JSContextRef  context,
+//              JSObjectRef   obj,
+//              JSObjectRef   module_obj,
 //              const char *name)
 //{
 //    if (!JS_DefineProperty(context, obj,
@@ -162,8 +162,8 @@ import_directory(JSContextRef context,
 // * we do this after the import succesfully completes.
 // */
 //static JSBool
-//seal_import(JSContext  *context,
-//            JSObject   *obj,
+//seal_import(JSContextRef  context,
+//            JSObjectRef   obj,
 //            const char *name)
 //{
 //    JSBool found;
@@ -209,8 +209,8 @@ import_directory(JSContextRef context,
 // * the attempt to clean up.)
 // */
 //static void
-//cancel_import(JSContext  *context,
-//              JSObject   *obj,
+//cancel_import(JSContextRef  context,
+//              JSObjectRef   obj,
 //              const char *name)
 //{
 //    gwkjs_debug(GWKJS_DEBUG_IMPORTER,
@@ -252,17 +252,17 @@ import_native_file(JSContextRef  context,
     return retval;
 }
 
-//static JSObject *
-//create_module_object(JSContext *context)
+//static JSObjectRef 
+//create_module_object(JSContextRef context)
 //{
 //    return JS_NewObject(context, NULL, NULL, NULL);
 //}
 //
 //static JSBool
-//import_file(JSContext  *context,
+//import_file(JSContextRef  context,
 //            const char *name,
 //            GFile      *file,
-//            JSObject   *module_obj)
+//            JSObjectRef   module_obj)
 //{
 //    JSBool ret = JS_FALSE;
 //    char *script = NULL;
@@ -308,7 +308,7 @@ load_module_init(JSContextRef  context,
     g_warning("NOT IMPLEMENTED");
     return NULL;
 // TODO: implement
-//    JSObject *module_obj;
+//    JSObjectRef module_obj;
 //    JSBool found;
 //    jsid module_init_name;
 //    GFile *file;
@@ -343,12 +343,12 @@ load_module_init(JSContextRef  context,
 }
 
 //static void
-//load_module_elements(JSContext *context,
-//                     JSObject *in_object,
+//load_module_elements(JSContextRef context,
+//                     JSObjectRef in_object,
 //                     ImporterIterator *iter,
 //                     const char *init_path) {
-//    JSObject *module_obj;
-//    JSObject *jsiter;
+//    JSObjectRef module_obj;
+//    JSObjectRef jsiter;
 //
 //    module_obj = load_module_init(context, in_object, init_path);
 //
@@ -391,7 +391,7 @@ import_file_on_module(JSContextRef context,
     g_warning("NOT IMPLEMENTED");
     return NULL;
 //TODO: IMPLEMENT
-//    JSObject *module_obj;
+//    JSObjectRef module_obj;
 //    JSBool retval = JS_FALSE;
 //    char *full_path = NULL;
 //
@@ -670,7 +670,7 @@ do_import(JSContextRef context,
 //
 //}
 //static JSBool
-//importer_new_enumerate(JSContext  *context,
+//importer_new_enumerate(JSContextRef  context,
 //                       JS::HandleObject object,
 //                       JSIterateOp enum_op,
 //                       JS::MutableHandleValue statep,
@@ -682,7 +682,7 @@ do_import(JSContextRef context,
 //    case JSENUMERATE_INIT_ALL:
 //    case JSENUMERATE_INIT: {
 //        Importer *priv;
-//        JSObject *search_path;
+//        JSObjectRef search_path;
 //        jsval search_path_val;
 //        guint32 search_path_len;
 //        guint32 i;
@@ -915,7 +915,7 @@ out:
 
 
 //static JSBool
-//importer_new_resolve(JSContext *context,
+//importer_new_resolve(JSContextRef context,
 //                     JS::HandleObject obj,
 //                     JS::HandleId id,
 //                     unsigned flags,
@@ -1100,9 +1100,9 @@ importer_new(JSContextRef context,
 
 
 // TODO:  we might want to check the PROTOTYPE stuff later
-//    JSObject *importer;
+//    JSObjectRef importer;
 //    Importer *priv;
-//    JSObject *global;
+//    JSObjectRef global;
 //    JSBool found;
 //
 //    global = gwkjs_get_import_global(context);
@@ -1111,7 +1111,7 @@ importer_new(JSContextRef context,
 //        g_error("HasProperty call failed creating importer class");
 //
 //    if (!found) {
-//        JSObject *prototype;
+//        JSObjectRef prototype;
 //        prototype = JS_InitClass(context, global,
 //                                 /* parent prototype JSObject* for
 //                                  * prototype; NULL for

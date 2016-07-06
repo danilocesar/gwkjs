@@ -30,8 +30,8 @@
 //
 //G_BEGIN_DECLS
 //
-//GClosure*  gwkjs_closure_new           (JSContext    *context,
-//                                      JSObject     *callable,
+//GClosure*  gwkjs_closure_new           (JSContextRef    context,
+//                                      JSObjectRef     callable,
 //                                      const char   *description,
 //                                      gboolean      root_function);
 //void       gwkjs_closure_invoke        (GClosure     *closure,

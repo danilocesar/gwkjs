@@ -56,7 +56,7 @@
 //}
 //
 //static JSBool
-//gwkjs_foreign_load_foreign_module(JSContext *context,
+//gwkjs_foreign_load_foreign_module(JSContextRef context,
 //                                const gchar *gi_namespace)
 //{
 //    int i;
@@ -108,7 +108,7 @@
 //}
 //
 //static GwkjsForeignInfo *
-//gwkjs_struct_foreign_lookup(JSContext  *context,
+//gwkjs_struct_foreign_lookup(JSContextRef  context,
 //                          GIBaseInfo *interface_info)
 //{
 //    GwkjsForeignInfo *retval = NULL;
@@ -138,7 +138,7 @@
 //}
 //
 //JSBool
-//gwkjs_struct_foreign_convert_to_g_argument(JSContext      *context,
+//gwkjs_struct_foreign_convert_to_g_argument(JSContextRef      context,
 //                                         jsval           value,
 //                                         GIBaseInfo     *interface_info,
 //                                         const char     *arg_name,
@@ -161,7 +161,7 @@
 //}
 //
 //JSBool
-//gwkjs_struct_foreign_convert_from_g_argument(JSContext  *context,
+//gwkjs_struct_foreign_convert_from_g_argument(JSContextRef  context,
 //                                           jsval      *value_p,
 //                                           GIBaseInfo *interface_info,
 //                                           GArgument  *arg)
@@ -179,7 +179,7 @@
 //}
 //
 //JSBool
-//gwkjs_struct_foreign_release_g_argument(JSContext  *context,
+//gwkjs_struct_foreign_release_g_argument(JSContextRef  context,
 //                                      GITransfer  transfer,
 //                                      GIBaseInfo *interface_info,
 //                                      GArgument  *arg)

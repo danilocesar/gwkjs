@@ -61,7 +61,7 @@ GWKJS_NATIVE_CONSTRUCTOR_DECLARE(cairo_radial_gradient)
 
 static void
 gwkjs_cairo_radial_gradient_finalize(JSFreeOp *fop,
-                                   JSObject *obj)
+                                   JSObjectRef obj)
 {
     gwkjs_cairo_pattern_finalize_pattern(fop, obj);
 }
@@ -75,11 +75,11 @@ JSFunctionSpec gwkjs_cairo_radial_gradient_proto_funcs[] = {
     { NULL }
 };
 
-JSObject *
-gwkjs_cairo_radial_gradient_from_pattern(JSContext       *context,
+JSObjectRef 
+gwkjs_cairo_radial_gradient_from_pattern(JSContextRef       context,
                                        cairo_pattern_t *pattern)
 {
-    JSObject *object;
+    JSObjectRef object;
 
     g_return_val_if_fail(context != NULL, NULL);
     g_return_val_if_fail(pattern != NULL, NULL);

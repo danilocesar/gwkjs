@@ -42,13 +42,13 @@
 // * This is the version included in SpiderMonkey 1.9 and later, to be
 // * used until we rebase on a newer libmozjs.
 // */
-//JSObject *
-//gwkjs_new_object_for_constructor(JSContext *context,
+//JSObjectRef 
+//gwkjs_new_object_for_constructor(JSContextRef context,
 //                               JSClass   *clasp,
 //                               jsval     *vp)
 //{
 //    jsval     callee;
-//    JSObject *parent;
+//    JSObjectRef parent;
 //    jsval     prototype;
 //
 //    callee = JS_CALLEE(context, vp);
@@ -62,9 +62,9 @@
 //}
 //
 //JSBool
-//gwkjs_init_class_dynamic(JSContext       *context,
-//                       JSObject        *in_object,
-//                       JSObject        *parent_proto,
+//gwkjs_init_class_dynamic(JSContextRef       context,
+//                       JSObjectRef        in_object,
+//                       JSObjectRef        parent_proto,
 //                       const char      *ns_name,
 //                       const char      *class_name,
 //                       JSClass         *clasp,
@@ -74,14 +74,14 @@
 //                       JSFunctionSpec  *proto_fs,
 //                       JSPropertySpec  *static_ps,
 //                       JSFunctionSpec  *static_fs,
-//                       JSObject       **prototype_p,
-//                       JSObject       **constructor_p)
+//                       JSObjectRef       *prototype_p,
+//                       JSObjectRef       *constructor_p)
 //{
-//    JSObject *global;
+//    JSObjectRef global;
 //    /* Force these variables on the stack, so the conservative GC will
 //       find them */
-//    JSObject * volatile prototype;
-//    JSObject * volatile constructor;
+//    JSObjectRef  volatile prototype;
+//    JSObjectRef  volatile constructor;
 //    JSFunction * volatile constructor_fun;
 //    char *full_function_name = NULL;
 //    JSBool res = JS_FALSE;
@@ -176,8 +176,8 @@
 //}
 //
 //JSBool
-//gwkjs_typecheck_instance(JSContext *context,
-//                       JSObject  *obj,
+//gwkjs_typecheck_instance(JSContextRef context,
+//                       JSObjectRef  obj,
 //                       JSClass   *static_clasp,
 //                       JSBool     throw_error)
 //{
@@ -197,13 +197,13 @@
 //}
 //
 //JSObject*
-//gwkjs_construct_object_dynamic(JSContext      *context,
-//                             JSObject       *proto,
+//gwkjs_construct_object_dynamic(JSContextRef      context,
+//                             JSObjectRef       proto,
 //                             unsigned        argc,
 //                             jsval          *argv)
 //{
-//    JSObject *constructor;
-//    JSObject *result = NULL;
+//    JSObjectRef constructor;
+//    JSObjectRef result = NULL;
 //    jsval value;
 //    jsid constructor_name;
 //

@@ -66,7 +66,7 @@ GWKJS_NATIVE_CONSTRUCTOR_DECLARE(cairo_svg_surface)
 
 static void
 gwkjs_cairo_svg_surface_finalize(JSFreeOp *fop,
-                               JSObject *obj)
+                               JSObjectRef obj)
 {
     gwkjs_cairo_surface_finalize_surface(fop, obj);
 }
@@ -79,11 +79,11 @@ JSFunctionSpec gwkjs_cairo_svg_surface_proto_funcs[] = {
     { NULL }
 };
 
-JSObject *
-gwkjs_cairo_svg_surface_from_surface(JSContext       *context,
+JSObjectRef 
+gwkjs_cairo_svg_surface_from_surface(JSContextRef       context,
                                    cairo_surface_t *surface)
 {
-    JSObject *object;
+    JSObjectRef object;
 
     g_return_val_if_fail(context != NULL, NULL);
     g_return_val_if_fail(surface != NULL, NULL);
@@ -100,8 +100,8 @@ gwkjs_cairo_svg_surface_from_surface(JSContext       *context,
     return object;
 }
 #else
-JSObject *
-gwkjs_cairo_svg_surface_from_surface(JSContext       *context,
+JSObjectRef 
+gwkjs_cairo_svg_surface_from_surface(JSContextRef       context,
                                    cairo_surface_t *surface)
 {
     gwkjs_throw(context,

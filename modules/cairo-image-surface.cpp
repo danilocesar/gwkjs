@@ -59,7 +59,7 @@ GWKJS_NATIVE_CONSTRUCTOR_DECLARE(cairo_image_surface)
 
 static void
 gwkjs_cairo_image_surface_finalize(JSFreeOp *fop,
-                                 JSObject *obj)
+                                 JSObjectRef obj)
 {
     gwkjs_cairo_surface_finalize_surface(fop, obj);
 }
@@ -69,14 +69,14 @@ JSPropertySpec gwkjs_cairo_image_surface_proto_props[] = {
 };
 
 static JSBool
-createFromPNG_func(JSContext *context,
+createFromPNG_func(JSContextRef context,
                    unsigned   argc,
                    jsval     *vp)
 {
     JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
     char *filename;
     cairo_surface_t *surface;
-    JSObject *surface_wrapper;
+    JSObjectRef surface_wrapper;
 
     if (!gwkjs_parse_call_args(context, "createFromPNG", "s", argv,
                         "filename", &filename))
@@ -100,12 +100,12 @@ createFromPNG_func(JSContext *context,
 }
 
 static JSBool
-getFormat_func(JSContext *context,
+getFormat_func(JSContextRef context,
                unsigned   argc,
                jsval     *vp)
 {
     JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-    JSObject *obj = JSVAL_TO_OBJECT(rec.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(rec.thisv());
 
     cairo_surface_t *surface;
     cairo_format_t format;
@@ -126,12 +126,12 @@ getFormat_func(JSContext *context,
 }
 
 static JSBool
-getWidth_func(JSContext *context,
+getWidth_func(JSContextRef context,
               unsigned   argc,
               jsval     *vp)
 {
     JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-    JSObject *obj = JSVAL_TO_OBJECT(rec.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(rec.thisv());
 
     cairo_surface_t *surface;
     int width;
@@ -152,12 +152,12 @@ getWidth_func(JSContext *context,
 }
 
 static JSBool
-getHeight_func(JSContext *context,
+getHeight_func(JSContextRef context,
                unsigned   argc,
                jsval     *vp)
 {
     JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-    JSObject *obj = JSVAL_TO_OBJECT(rec.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(rec.thisv());
 
     cairo_surface_t *surface;
     int height;
@@ -178,12 +178,12 @@ getHeight_func(JSContext *context,
 }
 
 static JSBool
-getStride_func(JSContext *context,
+getStride_func(JSContextRef context,
                unsigned   argc,
                jsval     *vp)
 {
     JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-    JSObject *obj = JSVAL_TO_OBJECT(rec.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(rec.thisv());
 
     cairo_surface_t *surface;
     int stride;
@@ -213,11 +213,11 @@ JSFunctionSpec gwkjs_cairo_image_surface_proto_funcs[] = {
     { NULL }
 };
 
-JSObject *
-gwkjs_cairo_image_surface_from_surface(JSContext       *context,
+JSObjectRef 
+gwkjs_cairo_image_surface_from_surface(JSContextRef       context,
                                      cairo_surface_t *surface)
 {
-    JSObject *object;
+    JSObjectRef object;
 
     g_return_val_if_fail(context != NULL, NULL);
     g_return_val_if_fail(surface != NULL, NULL);
@@ -235,7 +235,7 @@ gwkjs_cairo_image_surface_from_surface(JSContext       *context,
 }
 
 void
-gwkjs_cairo_image_surface_init(JSContext *context, JSObject *module_obj)
+gwkjs_cairo_image_surface_init(JSContextRef context, JSObjectRef module_obj)
 {
 
     if (!JS_DefineFunction(context, module_obj,

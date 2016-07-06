@@ -51,7 +51,7 @@
 //
 //static void
 //interface_finalize(JSFreeOp *fop,
-//                   JSObject *obj)
+//                   JSObjectRef obj)
 //{
 //    Interface *priv;
 //
@@ -70,8 +70,8 @@
 //}
 //
 //static JSBool
-//gwkjs_define_static_methods(JSContext       *context,
-//                          JSObject        *constructor,
+//gwkjs_define_static_methods(JSContextRef       context,
+//                          JSObjectRef        constructor,
 //                          GType            gtype,
 //                          GIInterfaceInfo *info)
 //{
@@ -105,7 +105,7 @@
 //}
 //
 //static JSBool
-//interface_new_resolve(JSContext *context,
+//interface_new_resolve(JSContextRef context,
 //                      JS::HandleObject obj,
 //                      JS::HandleId id,
 //                      unsigned flags,
@@ -183,17 +183,17 @@
 //};
 //
 //JSBool
-//gwkjs_define_interface_class(JSContext       *context,
-//                           JSObject        *in_object,
+//gwkjs_define_interface_class(JSContextRef       context,
+//                           JSObjectRef        in_object,
 //                           GIInterfaceInfo *info,
 //                           GType            gtype,
-//                           JSObject       **constructor_p)
+//                           JSObjectRef       *constructor_p)
 //{
 //    Interface *priv;
 //    const char *constructor_name;
 //    const char *ns;
-//    JSObject *constructor;
-//    JSObject *prototype;
+//    JSObjectRef constructor;
+//    JSObjectRef prototype;
 //    jsval value;
 //
 //    ns = gwkjs_get_names_from_gtype_and_gi_info(gtype, (GIBaseInfo *) info,
@@ -241,11 +241,11 @@
 //}
 //
 //JSBool
-//gwkjs_lookup_interface_constructor(JSContext *context,
+//gwkjs_lookup_interface_constructor(JSContextRef context,
 //                                 GType      gtype,
 //                                 jsval     *value_p)
 //{
-//    JSObject *constructor;
+//    JSObjectRef constructor;
 //    GIBaseInfo *interface_info;
 //
 //    interface_info = g_irepository_find_by_gtype(NULL, gtype);

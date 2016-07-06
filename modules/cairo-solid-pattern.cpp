@@ -31,7 +31,7 @@ GWKJS_DEFINE_PROTO_ABSTRACT("CairoSolidPattern", cairo_solid_pattern, JSCLASS_BA
 
 static void
 gwkjs_cairo_solid_pattern_finalize(JSFreeOp *fop,
-                                 JSObject *obj)
+                                 JSObjectRef obj)
 {
     gwkjs_cairo_pattern_finalize_pattern(fop, obj);
 }
@@ -41,14 +41,14 @@ JSPropertySpec gwkjs_cairo_solid_pattern_proto_props[] = {
 };
 
 static JSBool
-createRGB_func(JSContext *context,
+createRGB_func(JSContextRef context,
                unsigned   argc,
                jsval     *vp)
 {
     JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
     double red, green, blue;
     cairo_pattern_t *pattern;
-    JSObject *pattern_wrapper;
+    JSObjectRef pattern_wrapper;
 
     if (!gwkjs_parse_call_args(context, "createRGB", "fff", argv,
                         "red", &red,
@@ -69,14 +69,14 @@ createRGB_func(JSContext *context,
 }
 
 static JSBool
-createRGBA_func(JSContext *context,
+createRGBA_func(JSContextRef context,
                 unsigned   argc,
                 jsval     *vp)
 {
     JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
     double red, green, blue, alpha;
     cairo_pattern_t *pattern;
-    JSObject *pattern_wrapper;
+    JSObjectRef pattern_wrapper;
 
     if (!gwkjs_parse_call_args(context, "createRGBA", "ffff", argv,
                         "red", &red,
@@ -103,11 +103,11 @@ JSFunctionSpec gwkjs_cairo_solid_pattern_proto_funcs[] = {
     { NULL }
 };
 
-JSObject *
-gwkjs_cairo_solid_pattern_from_pattern(JSContext       *context,
+JSObjectRef 
+gwkjs_cairo_solid_pattern_from_pattern(JSContextRef       context,
                                      cairo_pattern_t *pattern)
 {
-    JSObject *object;
+    JSObjectRef object;
 
     g_return_val_if_fail(context != NULL, NULL);
     g_return_val_if_fail(pattern != NULL, NULL);

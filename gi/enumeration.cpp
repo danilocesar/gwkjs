@@ -38,10 +38,10 @@
 #include "enumeration.h"
 
 //JSObject*
-//gwkjs_lookup_enumeration(JSContext    *context,
+//gwkjs_lookup_enumeration(JSContextRef    context,
 //                       GIEnumInfo   *info)
 //{
-//    JSObject *in_object;
+//    JSObjectRef in_object;
 //    const char *enum_name;
 //    jsval value;
 //
@@ -145,8 +145,8 @@ gwkjs_define_enum_values(JSContextRef context,
 }
 
 //JSBool
-//gwkjs_define_enum_static_methods(JSContext    *context,
-//                               JSObject     *constructor,
+//gwkjs_define_enum_static_methods(JSContextRef    context,
+//                               JSObjectRef     constructor,
 //                               GIEnumInfo   *enum_info)
 //{
 //    int i, n_methods;

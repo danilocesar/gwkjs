@@ -51,7 +51,7 @@
 //
 //extern struct JSClass gwkjs_error_class;
 //
-//static void define_error_properties(JSContext *, JSObject *);
+//static void define_error_properties(JSContextRef , JSObjectRef );
 //
 //GWKJS_DEFINE_PRIV_FROM_JS(Error, gwkjs_error_class)
 //
@@ -60,7 +60,7 @@
 //    GWKJS_NATIVE_CONSTRUCTOR_VARIABLES(error)
 //    Error *priv;
 //    Error *proto_priv;
-//    JSObject *proto;
+//    JSObjectRef proto;
 //    jsid message_name, code_name;
 //    jsval v_message, v_code;
 //    gchar *message;
@@ -128,7 +128,7 @@
 //
 //static void
 //error_finalize(JSFreeOp *fop,
-//               JSObject *obj)
+//               JSObjectRef obj)
 //{
 //    Error *priv;
 //
@@ -150,7 +150,7 @@
 //}
 //
 //static JSBool
-//error_get_domain(JSContext *context, JS::HandleObject obj,
+//error_get_domain(JSContextRef context, JS::HandleObject obj,
 //                 JS::HandleId id, JS::MutableHandleValue vp)
 //{
 //    Error *priv;
@@ -165,7 +165,7 @@
 //}
 //
 //static JSBool
-//error_get_message(JSContext *context, JS::HandleObject obj,
+//error_get_message(JSContextRef context, JS::HandleObject obj,
 //                  JS::HandleId id, JS::MutableHandleValue vp)
 //{
 //    Error *priv;
@@ -185,7 +185,7 @@
 //}
 //
 //static JSBool
-//error_get_code(JSContext *context, JS::HandleObject obj,
+//error_get_code(JSContextRef context, JS::HandleObject obj,
 //               JS::HandleId id, JS::MutableHandleValue vp)
 //{
 //    Error *priv;
@@ -206,10 +206,10 @@
 //}
 //
 //static JSBool
-//error_to_string(JSContext *context, unsigned argc, jsval *vp)
+//error_to_string(JSContextRef context, unsigned argc, jsval *vp)
 //{
 //    jsval v_self;
-//    JSObject *self;
+//    JSObjectRef self;
 //    Error *priv;
 //    jsval v_out;
 //    gchar *descr;
@@ -261,7 +261,7 @@
 //}
 //
 //static JSBool
-//error_constructor_value_of(JSContext *context, unsigned argc, jsval *vp)
+//error_constructor_value_of(JSContextRef context, unsigned argc, jsval *vp)
 //{
 //    jsval v_self, v_prototype;
 //    Error *priv;
@@ -356,14 +356,14 @@
 //};
 //
 //void
-//gwkjs_define_error_class(JSContext    *context,
-//                       JSObject     *in_object,
+//gwkjs_define_error_class(JSContextRef    context,
+//                       JSObjectRef     in_object,
 //                       GIEnumInfo   *info)
 //{
 //    const char *constructor_name;
 //    GIBoxedInfo *glib_error_info;
-//    JSObject *prototype, *parent_proto;
-//    JSObject *constructor;
+//    JSObjectRef prototype, *parent_proto;
+//    JSObjectRef constructor;
 //    Error *priv;
 //
 //    /* See the comment in gwkjs_define_boxed_class() for an
@@ -443,8 +443,8 @@
 //   fileName, lineNumber and stack
 //*/
 //static void
-//define_error_properties(JSContext *context,
-//                        JSObject  *obj)
+//define_error_properties(JSContextRef context,
+//                        JSObjectRef  obj)
 //{
 //    jsid stack_name, filename_name, linenumber_name;
 //    jsval stack, fileName, lineNumber;
@@ -470,12 +470,12 @@
 //}
 //
 //JSObject*
-//gwkjs_error_from_gerror(JSContext             *context,
+//gwkjs_error_from_gerror(JSContextRef             context,
 //                      GError                *gerror,
 //                      gboolean               add_stack)
 //{
-//    JSObject *obj;
-//    JSObject *proto;
+//    JSObjectRef obj;
+//    JSObjectRef proto;
 //    Error *priv;
 //    Error *proto_priv;
 //    GIEnumInfo *info;
@@ -489,7 +489,7 @@
 //        /* We don't have error domain metadata */
 //        /* Marshal the error as a plain GError */
 //        GIBaseInfo *glib_boxed;
-//        JSObject *retval;
+//        JSObjectRef retval;
 //
 //        glib_boxed = g_irepository_find_by_name(NULL, "GLib", "Error");
 //        retval = gwkjs_boxed_from_c_struct(context, glib_boxed, gerror, (GwkjsBoxedCreationFlags) 0);
@@ -524,8 +524,8 @@
 //}
 //
 //GError*
-//gwkjs_gerror_from_error(JSContext    *context,
-//                      JSObject     *obj)
+//gwkjs_gerror_from_error(JSContextRef    context,
+//                      JSObjectRef     obj)
 //{
 //    Error *priv;
 //
@@ -555,8 +555,8 @@
 //}
 //
 //JSBool
-//gwkjs_typecheck_gerror (JSContext *context,
-//                      JSObject  *obj,
+//gwkjs_typecheck_gerror (JSContextRef context,
+//                      JSObjectRef  obj,
 //                      JSBool     throw_error)
 //{
 //    if (gwkjs_typecheck_boxed (context, obj, NULL, G_TYPE_ERROR, JS_FALSE))

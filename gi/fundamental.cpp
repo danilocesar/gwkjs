@@ -103,7 +103,7 @@
 //}
 //
 //static void
-//_fundamental_add_object(void *native_object, JSObject *js_object)
+//_fundamental_add_object(void *native_object, JSObjectRef js_object)
 //{
 //    GHashTable *table = _ensure_mapping_table(gwkjs_context_get_current());
 //
@@ -118,28 +118,28 @@
 //    g_hash_table_remove(table, native_object);
 //}
 //
-//static JSObject *
+//static JSObjectRef 
 //_fundamental_lookup_object(void *native_object)
 //{
 //    GHashTable *table = _ensure_mapping_table(gwkjs_context_get_current());
 //
-//    return (JSObject *) g_hash_table_lookup(table, native_object);
+//    return (JSObjectRef ) g_hash_table_lookup(table, native_object);
 //}
 //
 ///**/
 //
 //static inline Fundamental *
-//proto_priv_from_js(JSContext *context,
-//                   JSObject  *obj)
+//proto_priv_from_js(JSContextRef context,
+//                   JSObjectRef  obj)
 //{
-//    JSObject *proto;
+//    JSObjectRef proto;
 //    JS_GetPrototype(context, obj, &proto);
 //    return (Fundamental*) priv_from_js(context, proto);
 //}
 //
 //static FundamentalInstance *
-//init_fundamental_instance(JSContext *context,
-//                          JSObject  *object)
+//init_fundamental_instance(JSContextRef context,
+//                          JSObjectRef  object)
 //{
 //    Fundamental *proto_priv;
 //    FundamentalInstance *priv;
@@ -168,8 +168,8 @@
 //}
 //
 //static void
-//associate_js_instance_to_fundamental(JSContext *context,
-//                                     JSObject  *object,
+//associate_js_instance_to_fundamental(JSContextRef context,
+//                                     JSObjectRef  object,
 //                                     void      *gfundamental,
 //                                     gboolean   owned_ref)
 //{
@@ -193,7 +193,7 @@
 //
 ///* Find the first constructor */
 //static GIFunctionInfo *
-//find_fundamental_constructor(JSContext    *context,
+//find_fundamental_constructor(JSContextRef    context,
 //                             GIObjectInfo *info,
 //                             jsid         *constructor_name)
 //{
@@ -226,7 +226,7 @@
 ///**/
 //
 //static JSBool
-//fundamental_instance_new_resolve_interface(JSContext    *context,
+//fundamental_instance_new_resolve_interface(JSContextRef    context,
 //                                           JS::HandleObject obj,
 //                                           JS::MutableHandleObject objp,
 //                                           Fundamental  *proto_priv,
@@ -293,7 +293,7 @@
 // * if id was resolved.
 // */
 //static JSBool
-//fundamental_instance_new_resolve(JSContext  *context,
+//fundamental_instance_new_resolve(JSContextRef  context,
 //                                 JS::HandleObject obj,
 //                                 JS::HandleId id,
 //                                 unsigned flags,
@@ -381,8 +381,8 @@
 //
 //static JSBool
 //fundamental_invoke_constructor(FundamentalInstance *priv,
-//                               JSContext           *context,
-//                               JSObject            *obj,
+//                               JSContextRef           context,
+//                               JSObjectRef            obj,
 //                               unsigned             argc,
 //                               jsval               *argv,
 //                               GArgument           *rvalue)
@@ -460,7 +460,7 @@
 //
 //static void
 //fundamental_finalize(JSFreeOp  *fop,
-//                     JSObject  *obj)
+//                     JSObjectRef  obj)
 //{
 //    FundamentalInstance *priv;
 //
@@ -496,12 +496,12 @@
 //}
 //
 //static JSBool
-//to_string_func(JSContext *context,
+//to_string_func(JSContextRef context,
 //               unsigned   argc,
 //               jsval     *vp)
 //{
 //    JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-//    JSObject *obj = JSVAL_TO_OBJECT(rec.thisv());
+//    JSObjectRef obj = JSVAL_TO_OBJECT(rec.thisv());
 //
 //    FundamentalInstance *priv;
 //    JSBool ret = JS_FALSE;
@@ -576,13 +576,13 @@
 //    { NULL }
 //};
 //
-//static JSObject *
-//gwkjs_lookup_fundamental_prototype(JSContext    *context,
+//static JSObjectRef 
+//gwkjs_lookup_fundamental_prototype(JSContextRef    context,
 //                                 GIObjectInfo *info,
 //                                 GType         gtype)
 //{
-//    JSObject *in_object;
-//    JSObject *constructor;
+//    JSObjectRef in_object;
+//    JSObjectRef constructor;
 //    const char *constructor_name;
 //    jsval value;
 //
@@ -625,11 +625,11 @@
 //}
 //
 //static JSObject*
-//gwkjs_lookup_fundamental_prototype_from_gtype(JSContext *context,
+//gwkjs_lookup_fundamental_prototype_from_gtype(JSContextRef context,
 //                                            GType      gtype)
 //{
 //    GIObjectInfo *info;
-//    JSObject *proto;
+//    JSObjectRef proto;
 //
 //    info = (GIObjectInfo *) g_irepository_find_by_gtype(g_irepository_get_default(),
 //                                                        gtype);
@@ -641,19 +641,19 @@
 //}
 //
 //JSBool
-//gwkjs_define_fundamental_class(JSContext     *context,
-//                             JSObject      *in_object,
+//gwkjs_define_fundamental_class(JSContextRef     context,
+//                             JSObjectRef      in_object,
 //                             GIObjectInfo  *info,
-//                             JSObject     **constructor_p,
-//                             JSObject     **prototype_p)
+//                             JSObjectRef     *constructor_p,
+//                             JSObjectRef     *prototype_p)
 //{
 //    const char *constructor_name;
-//    JSObject *prototype;
+//    JSObjectRef prototype;
 //    jsval value;
 //    jsid js_constructor_name = JSID_VOID;
-//    JSObject *parent_proto;
+//    JSObjectRef parent_proto;
 //    Fundamental *priv;
-//    JSObject *constructor;
+//    JSObjectRef constructor;
 //    GType parent_gtype;
 //    GType gtype;
 //    GIFunctionInfo *constructor_info;
@@ -748,12 +748,12 @@
 //}
 //
 //JSObject*
-//gwkjs_object_from_g_fundamental(JSContext    *context,
+//gwkjs_object_from_g_fundamental(JSContextRef    context,
 //                              GIObjectInfo *info,
 //                              void         *gfundamental)
 //{
-//    JSObject *proto;
-//    JSObject *object;
+//    JSObjectRef proto;
+//    JSObjectRef object;
 //
 //    if (gfundamental == NULL)
 //        return NULL;
@@ -786,12 +786,12 @@
 //    return object;
 //}
 //
-//JSObject *
-//gwkjs_fundamental_from_g_value(JSContext    *context,
+//JSObjectRef 
+//gwkjs_fundamental_from_g_value(JSContextRef    context,
 //                             const GValue *value,
 //                             GType         gtype)
 //{
-//    JSObject *proto;
+//    JSObjectRef proto;
 //    Fundamental *proto_priv;
 //    void *fobj;
 //
@@ -812,8 +812,8 @@
 //}
 //
 //void*
-//gwkjs_g_fundamental_from_object(JSContext *context,
-//                              JSObject  *obj)
+//gwkjs_g_fundamental_from_object(JSContextRef context,
+//                              JSObjectRef  obj)
 //{
 //    FundamentalInstance *priv;
 //
@@ -840,16 +840,16 @@
 //}
 //
 //JSBool
-//gwkjs_typecheck_is_fundamental(JSContext     *context,
-//                             JSObject      *object,
+//gwkjs_typecheck_is_fundamental(JSContextRef     context,
+//                             JSObjectRef      object,
 //                             JSBool         throw_error)
 //{
 //    return do_base_typecheck(context, object, throw_error);
 //}
 //
 //JSBool
-//gwkjs_typecheck_fundamental(JSContext *context,
-//                          JSObject  *object,
+//gwkjs_typecheck_fundamental(JSContextRef context,
+//                          JSObjectRef  object,
 //                          GType      expected_gtype,
 //                          JSBool     throw_error)
 //{
@@ -898,10 +898,10 @@
 //}
 //
 //void *
-//gwkjs_fundamental_ref(JSContext     *context,
+//gwkjs_fundamental_ref(JSContextRef     context,
 //                    void          *gfundamental)
 //{
-//    JSObject *proto;
+//    JSObjectRef proto;
 //    Fundamental *proto_priv;
 //
 //    proto = gwkjs_lookup_fundamental_prototype_from_gtype(context,
@@ -913,10 +913,10 @@
 //}
 //
 //void
-//gwkjs_fundamental_unref(JSContext    *context,
+//gwkjs_fundamental_unref(JSContextRef    context,
 //                      void         *gfundamental)
 //{
-//    JSObject *proto;
+//    JSObjectRef proto;
 //    Fundamental *proto_priv;
 //
 //    proto = gwkjs_lookup_fundamental_prototype_from_gtype(context,

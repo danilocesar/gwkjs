@@ -31,8 +31,8 @@
 #include "cairo-private.h"
 
 typedef struct {
-    JSContext *context;
-    JSObject *object;
+    JSContextRef context;
+    JSObjectRef object;
     cairo_region_t *region;
 } GwkjsCairoRegion;
 
@@ -40,8 +40,8 @@ GWKJS_DEFINE_PROTO_WITH_GTYPE("CairoRegion", cairo_region, CAIRO_GOBJECT_TYPE_RE
 GWKJS_DEFINE_PRIV_FROM_JS(GwkjsCairoRegion, gwkjs_cairo_region_class);
 
 static cairo_region_t *
-get_region(JSContext *context,
-           JSObject *obj) {
+get_region(JSContextRef context,
+           JSObjectRef obj) {
     GwkjsCairoRegion *priv = priv_from_js(context, obj);
     if (priv == NULL)
         return NULL;
@@ -50,12 +50,12 @@ get_region(JSContext *context,
 }
 
 static JSBool
-fill_rectangle(JSContext *context, JSObject *obj,
+fill_rectangle(JSContextRef context, JSObjectRef obj,
                cairo_rectangle_int_t *rect);
 
 #define PRELUDE                                                 \
     JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);          \
-    JSObject *obj = JSVAL_TO_OBJECT(argv.thisv());              \
+    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());              \
     cairo_region_t *this_region = get_region(context, obj);
 
 #define RETURN_STATUS                                           \
@@ -63,12 +63,12 @@ fill_rectangle(JSContext *context, JSObject *obj,
 
 #define REGION_DEFINE_REGION_FUNC(method)                       \
     static JSBool                                               \
-    method##_func(JSContext *context,                           \
+    method##_func(JSContextRef context,                           \
                   unsigned argc,                                \
                   jsval *vp)                                    \
     {                                                           \
         PRELUDE;                                                \
-        JSObject *other_obj;                                    \
+        JSObjectRef other_obj;                                    \
         cairo_region_t *other_region;                           \
         if (!gwkjs_parse_call_args(context, #method, "o", argv,   \
                             "other_region", &other_obj))        \
@@ -84,12 +84,12 @@ fill_rectangle(JSContext *context, JSObject *obj,
 
 #define REGION_DEFINE_RECT_FUNC(method)                         \
     static JSBool                                               \
-    method##_rectangle_func(JSContext *context,                 \
+    method##_rectangle_func(JSContextRef context,                 \
                             unsigned argc,                      \
                             jsval *vp)                          \
     {                                                           \
         PRELUDE;                                                \
-        JSObject *rect_obj;                                     \
+        JSObjectRef rect_obj;                                     \
         cairo_rectangle_int_t rect;                             \
         if (!gwkjs_parse_call_args(context, #method, "o", argv,   \
                             "rect", &rect_obj))                 \
@@ -114,7 +114,7 @@ REGION_DEFINE_RECT_FUNC(intersect)
 REGION_DEFINE_RECT_FUNC(xor)
 
 static JSBool
-fill_rectangle(JSContext *context, JSObject *obj,
+fill_rectangle(JSContextRef context, JSObjectRef obj,
                cairo_rectangle_int_t *rect)
 {
     jsval val;
@@ -142,11 +142,11 @@ fill_rectangle(JSContext *context, JSObject *obj,
     return JS_TRUE;
 }
 
-static JSObject *
-make_rectangle(JSContext *context,
+static JSObjectRef 
+make_rectangle(JSContextRef context,
                cairo_rectangle_int_t *rect)
 {
-    JSObject *rect_obj = JS_NewObject(context, NULL, NULL, NULL);
+    JSObjectRef rect_obj = JS_NewObject(context, NULL, NULL, NULL);
     jsval val;
 
     val = INT_TO_JSVAL(rect->x);
@@ -165,7 +165,7 @@ make_rectangle(JSContext *context,
 }
 
 static JSBool
-num_rectangles_func(JSContext *context,
+num_rectangles_func(JSContextRef context,
                     unsigned argc,
                     jsval *vp)
 {
@@ -183,13 +183,13 @@ num_rectangles_func(JSContext *context,
 }
 
 static JSBool
-get_rectangle_func(JSContext *context,
+get_rectangle_func(JSContextRef context,
                    unsigned argc,
                    jsval *vp)
 {
     PRELUDE;
     int i;
-    JSObject *rect_obj;
+    JSObjectRef rect_obj;
     cairo_rectangle_int_t rect;
     jsval retval;
 
@@ -225,8 +225,8 @@ JSFunctionSpec gwkjs_cairo_region_proto_funcs[] = {
 };
 
 static void
-_gwkjs_cairo_region_construct_internal(JSContext *context,
-                                     JSObject *obj,
+_gwkjs_cairo_region_construct_internal(JSContextRef context,
+                                     JSObjectRef obj,
                                      cairo_region_t *region)
 {
     GwkjsCairoRegion *priv;
@@ -263,7 +263,7 @@ GWKJS_NATIVE_CONSTRUCTOR_DECLARE(cairo_region)
 
 static void
 gwkjs_cairo_region_finalize(JSFreeOp *fop,
-                          JSObject *obj)
+                          JSObjectRef obj)
 {
     GwkjsCairoRegion *priv;
     priv = (GwkjsCairoRegion*) JS_GetPrivate(obj);
@@ -274,11 +274,11 @@ gwkjs_cairo_region_finalize(JSFreeOp *fop,
     g_slice_free(GwkjsCairoRegion, priv);
 }
 
-static JSObject *
-gwkjs_cairo_region_from_region(JSContext *context,
+static JSObjectRef 
+gwkjs_cairo_region_from_region(JSContextRef context,
                              cairo_region_t *region)
 {
-    JSObject *object;
+    JSObjectRef object;
 
     object = JS_NewObject(context, &gwkjs_cairo_region_class, NULL, NULL);
     if (!object)
@@ -290,7 +290,7 @@ gwkjs_cairo_region_from_region(JSContext *context,
 }
 
 static JSBool
-region_to_g_argument(JSContext      *context,
+region_to_g_argument(JSContextRef      context,
                      jsval           value,
                      const char     *arg_name,
                      GwkjsArgumentType argument_type,
@@ -298,7 +298,7 @@ region_to_g_argument(JSContext      *context,
                      gboolean        may_be_null,
                      GArgument      *arg)
 {
-    JSObject *obj;
+    JSObjectRef obj;
     cairo_region_t *region;
 
     obj = JSVAL_TO_OBJECT(value);
@@ -313,11 +313,11 @@ region_to_g_argument(JSContext      *context,
 }
 
 static JSBool
-region_from_g_argument(JSContext  *context,
+region_from_g_argument(JSContextRef  context,
                        jsval      *value_p,
                        GArgument  *arg)
 {
-    JSObject *obj;
+    JSObjectRef obj;
 
     obj = gwkjs_cairo_region_from_region(context, (cairo_region_t*)arg->v_pointer);
     if (!obj)
@@ -328,7 +328,7 @@ region_from_g_argument(JSContext  *context,
 }
 
 static JSBool
-region_release_argument(JSContext  *context,
+region_release_argument(JSContextRef  context,
                         GITransfer  transfer,
                         GArgument  *arg)
 {
@@ -343,7 +343,7 @@ static GwkjsForeignInfo foreign_info = {
 };
 
 void
-gwkjs_cairo_region_init(JSContext *context)
+gwkjs_cairo_region_init(JSContextRef context)
 {
     gwkjs_struct_foreign_register("cairo", "Region", &foreign_info);
 }

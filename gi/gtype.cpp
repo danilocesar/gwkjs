@@ -61,12 +61,12 @@ gwkjs_gtype_finalize(JSObjectRef obj)
 }
 
 //static JSBool
-//to_string_func(JSContext *context,
+//to_string_func(JSContextRef context,
 //               unsigned   argc,
 //               jsval     *vp)
 //{
 //    JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-//    JSObject *obj = JSVAL_TO_OBJECT(rec.thisv());
+//    JSObjectRef obj = JSVAL_TO_OBJECT(rec.thisv());
 //
 //    GType gtype;
 //    gchar *strval;
@@ -88,7 +88,7 @@ gwkjs_gtype_finalize(JSObjectRef obj)
 //}
 //
 //static JSBool
-//get_name_func (JSContext *context,
+//get_name_func (JSContextRef context,
 //               JS::HandleObject obj,
 //               JS::HandleId id,
 //               JS::MutableHandleValue vp)
@@ -155,8 +155,8 @@ gwkjs_gtype_create_gtype_wrapper (JSContextRef context,
 }
 
 //static GType
-//_gwkjs_gtype_get_actual_gtype (JSContext *context,
-//                             JSObject  *object,
+//_gwkjs_gtype_get_actual_gtype (JSContextRef context,
+//                             JSObjectRef  object,
 //                             int        recurse)
 //{
 //    GType gtype = G_TYPE_INVALID;
@@ -188,8 +188,8 @@ gwkjs_gtype_create_gtype_wrapper (JSContextRef context,
 //}
 //
 //GType
-//gwkjs_gtype_get_actual_gtype (JSContext *context,
-//                            JSObject  *object)
+//gwkjs_gtype_get_actual_gtype (JSContextRef context,
+//                            JSObjectRef  object)
 //{
 //    /* 2 means: recurse at most three times (including this
 //       call).
@@ -203,8 +203,8 @@ gwkjs_gtype_create_gtype_wrapper (JSContextRef context,
 //}
 //
 //JSBool
-//gwkjs_typecheck_gtype (JSContext             *context,
-//                     JSObject              *obj,
+//gwkjs_typecheck_gtype (JSContextRef             context,
+//                     JSObjectRef              obj,
 //                     JSBool                 throw_error)
 //{
 //    return do_base_typecheck(context, obj, throw_error);

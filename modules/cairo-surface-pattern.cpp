@@ -32,7 +32,7 @@ GWKJS_DEFINE_PROTO("CairoSurfacePattern", cairo_surface_pattern, JSCLASS_BACKGRO
 GWKJS_NATIVE_CONSTRUCTOR_DECLARE(cairo_surface_pattern)
 {
     GWKJS_NATIVE_CONSTRUCTOR_VARIABLES(cairo_surface_pattern)
-    JSObject *surface_wrapper;
+    JSObjectRef surface_wrapper;
     cairo_surface_t *surface;
     cairo_pattern_t *pattern;
 
@@ -64,7 +64,7 @@ GWKJS_NATIVE_CONSTRUCTOR_DECLARE(cairo_surface_pattern)
 
 static void
 gwkjs_cairo_surface_pattern_finalize(JSFreeOp *fop,
-                                   JSObject *obj)
+                                   JSObjectRef obj)
 {
     gwkjs_cairo_pattern_finalize_pattern(fop, obj);
 }
@@ -75,12 +75,12 @@ JSPropertySpec gwkjs_cairo_surface_pattern_proto_props[] = {
 
 
 static JSBool
-setExtend_func(JSContext *context,
+setExtend_func(JSContextRef context,
                unsigned   argc,
                jsval     *vp)
 {
     JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-    JSObject *obj = JSVAL_TO_OBJECT(argv.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
 
     cairo_extend_t extend;
     cairo_pattern_t *pattern;
@@ -100,12 +100,12 @@ setExtend_func(JSContext *context,
 }
 
 static JSBool
-getExtend_func(JSContext *context,
+getExtend_func(JSContextRef context,
                unsigned   argc,
                jsval     *vp)
 {
     JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-    JSObject *obj = JSVAL_TO_OBJECT(rec.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(rec.thisv());
 
     cairo_extend_t extend;
     cairo_pattern_t *pattern;
@@ -127,12 +127,12 @@ getExtend_func(JSContext *context,
 }
 
 static JSBool
-setFilter_func(JSContext *context,
+setFilter_func(JSContextRef context,
                unsigned   argc,
                jsval     *vp)
 {
     JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-    JSObject *obj = JSVAL_TO_OBJECT(argv.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
 
     cairo_filter_t filter;
     cairo_pattern_t *pattern;
@@ -152,12 +152,12 @@ setFilter_func(JSContext *context,
 }
 
 static JSBool
-getFilter_func(JSContext *context,
+getFilter_func(JSContextRef context,
                unsigned   argc,
                jsval     *vp)
 {
     JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-    JSObject *obj = JSVAL_TO_OBJECT(rec.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(rec.thisv());
 
     cairo_filter_t filter;
     cairo_pattern_t *pattern;
@@ -186,11 +186,11 @@ JSFunctionSpec gwkjs_cairo_surface_pattern_proto_funcs[] = {
     { NULL }
 };
 
-JSObject *
-gwkjs_cairo_surface_pattern_from_pattern(JSContext       *context,
+JSObjectRef 
+gwkjs_cairo_surface_pattern_from_pattern(JSContextRef       context,
                                        cairo_pattern_t *pattern)
 {
-    JSObject *object;
+    JSObjectRef object;
 
     g_return_val_if_fail(context != NULL, NULL);
     g_return_val_if_fail(pattern != NULL, NULL);

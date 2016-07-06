@@ -28,8 +28,8 @@
 #include "cairo-private.h"
 
 typedef struct {
-    JSContext       *context;
-    JSObject        *object;
+    JSContextRef       context;
+    JSObjectRef        object;
     cairo_path_t    *path;
 } GwkjsCairoPath;
 
@@ -38,7 +38,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(GwkjsCairoPath, gwkjs_cairo_path_class)
 
 static void
 gwkjs_cairo_path_finalize(JSFreeOp *fop,
-                        JSObject *obj)
+                        JSObjectRef obj)
 {
     GwkjsCairoPath *priv;
     priv = (GwkjsCairoPath*) JS_GetPrivate(obj);
@@ -65,11 +65,11 @@ JSFunctionSpec gwkjs_cairo_path_proto_funcs[] = {
  * Constructs a pattern wrapper given cairo pattern.
  * NOTE: This function takes ownership of the path.
  */
-JSObject *
-gwkjs_cairo_path_from_path(JSContext    *context,
+JSObjectRef 
+gwkjs_cairo_path_from_path(JSContextRef    context,
                          cairo_path_t *path)
 {
-    JSObject *object;
+    JSObjectRef object;
     GwkjsCairoPath *priv;
 
     g_return_val_if_fail(context != NULL, NULL);
@@ -103,8 +103,8 @@ gwkjs_cairo_path_from_path(JSContext    *context,
  *
  */
 cairo_path_t *
-gwkjs_cairo_path_get_path(JSContext *context,
-                        JSObject  *object)
+gwkjs_cairo_path_get_path(JSContextRef context,
+                        JSObjectRef  object)
 {
     GwkjsCairoPath *priv;
 

@@ -32,12 +32,12 @@
 
 #define _GWKJS_CAIRO_CONTEXT_DEFINE_FUNC_BEGIN(mname) \
 static JSBool                                       \
-mname##_func(JSContext *context,                    \
+mname##_func(JSContextRef context,                    \
               unsigned   argc,                      \
               jsval     *vp)                    \
 {                                                   \
     JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);             \
-    JSObject *obj = JSVAL_TO_OBJECT(argv.thisv());                  \
+    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());                  \
     cairo_t *cr;
 
 #define _GWKJS_CAIRO_CONTEXT_DEFINE_FUNC_END                             \
@@ -86,7 +86,7 @@ _GWKJS_CAIRO_CONTEXT_DEFINE_FUNC_BEGIN(method)                               \
     cr = gwkjs_cairo_context_get_context(context, obj);                      \
     cfunc(cr, &arg1, &arg2);                                               \
     if (cairo_status(cr) == CAIRO_STATUS_SUCCESS) {                        \
-      JSObject *array = JS_NewArrayObject(context, 0, NULL);               \
+      JSObjectRef array = JS_NewArrayObject(context, 0, NULL);               \
       if (!array)                                                          \
         return JS_FALSE;                                                   \
       jsval r;                                                             \
@@ -105,7 +105,7 @@ _GWKJS_CAIRO_CONTEXT_DEFINE_FUNC_BEGIN(method)                               \
     cr = gwkjs_cairo_context_get_context(context, obj);                      \
     cfunc(cr, &arg1, &arg2);                                               \
     if (cairo_status(cr) == CAIRO_STATUS_SUCCESS) {                        \
-      JSObject *array = JS_NewArrayObject(context, 0, NULL);               \
+      JSObjectRef array = JS_NewArrayObject(context, 0, NULL);               \
       if (!array)                                                          \
         return JS_FALSE;                                                   \
       jsval r;                                                             \
@@ -124,7 +124,7 @@ _GWKJS_CAIRO_CONTEXT_DEFINE_FUNC_BEGIN(method)                               \
     cr = gwkjs_cairo_context_get_context(context, obj);                      \
     cfunc(cr, &arg1, &arg2, &arg3, &arg4);                                 \
     {                                                                      \
-      JSObject *array = JS_NewArrayObject(context, 0, NULL);               \
+      JSObjectRef array = JS_NewArrayObject(context, 0, NULL);               \
       if (!array)                                                          \
         return JS_FALSE;                                                   \
       jsval r;                                                             \
@@ -249,8 +249,8 @@ _GWKJS_CAIRO_CONTEXT_DEFINE_FUNC_END
 
 typedef struct {
     void *dummy;
-    JSContext  *context;
-    JSObject   *object;
+    JSContextRef  context;
+    JSObjectRef   object;
     cairo_t * cr;
 } GwkjsCairoContext;
 
@@ -258,8 +258,8 @@ GWKJS_DEFINE_PROTO_WITH_GTYPE("CairoContext", cairo_context, CAIRO_GOBJECT_TYPE_
 GWKJS_DEFINE_PRIV_FROM_JS(GwkjsCairoContext, gwkjs_cairo_context_class);
 
 static void
-_gwkjs_cairo_context_construct_internal(JSContext *context,
-                                      JSObject *obj,
+_gwkjs_cairo_context_construct_internal(JSContextRef context,
+                                      JSObjectRef obj,
                                       cairo_t *cr)
 {
     GwkjsCairoContext *priv;
@@ -277,7 +277,7 @@ _gwkjs_cairo_context_construct_internal(JSContext *context,
 GWKJS_NATIVE_CONSTRUCTOR_DECLARE(cairo_context)
 {
     GWKJS_NATIVE_CONSTRUCTOR_VARIABLES(cairo_context)
-    JSObject *surface_wrapper;
+    JSObjectRef surface_wrapper;
     cairo_surface_t *surface;
     cairo_t *cr;
 
@@ -308,7 +308,7 @@ GWKJS_NATIVE_CONSTRUCTOR_DECLARE(cairo_context)
 
 static void
 gwkjs_cairo_context_finalize(JSFreeOp *fop,
-                           JSObject *obj)
+                           JSObjectRef obj)
 {
     GwkjsCairoContext *priv;
     priv = (GwkjsCairoContext*) JS_GetPrivate(obj);
@@ -407,12 +407,12 @@ _GWKJS_CAIRO_CONTEXT_DEFINE_FUNC2FFAFF(userToDeviceDistance, cairo_user_to_devic
 
 
 static JSBool
-dispose_func(JSContext *context,
+dispose_func(JSContextRef context,
              unsigned   argc,
              jsval     *vp)
 {
     JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-    JSObject *obj = JSVAL_TO_OBJECT(rec.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(rec.thisv());
 
     GwkjsCairoContext *priv;
 
@@ -426,14 +426,14 @@ dispose_func(JSContext *context,
 }
 
 static JSBool
-appendPath_func(JSContext *context,
+appendPath_func(JSContextRef context,
                 unsigned   argc,
                 jsval     *vp)
 {
     JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-    JSObject *obj = JSVAL_TO_OBJECT(argv.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
 
-    JSObject *path_wrapper;
+    JSObjectRef path_wrapper;
     cairo_path_t *path;
     cairo_t *cr;
 
@@ -454,12 +454,12 @@ appendPath_func(JSContext *context,
 }
 
 static JSBool
-copyPath_func(JSContext *context,
+copyPath_func(JSContextRef context,
               unsigned   argc,
               jsval     *vp)
 {
     JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-    JSObject *obj = JSVAL_TO_OBJECT(argv.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
 
     cairo_path_t *path;
     cairo_t *cr;
@@ -475,12 +475,12 @@ copyPath_func(JSContext *context,
 }
 
 static JSBool
-copyPathFlat_func(JSContext *context,
+copyPathFlat_func(JSContextRef context,
                   unsigned   argc,
                   jsval     *vp)
 {
     JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-    JSObject *obj = JSVAL_TO_OBJECT(argv.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
 
     cairo_path_t *path;
     cairo_t *cr;
@@ -495,14 +495,14 @@ copyPathFlat_func(JSContext *context,
 }
 
 static JSBool
-mask_func(JSContext *context,
+mask_func(JSContextRef context,
           unsigned   argc,
           jsval     *vp)
 {
     JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-    JSObject *obj = JSVAL_TO_OBJECT(argv.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
 
-    JSObject *pattern_wrapper;
+    JSObjectRef pattern_wrapper;
     cairo_pattern_t *pattern;
     cairo_t *cr;
 
@@ -527,14 +527,14 @@ mask_func(JSContext *context,
 }
 
 static JSBool
-maskSurface_func(JSContext *context,
+maskSurface_func(JSContextRef context,
                  unsigned   argc,
                  jsval     *vp)
 {
     JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-    JSObject *obj = JSVAL_TO_OBJECT(argv.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
 
-    JSObject *surface_wrapper;
+    JSObjectRef surface_wrapper;
     double x, y;
     cairo_surface_t *surface;
     cairo_t *cr;
@@ -563,16 +563,16 @@ maskSurface_func(JSContext *context,
 }
 
 static JSBool
-setDash_func(JSContext *context,
+setDash_func(JSContextRef context,
              unsigned   argc,
              jsval     *vp)
 {
     JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-    JSObject *obj = JSVAL_TO_OBJECT(argv.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
 
     guint i;
     cairo_t *cr;
-    JSObject *dashes;
+    JSObjectRef dashes;
     double offset;
     JSBool retval = JS_FALSE;
     guint len;
@@ -628,14 +628,14 @@ setDash_func(JSContext *context,
 }
 
 static JSBool
-setSource_func(JSContext *context,
+setSource_func(JSContextRef context,
                unsigned   argc,
                jsval     *vp)
 {
     JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-    JSObject *obj = JSVAL_TO_OBJECT(argv.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
 
-    JSObject *pattern_wrapper;
+    JSObjectRef pattern_wrapper;
     cairo_pattern_t *pattern;
     cairo_t *cr;
 
@@ -662,14 +662,14 @@ setSource_func(JSContext *context,
 }
 
 static JSBool
-setSourceSurface_func(JSContext *context,
+setSourceSurface_func(JSContextRef context,
                       unsigned   argc,
                       jsval     *vp)
 {
     JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-    JSObject *obj = JSVAL_TO_OBJECT(argv.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
 
-    JSObject *surface_wrapper;
+    JSObjectRef surface_wrapper;
     double x, y;
     cairo_surface_t *surface;
     cairo_t *cr;
@@ -699,12 +699,12 @@ setSourceSurface_func(JSContext *context,
 }
 
 static JSBool
-showText_func(JSContext *context,
+showText_func(JSContextRef context,
               unsigned   argc,
               jsval     *vp)
 {
     JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-    JSObject *obj = JSVAL_TO_OBJECT(argv.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
 
     char *utf8;
     cairo_t *cr;
@@ -727,12 +727,12 @@ showText_func(JSContext *context,
 }
 
 static JSBool
-selectFontFace_func(JSContext *context,
+selectFontFace_func(JSContextRef context,
                     unsigned   argc,
                     jsval     *vp)
 {
     JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-    JSObject *obj = JSVAL_TO_OBJECT(argv.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
 
     char *family;
     cairo_font_slant_t slant;
@@ -758,16 +758,16 @@ selectFontFace_func(JSContext *context,
 }
 
 static JSBool
-popGroup_func(JSContext *context,
+popGroup_func(JSContextRef context,
               unsigned   argc,
               jsval     *vp)
 {
     JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-    JSObject *obj = JSVAL_TO_OBJECT(rec.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(rec.thisv());
 
     cairo_t *cr;
     cairo_pattern_t *pattern;
-    JSObject *pattern_wrapper;
+    JSObjectRef pattern_wrapper;
 
     if (argc > 0) {
         gwkjs_throw(context, "Context.popGroup() takes no arguments");
@@ -791,16 +791,16 @@ popGroup_func(JSContext *context,
     return JS_TRUE;
 }
 static JSBool
-getSource_func(JSContext *context,
+getSource_func(JSContextRef context,
                unsigned   argc,
                jsval     *vp)
 {
     JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-    JSObject *obj = JSVAL_TO_OBJECT(rec.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(rec.thisv());
 
     cairo_t *cr;
     cairo_pattern_t *pattern;
-    JSObject *pattern_wrapper;
+    JSObjectRef pattern_wrapper;
 
     if (argc > 0) {
         gwkjs_throw(context, "Context.getSource() takes no arguments");
@@ -825,16 +825,16 @@ getSource_func(JSContext *context,
 }
 
 static JSBool
-getTarget_func(JSContext *context,
+getTarget_func(JSContextRef context,
                unsigned   argc,
                jsval     *vp)
 {
     JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-    JSObject *obj = JSVAL_TO_OBJECT(rec.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(rec.thisv());
 
     cairo_t *cr;
     cairo_surface_t *surface;
-    JSObject *surface_wrapper;
+    JSObjectRef surface_wrapper;
 
     if (argc > 0) {
         gwkjs_throw(context, "Context.getTarget() takes no arguments");
@@ -859,16 +859,16 @@ getTarget_func(JSContext *context,
 }
 
 static JSBool
-getGroupTarget_func(JSContext *context,
+getGroupTarget_func(JSContextRef context,
                     unsigned   argc,
                     jsval     *vp)
 {
     JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-    JSObject *obj = JSVAL_TO_OBJECT(rec.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(rec.thisv());
 
     cairo_t *cr;
     cairo_surface_t *surface;
-    JSObject *surface_wrapper;
+    JSObjectRef surface_wrapper;
 
     if (argc > 0) {
         gwkjs_throw(context, "Context.getGroupTarget() takes no arguments");
@@ -994,11 +994,11 @@ JSFunctionSpec gwkjs_cairo_context_proto_funcs[] = {
     { NULL }
 };
 
-JSObject *
-gwkjs_cairo_context_from_context(JSContext *context,
+JSObjectRef 
+gwkjs_cairo_context_from_context(JSContextRef context,
                                cairo_t *cr)
 {
-    JSObject *object;
+    JSObjectRef object;
 
     object = JS_NewObject(context, &gwkjs_cairo_context_class, NULL, NULL);
     if (!object)
@@ -1010,8 +1010,8 @@ gwkjs_cairo_context_from_context(JSContext *context,
 }
 
 cairo_t *
-gwkjs_cairo_context_get_context(JSContext *context,
-                              JSObject *object)
+gwkjs_cairo_context_get_context(JSContextRef context,
+                              JSObjectRef object)
 {
     GwkjsCairoContext *priv;
     priv = priv_from_js(context, object);
@@ -1022,7 +1022,7 @@ gwkjs_cairo_context_get_context(JSContext *context,
 }
 
 static JSBool
-context_to_g_argument(JSContext      *context,
+context_to_g_argument(JSContextRef      context,
                       jsval           value,
                       const char     *arg_name,
                       GwkjsArgumentType argument_type,
@@ -1030,7 +1030,7 @@ context_to_g_argument(JSContext      *context,
                       gboolean        may_be_null,
                       GArgument      *arg)
 {
-    JSObject *obj;
+    JSObjectRef obj;
     cairo_t *cr;
 
     obj = JSVAL_TO_OBJECT(value);
@@ -1045,11 +1045,11 @@ context_to_g_argument(JSContext      *context,
 }
 
 static JSBool
-context_from_g_argument(JSContext  *context,
+context_from_g_argument(JSContextRef  context,
                         jsval      *value_p,
                         GArgument  *arg)
 {
-    JSObject *obj;
+    JSObjectRef obj;
 
     obj = gwkjs_cairo_context_from_context(context, (cairo_t*)arg->v_pointer);
     if (!obj)
@@ -1060,7 +1060,7 @@ context_from_g_argument(JSContext  *context,
 }
 
 static JSBool
-context_release_argument(JSContext  *context,
+context_release_argument(JSContextRef  context,
                          GITransfer  transfer,
                          GArgument  *arg)
 {
@@ -1075,7 +1075,7 @@ static GwkjsForeignInfo foreign_info = {
 };
 
 void
-gwkjs_cairo_context_init(JSContext *context)
+gwkjs_cairo_context_init(JSContextRef context)
 {
     gwkjs_struct_foreign_register("cairo", "Context", &foreign_info);
 }

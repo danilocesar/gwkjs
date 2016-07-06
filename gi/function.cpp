@@ -83,7 +83,7 @@
 //
 //    trampoline->ref_count--;
 //    if (trampoline->ref_count == 0) {
-//        JSContext *context = trampoline->context;
+//        JSContextRef context = trampoline->context;
 //
 //        if (!trampoline->is_vfunc) {
 //            JS_BeginRequest(context);
@@ -170,13 +170,13 @@
 //                     void **args,
 //                     void *data)
 //{
-//    JSContext *context;
+//    JSContextRef context;
 //    JSRuntime *runtime;
-//    JSObject *func_obj;
+//    JSObjectRef func_obj;
 //    GwkjsCallbackTrampoline *trampoline;
 //    int i, n_args, n_jsargs, n_outargs;
 //    jsval *jsargs, rval;
-//    JSObject *this_object;
+//    JSObjectRef this_object;
 //    GITypeInfo ret_type;
 //    gboolean success = FALSE;
 //    gboolean ret_type_is_void;
@@ -419,7 +419,7 @@
 //}
 //
 //GwkjsCallbackTrampoline*
-//gwkjs_callback_trampoline_new(JSContext      *context,
+//gwkjs_callback_trampoline_new(JSContextRef      context,
 //                            jsval           function,
 //                            GICallableInfo *callable_info,
 //                            GIScopeType     scope,
@@ -537,8 +537,8 @@
 //}
 //
 //static JSBool
-//gwkjs_fill_method_instance (JSContext  *context,
-//                          JSObject   *obj,
+//gwkjs_fill_method_instance (JSContextRef  context,
+//                          JSObjectRef   obj,
 //                          Function   *function,
 //                          GIArgument *out_arg)
 //{
@@ -668,9 +668,9 @@
 // * providing a @r_value argument.
 // */
 //static JSBool
-//gwkjs_invoke_c_function(JSContext      *context,
+//gwkjs_invoke_c_function(JSContextRef      context,
 //                      Function       *function,
-//                      JSObject       *obj, /* "this" object */
+//                      JSObjectRef       obj, /* "this" object */
 //                      unsigned        js_argc,
 //                      jsval          *js_argv,
 //                      jsval          *js_rval,
@@ -1268,7 +1268,7 @@
 //            if (function->js_out_argc == 1) {
 //                *js_rval = return_values[0];
 //            } else {
-//                JSObject *array;
+//                JSObjectRef array;
 //                array = JS_NewArrayObject(context,
 //                                          function->js_out_argc,
 //                                          return_values);
@@ -1298,13 +1298,13 @@
 //}
 //
 //static JSBool
-//function_call(JSContext *context,
+//function_call(JSContextRef context,
 //              unsigned   js_argc,
 //              jsval     *vp)
 //{
 //    JS::CallArgs js_argv = JS::CallArgsFromVp (js_argc, vp);
-//    JSObject *object = JSVAL_TO_OBJECT(js_argv.thisv());
-//    JSObject *callee = &js_argv.callee();
+//    JSObjectRef object = JSVAL_TO_OBJECT(js_argv.thisv());
+//    JSObjectRef callee = &js_argv.callee();
 //
 //    JSBool success;
 //    Function *priv;
@@ -1345,7 +1345,7 @@
 //
 //static void
 //function_finalize(JSFreeOp *fop,
-//                  JSObject *obj)
+//                  JSObjectRef obj)
 //{
 //    Function *priv;
 //
@@ -1362,7 +1362,7 @@
 //}
 //
 //static JSBool
-//get_num_arguments (JSContext *context,
+//get_num_arguments (JSContextRef context,
 //                   JS::HandleObject obj,
 //                   JS::HandleId id,
 //                   JS::MutableHandleValue vp)
@@ -1398,14 +1398,14 @@
 //}
 //
 //static JSBool
-//function_to_string (JSContext *context,
+//function_to_string (JSContextRef context,
 //                    guint      argc,
 //                    jsval     *vp)
 //{
 //    Function *priv;
 //    gchar *string;
 //    gboolean free;
-//    JSObject *self;
+//    JSObjectRef self;
 //    jsval retval;
 //    JSBool ret = JS_FALSE;
 //    int i, n_args, n_jsargs;
@@ -1513,7 +1513,7 @@
 //};
 //
 //static gboolean
-//init_cached_function_data (JSContext      *context,
+//init_cached_function_data (JSContextRef      context,
 //                           Function       *function,
 //                           GType           gtype,
 //                           GICallableInfo *info)
@@ -1661,12 +1661,12 @@
 //}
 //
 //static JSObject*
-//function_new(JSContext      *context,
+//function_new(JSContextRef      context,
 //             GType           gtype,
 //             GICallableInfo *info)
 //{
-//    JSObject *function;
-//    JSObject *global;
+//    JSObjectRef function;
+//    JSObjectRef global;
 //    Function *priv;
 //    JSBool found;
 //
@@ -1676,8 +1676,8 @@
 //    if (!JS_HasProperty(context, global, gwkjs_function_class.name, &found))
 //        return NULL;
 //    if (!found) {
-//        JSObject *prototype;
-//        JSObject *parent_proto;
+//        JSObjectRef prototype;
+//        JSObjectRef parent_proto;
 //        jsval native_function;
 //
 //        JS_GetProperty(context, global, "Function", &native_function);
@@ -1737,12 +1737,12 @@
 //}
 //
 //JSObject*
-//gwkjs_define_function(JSContext      *context,
-//                    JSObject       *in_object,
+//gwkjs_define_function(JSContextRef      context,
+//                    JSObjectRef       in_object,
 //                    GType           gtype,
 //                    GICallableInfo *info)
 //{
-//    JSObject *function = NULL;
+//    JSObjectRef function = NULL;
 //    GIInfoType info_type;
 //    gchar *name;
 //    gboolean free_name;
@@ -1785,9 +1785,9 @@
 //
 //
 //JSBool
-//gwkjs_invoke_c_function_uncached (JSContext      *context,
+//gwkjs_invoke_c_function_uncached (JSContextRef      context,
 //                                GIFunctionInfo *info,
-//                                JSObject       *obj,
+//                                JSObjectRef       obj,
 //                                unsigned        argc,
 //                                jsval          *argv,
 //                                jsval          *rval)
@@ -1805,9 +1805,9 @@
 //}
 //
 //JSBool
-//gwkjs_invoke_constructor_from_c (JSContext      *context,
-//                               JSObject       *constructor,
-//                               JSObject       *obj,
+//gwkjs_invoke_constructor_from_c (JSContextRef      context,
+//                               JSObjectRef       constructor,
+//                               JSObjectRef       obj,
 //                               unsigned        argc,
 //                               jsval          *argv,
 //                               GArgument      *rvalue)

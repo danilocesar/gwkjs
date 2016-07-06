@@ -28,7 +28,7 @@
 //#include <gwkjs/gwkjs.h>
 //#include "arg.h"
 //
-//typedef JSBool (*GwkjsArgOverrideToGArgumentFunc) (JSContext      *context,
+//typedef JSBool (*GwkjsArgOverrideToGArgumentFunc) (JSContextRef      context,
 //                                                 jsval           value,
 //                                                 const char     *arg_name,
 //                                                 GwkjsArgumentType argument_type,
@@ -36,10 +36,10 @@
 //                                                 gboolean        may_be_null,
 //                                                 GArgument      *arg);
 //
-//typedef JSBool (*GwkjsArgOverrideFromGArgumentFunc) (JSContext  *context,
+//typedef JSBool (*GwkjsArgOverrideFromGArgumentFunc) (JSContextRef  context,
 //                                                   jsval      *value_p,
 //                                                   GArgument  *arg);
-//typedef JSBool (*GwkjsArgOverrideReleaseGArgumentFunc) (JSContext  *context,
+//typedef JSBool (*GwkjsArgOverrideReleaseGArgumentFunc) (JSContextRef  context,
 //                                                      GITransfer  transfer,
 //                                                      GArgument  *arg);
 //
@@ -53,7 +53,7 @@
 //                                                    const char         *type_name,
 //                                                    GwkjsForeignInfo *info);
 //
-//JSBool  gwkjs_struct_foreign_convert_to_g_argument   (JSContext          *context,
+//JSBool  gwkjs_struct_foreign_convert_to_g_argument   (JSContextRef          context,
 //                                                    jsval               value,
 //                                                    GIBaseInfo         *interface_info,
 //                                                    const char         *arg_name,
@@ -61,11 +61,11 @@
 //                                                    GITransfer          transfer,
 //                                                    gboolean            may_be_null,
 //                                                    GArgument          *arg);
-//JSBool  gwkjs_struct_foreign_convert_from_g_argument (JSContext          *context,
+//JSBool  gwkjs_struct_foreign_convert_from_g_argument (JSContextRef          context,
 //                                                    jsval              *value_p,
 //                                                    GIBaseInfo         *interface_info,
 //                                                    GArgument          *arg);
-//JSBool  gwkjs_struct_foreign_release_g_argument      (JSContext          *context,
+//JSBool  gwkjs_struct_foreign_release_g_argument      (JSContextRef          context,
 //                                                    GITransfer          transfer,
 //                                                    GIBaseInfo         *interface_info,
 //                                                    GArgument          *arg);

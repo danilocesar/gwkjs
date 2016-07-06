@@ -289,8 +289,8 @@ gboolean    gwkjs_object_require_property      (JSContextRef     context,
 //                                              JSFunctionSpec  *fs,
 //                                              JSPropertySpec  *static_ps,
 //                                              JSFunctionSpec  *static_fs,
-//                                              JSObject       **constructor_p,
-//                                              JSObject       **prototype_p);
+//                                              JSObjectRef       *constructor_p,
+//                                              JSObjectRef       *prototype_p);
 //*/
 //void gwkjs_throw_constructor_error             (JSContextRef       context);
 

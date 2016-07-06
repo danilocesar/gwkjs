@@ -49,28 +49,28 @@
 // * only the keep-alive capability.
 // */
 //
-//typedef void (* GwkjsUnrootedFunc) (JSObject *obj,
+//typedef void (* GwkjsUnrootedFunc) (JSObjectRef obj,
 //                                  void     *data);
 //
 //
-//JSObject* gwkjs_keep_alive_new                       (JSContext         *context);
-//void      gwkjs_keep_alive_add_child                 (JSObject          *keep_alive,
+//JSObject* gwkjs_keep_alive_new                       (JSContextRef         context);
+//void      gwkjs_keep_alive_add_child                 (JSObjectRef          keep_alive,
 //                                                    GwkjsUnrootedFunc    notify,
-//                                                    JSObject          *child,
+//                                                    JSObjectRef          child,
 //                                                    void              *data);
-//void      gwkjs_keep_alive_remove_child              (JSObject          *keep_alive,
+//void      gwkjs_keep_alive_remove_child              (JSObjectRef          keep_alive,
 //                                                    GwkjsUnrootedFunc    notify,
-//                                                    JSObject          *child,
+//                                                    JSObjectRef          child,
 //                                                    void              *data);
-//JSObject* gwkjs_keep_alive_get_global                (JSContext         *context);
-//JSObject* gwkjs_keep_alive_get_global_if_exists      (JSContext         *context);
-//void      gwkjs_keep_alive_add_global_child          (JSContext         *context,
+//JSObject* gwkjs_keep_alive_get_global                (JSContextRef         context);
+//JSObject* gwkjs_keep_alive_get_global_if_exists      (JSContextRef         context);
+//void      gwkjs_keep_alive_add_global_child          (JSContextRef         context,
 //                                                    GwkjsUnrootedFunc  notify,
-//                                                    JSObject          *child,
+//                                                    JSObjectRef          child,
 //                                                    void              *data);
-//void      gwkjs_keep_alive_remove_global_child       (JSContext         *context,
+//void      gwkjs_keep_alive_remove_global_child       (JSContextRef         context,
 //                                                    GwkjsUnrootedFunc  notify,
-//                                                    JSObject          *child,
+//                                                    JSObjectRef          child,
 //                                                    void              *data);
 //
 //typedef struct GwkjsKeepAliveIter GwkjsKeepAliveIter;
@@ -80,11 +80,11 @@
 //    GHashTableIter dummyhiter;
 //};
 //
-//void gwkjs_keep_alive_iterator_init (GwkjsKeepAliveIter *iter, JSObject *keep_alive);
+//void gwkjs_keep_alive_iterator_init (GwkjsKeepAliveIter *iter, JSObjectRef keep_alive);
 //
 //gboolean gwkjs_keep_alive_iterator_next (GwkjsKeepAliveIter  *iter,
 //                                       GwkjsUnrootedFunc    notify_func,
-//                                       JSObject         **out_child,
+//                                       JSObjectRef         *out_child,
 //                                       void             **out_data);
 //
 //G_END_DECLS

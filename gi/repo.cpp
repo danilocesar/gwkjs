@@ -607,7 +607,7 @@ gwkjs_define_info(JSContextRef context,
 //
 ///* Get the "unknown namespace", which should be used for unnamespaced types */
 //JSObject*
-//gwkjs_lookup_private_namespace(JSContext *context)
+//gwkjs_lookup_private_namespace(JSContextRef context)
 //{
 //    jsid ns_name;
 //
@@ -617,7 +617,7 @@ gwkjs_define_info(JSContextRef context,
 //
 ///* Get the namespace object that the GIBaseInfo should be inside */
 //JSObject*
-//gwkjs_lookup_namespace_object(JSContext  *context,
+//gwkjs_lookup_namespace_object(JSContextRef  context,
 //                            GIBaseInfo *info)
 //{
 //    const char *ns;
@@ -681,10 +681,10 @@ lookup_override_function(JSContextRef  context,
 }
 //
 //JSObject*
-//gwkjs_lookup_namespace_object_by_name(JSContext      *context,
+//gwkjs_lookup_namespace_object_by_name(JSContextRef      context,
 //                                    jsid            ns_name)
 //{
-//    JSObject *repo_obj;
+//    JSObjectRef repo_obj;
 //    jsval importer;
 //    jsval girepository;
 //    jsval ns_obj;
@@ -826,12 +826,12 @@ gwkjs_hyphen_from_camel(const char *camel_name)
     return g_string_free(s, FALSE);
 }
 
-//JSObject *
-//gwkjs_lookup_generic_constructor(JSContext  *context,
+//JSObjectRef 
+//gwkjs_lookup_generic_constructor(JSContextRef  context,
 //                               GIBaseInfo *info)
 //{
-//    JSObject *in_object;
-//    JSObject *constructor;
+//    JSObjectRef in_object;
+//    JSObjectRef constructor;
 //    const char *constructor_name;
 //    jsval value;
 //
@@ -853,11 +853,11 @@ gwkjs_hyphen_from_camel(const char *camel_name)
 //    return constructor;
 //}
 //
-//JSObject *
-//gwkjs_lookup_generic_prototype(JSContext  *context,
+//JSObjectRef 
+//gwkjs_lookup_generic_prototype(JSContextRef  context,
 //                             GIBaseInfo *info)
 //{
-//    JSObject *constructor;
+//    JSObjectRef constructor;
 //    jsval value;
 //
 //    constructor = gwkjs_lookup_generic_constructor(context, info);

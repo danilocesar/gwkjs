@@ -32,8 +32,8 @@
 // * and a memory address.
 // */
 //JSBool
-//_gwkjs_proxy_to_string_func(JSContext  *context,
-//                          JSObject   *this_obj,
+//_gwkjs_proxy_to_string_func(JSContextRef  context,
+//                          JSObjectRef   this_obj,
 //                          const char *objtype,
 //                          GIBaseInfo *info,
 //                          GType       gtype,

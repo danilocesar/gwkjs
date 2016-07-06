@@ -45,7 +45,7 @@
 // * back if necessary.
 // */
 //static JSBool
-//gwkjs_locale_to_upper_case (JSContext *context,
+//gwkjs_locale_to_upper_case (JSContextRef context,
 //                          JS::HandleString src,
 //                          JS::MutableHandleValue retval)
 //{
@@ -71,7 +71,7 @@
 //}
 //
 //static JSBool
-//gwkjs_locale_to_lower_case (JSContext *context,
+//gwkjs_locale_to_lower_case (JSContextRef context,
 //                          JS::HandleString src,
 //                          JS::MutableHandleValue retval)
 //{
@@ -97,7 +97,7 @@
 //}
 //
 //static JSBool
-//gwkjs_locale_compare (JSContext *context,
+//gwkjs_locale_compare (JSContextRef context,
 //                    JS::HandleString src_1,
 //                    JS::HandleString src_2,
 //                    JS::MutableHandleValue retval)
@@ -123,7 +123,7 @@
 //}
 //
 //static JSBool
-//gwkjs_locale_to_unicode (JSContext  *context,
+//gwkjs_locale_to_unicode (JSContextRef  context,
 //                       const char *src,
 //                       JS::MutableHandleValue retval)
 //{

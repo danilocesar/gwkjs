@@ -57,7 +57,7 @@
 //
 ///* typesafe wrapper */
 //static void
-//add_root_jsval(JSContext *context,
+//add_root_jsval(JSContextRef context,
 //               jsval     *value_p)
 //{
 //    JS_BeginRequest(context);
@@ -67,7 +67,7 @@
 //
 ///* typesafe wrapper */
 //static void
-//remove_root_jsval(JSContext *context,
+//remove_root_jsval(JSContextRef context,
 //                  jsval     *value_p)
 //{
 //    JS_BeginRequest(context);
@@ -85,7 +85,7 @@
 // *
 // **/
 //void
-//gwkjs_rooted_array_append(JSContext        *context,
+//gwkjs_rooted_array_append(JSContextRef        context,
 //                        GwkjsRootedArray *array,
 //                        jsval             value)
 //{
@@ -114,7 +114,7 @@
 // * Returns: value of an element
 // */
 //jsval
-//gwkjs_rooted_array_get(JSContext        *context,
+//gwkjs_rooted_array_get(JSContextRef        context,
 //                     GwkjsRootedArray *array,
 //                     int               i)
 //{
@@ -141,7 +141,7 @@
 // * Returns: the rooted jsval locations in the array
 // */
 //jsval*
-//gwkjs_rooted_array_get_data(JSContext      *context,
+//gwkjs_rooted_array_get_data(JSContextRef      context,
 //                          GwkjsRootedArray *array)
 //{
 //    GArray *garray;
@@ -162,7 +162,7 @@
 // * Returns: number of jsval in the rooted array
 // */
 //int
-//gwkjs_rooted_array_get_length (JSContext        *context,
+//gwkjs_rooted_array_get_length (JSContextRef        context,
 //                             GwkjsRootedArray *array)
 //{
 //    GArray *garray;
@@ -185,7 +185,7 @@
 // *
 // **/
 //void
-//gwkjs_root_value_locations(JSContext        *context,
+//gwkjs_root_value_locations(JSContextRef        context,
 //                         jsval            *locations,
 //                         int               n_locations)
 //{
@@ -212,7 +212,7 @@
 // *
 // **/
 //void
-//gwkjs_unroot_value_locations(JSContext *context,
+//gwkjs_unroot_value_locations(JSContextRef context,
 //                           jsval     *locations,
 //                           int        n_locations)
 //{
@@ -240,7 +240,7 @@
 // *
 // **/
 //void
-//gwkjs_set_values(JSContext        *context,
+//gwkjs_set_values(JSContextRef        context,
 //               jsval            *locations,
 //               int               n_locations,
 //               jsval             initializer)
@@ -269,7 +269,7 @@
 // * Returns: the jsval array if it was not freed
 // **/
 //jsval*
-//gwkjs_rooted_array_free(JSContext        *context,
+//gwkjs_rooted_array_free(JSContextRef        context,
 //                      GwkjsRootedArray *array,
 //                      gboolean          free_segment)
 //{

@@ -35,8 +35,8 @@
 //typedef struct {
 //    GClosure base;
 //    JSRuntime *runtime;
-//    JSContext *context;
-//    JSObject *obj;
+//    JSContextRef context;
+//    JSObjectRef obj;
 //    guint unref_on_global_object_finalized : 1;
 //} Closure;
 //
@@ -91,7 +91,7 @@
 //}
 //
 //static void
-//global_context_finalized(JSObject *obj,
+//global_context_finalized(JSObjectRef obj,
 //                         void     *data)
 //{
 //    Closure *c;
@@ -123,8 +123,8 @@
 //static void
 //check_context_valid(Closure *c)
 //{
-//    JSContext *a_context;
-//    JSContext *iter;
+//    JSContextRef a_context;
+//    JSContextRef iter;
 //
 //    if (c->runtime == NULL)
 //        return;
@@ -252,7 +252,7 @@
 //                   jsval    *retval)
 //{
 //    Closure *c;
-//    JSContext *context;
+//    JSContextRef context;
 //
 //    c = (Closure*) closure;
 //
@@ -342,8 +342,8 @@
 //}
 //
 //GClosure*
-//gwkjs_closure_new(JSContext  *context,
-//                JSObject   *callable,
+//gwkjs_closure_new(JSContextRef  context,
+//                JSObjectRef   callable,
 //                const char *description,
 //                gboolean    root_function)
 //{

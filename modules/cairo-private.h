@@ -26,145 +26,145 @@
 #include "cairo-module.h"
 #include <cairo.h>
 
-JSBool           gwkjs_cairo_check_status                 (JSContext       *context,
+JSBool           gwkjs_cairo_check_status                 (JSContextRef       context,
                                                          cairo_status_t   status,
                                                          const char      *name);
 
-jsval            gwkjs_cairo_region_create_proto          (JSContext       *context,
-                                                         JSObject        *module,
+jsval            gwkjs_cairo_region_create_proto          (JSContextRef       context,
+                                                         JSObjectRef        module,
                                                          const char      *proto_name,
-                                                         JSObject        *parent);
-void             gwkjs_cairo_region_init                  (JSContext       *context);
+                                                         JSObjectRef        parent);
+void             gwkjs_cairo_region_init                  (JSContextRef       context);
 
 
-jsval            gwkjs_cairo_context_create_proto         (JSContext       *context,
-                                                         JSObject        *module,
+jsval            gwkjs_cairo_context_create_proto         (JSContextRef       context,
+                                                         JSObjectRef        module,
                                                          const char      *proto_name,
-                                                         JSObject        *parent);
-cairo_t *        gwkjs_cairo_context_get_context          (JSContext       *context,
-                                                         JSObject        *object);
-JSObject *       gwkjs_cairo_context_from_context         (JSContext       *context,
+                                                         JSObjectRef        parent);
+cairo_t *        gwkjs_cairo_context_get_context          (JSContextRef       context,
+                                                         JSObjectRef        object);
+JSObjectRef        gwkjs_cairo_context_from_context         (JSContextRef       context,
                                                          cairo_t         *cr);
-void             gwkjs_cairo_context_init                 (JSContext       *context);
-void             gwkjs_cairo_surface_init                 (JSContext       *context);
+void             gwkjs_cairo_context_init                 (JSContextRef       context);
+void             gwkjs_cairo_surface_init                 (JSContextRef       context);
 
 
 /* cairo_path_t */
-jsval            gwkjs_cairo_path_create_proto            (JSContext       *context,
-                                                         JSObject        *module,
+jsval            gwkjs_cairo_path_create_proto            (JSContextRef       context,
+                                                         JSObjectRef        module,
                                                          const char      *proto_name,
-                                                         JSObject        *parent);
-JSObject *       gwkjs_cairo_path_from_path               (JSContext       *context,
+                                                         JSObjectRef        parent);
+JSObjectRef        gwkjs_cairo_path_from_path               (JSContextRef       context,
                                                          cairo_path_t    *path);
-cairo_path_t *   gwkjs_cairo_path_get_path                (JSContext       *context,
-                                                         JSObject        *path_wrapper);
+cairo_path_t *   gwkjs_cairo_path_get_path                (JSContextRef       context,
+                                                         JSObjectRef        path_wrapper);
 
 /* surface */
-jsval            gwkjs_cairo_surface_create_proto         (JSContext       *context,
-                                                         JSObject        *module,
+jsval            gwkjs_cairo_surface_create_proto         (JSContextRef       context,
+                                                         JSObjectRef        module,
                                                          const char      *proto_name,
-                                                         JSObject        *parent);
-void             gwkjs_cairo_surface_construct            (JSContext       *context,
-                                                         JSObject        *object,
+                                                         JSObjectRef        parent);
+void             gwkjs_cairo_surface_construct            (JSContextRef       context,
+                                                         JSObjectRef        object,
                                                          cairo_surface_t *surface);
 void             gwkjs_cairo_surface_finalize_surface     (JSFreeOp        *fop,
-                                                         JSObject        *object);
-JSObject *       gwkjs_cairo_surface_from_surface         (JSContext       *context,
+                                                         JSObjectRef        object);
+JSObjectRef        gwkjs_cairo_surface_from_surface         (JSContextRef       context,
                                                          cairo_surface_t *surface);
-cairo_surface_t* gwkjs_cairo_surface_get_surface          (JSContext       *context,
-                                                         JSObject        *object);
+cairo_surface_t* gwkjs_cairo_surface_get_surface          (JSContextRef       context,
+                                                         JSObjectRef        object);
 
 /* image surface */
-jsval            gwkjs_cairo_image_surface_create_proto   (JSContext       *context,
-                                                         JSObject        *module,
+jsval            gwkjs_cairo_image_surface_create_proto   (JSContextRef       context,
+                                                         JSObjectRef        module,
                                                          const char      *proto_name,
-                                                         JSObject        *parent);
-void             gwkjs_cairo_image_surface_init           (JSContext       *context,
-                                                         JSObject        *object);
-JSObject *       gwkjs_cairo_image_surface_from_surface   (JSContext       *context,
+                                                         JSObjectRef        parent);
+void             gwkjs_cairo_image_surface_init           (JSContextRef       context,
+                                                         JSObjectRef        object);
+JSObjectRef        gwkjs_cairo_image_surface_from_surface   (JSContextRef       context,
                                                          cairo_surface_t *surface);
 
 /* postscript surface */
 #ifdef CAIRO_HAS_PS_SURFACE
-jsval            gwkjs_cairo_ps_surface_create_proto      (JSContext       *context,
-                                                         JSObject        *module,
+jsval            gwkjs_cairo_ps_surface_create_proto      (JSContextRef       context,
+                                                         JSObjectRef        module,
                                                          const char      *proto_name,
-                                                         JSObject        *parent);
+                                                         JSObjectRef        parent);
 #endif
-JSObject *       gwkjs_cairo_ps_surface_from_surface       (JSContext       *context,
+JSObjectRef        gwkjs_cairo_ps_surface_from_surface       (JSContextRef       context,
                                                           cairo_surface_t *surface);
 
 /* pdf surface */
 #ifdef CAIRO_HAS_PDF_SURFACE
-jsval            gwkjs_cairo_pdf_surface_create_proto     (JSContext       *context,
-                                                         JSObject        *module,
+jsval            gwkjs_cairo_pdf_surface_create_proto     (JSContextRef       context,
+                                                         JSObjectRef        module,
                                                          const char      *proto_name,
-                                                         JSObject        *parent);
+                                                         JSObjectRef        parent);
 #endif
-JSObject *       gwkjs_cairo_pdf_surface_from_surface     (JSContext       *context,
+JSObjectRef        gwkjs_cairo_pdf_surface_from_surface     (JSContextRef       context,
                                                          cairo_surface_t *surface);
 
 /* svg surface */
 #ifdef CAIRO_HAS_SVG_SURFACE
-jsval            gwkjs_cairo_svg_surface_create_proto     (JSContext       *context,
-                                                         JSObject        *module,
+jsval            gwkjs_cairo_svg_surface_create_proto     (JSContextRef       context,
+                                                         JSObjectRef        module,
                                                          const char      *proto_name,
-                                                         JSObject        *parent);
+                                                         JSObjectRef        parent);
 #endif
-JSObject *       gwkjs_cairo_svg_surface_from_surface     (JSContext       *context,
+JSObjectRef        gwkjs_cairo_svg_surface_from_surface     (JSContextRef       context,
                                                          cairo_surface_t *surface);
 
 /* pattern */
-jsval            gwkjs_cairo_pattern_create_proto         (JSContext       *context,
-                                                         JSObject        *module,
+jsval            gwkjs_cairo_pattern_create_proto         (JSContextRef       context,
+                                                         JSObjectRef        module,
                                                          const char      *proto_name,
-                                                         JSObject        *parent);
-void             gwkjs_cairo_pattern_construct            (JSContext       *context,
-                                                         JSObject        *object,
+                                                         JSObjectRef        parent);
+void             gwkjs_cairo_pattern_construct            (JSContextRef       context,
+                                                         JSObjectRef        object,
                                                          cairo_pattern_t *pattern);
 void             gwkjs_cairo_pattern_finalize_pattern     (JSFreeOp        *fop,
-                                                         JSObject        *object);
-JSObject*        gwkjs_cairo_pattern_from_pattern         (JSContext       *context,
+                                                         JSObjectRef        object);
+JSObject*        gwkjs_cairo_pattern_from_pattern         (JSContextRef       context,
                                                          cairo_pattern_t *pattern);
-cairo_pattern_t* gwkjs_cairo_pattern_get_pattern          (JSContext       *context,
-                                                         JSObject        *object);
+cairo_pattern_t* gwkjs_cairo_pattern_get_pattern          (JSContextRef       context,
+                                                         JSObjectRef        object);
 
 /* gradient */
-jsval            gwkjs_cairo_gradient_create_proto        (JSContext       *context,
-                                                         JSObject        *module,
+jsval            gwkjs_cairo_gradient_create_proto        (JSContextRef       context,
+                                                         JSObjectRef        module,
                                                          const char      *proto_name,
-                                                         JSObject        *parent);
+                                                         JSObjectRef        parent);
 
 /* linear gradient */
-jsval            gwkjs_cairo_linear_gradient_create_proto (JSContext       *context,
-                                                         JSObject        *module,
+jsval            gwkjs_cairo_linear_gradient_create_proto (JSContextRef       context,
+                                                         JSObjectRef        module,
                                                          const char      *proto_name,
-                                                         JSObject        *parent);
-JSObject *       gwkjs_cairo_linear_gradient_from_pattern (JSContext       *context,
+                                                         JSObjectRef        parent);
+JSObjectRef        gwkjs_cairo_linear_gradient_from_pattern (JSContextRef       context,
                                                          cairo_pattern_t *pattern);
 
 /* radial gradient */
-jsval            gwkjs_cairo_radial_gradient_create_proto (JSContext       *context,
-                                                         JSObject        *module,
+jsval            gwkjs_cairo_radial_gradient_create_proto (JSContextRef       context,
+                                                         JSObjectRef        module,
                                                          const char      *proto_name,
-                                                         JSObject        *parent);
-JSObject *       gwkjs_cairo_radial_gradient_from_pattern (JSContext       *context,
+                                                         JSObjectRef        parent);
+JSObjectRef        gwkjs_cairo_radial_gradient_from_pattern (JSContextRef       context,
                                                          cairo_pattern_t *pattern);
 
 /* surface pattern */
-jsval            gwkjs_cairo_surface_pattern_create_proto (JSContext       *context,
-                                                         JSObject        *module,
+jsval            gwkjs_cairo_surface_pattern_create_proto (JSContextRef       context,
+                                                         JSObjectRef        module,
                                                          const char      *proto_name,
-                                                         JSObject        *parent);
-JSObject *       gwkjs_cairo_surface_pattern_from_pattern (JSContext       *context,
+                                                         JSObjectRef        parent);
+JSObjectRef        gwkjs_cairo_surface_pattern_from_pattern (JSContextRef       context,
                                                          cairo_pattern_t *pattern);
 
 /* solid pattern */
-jsval            gwkjs_cairo_solid_pattern_create_proto   (JSContext       *context,
-                                                         JSObject        *module,
+jsval            gwkjs_cairo_solid_pattern_create_proto   (JSContextRef       context,
+                                                         JSObjectRef        module,
                                                          const char      *proto_name,
-                                                         JSObject        *parent);
-JSObject *       gwkjs_cairo_solid_pattern_from_pattern   (JSContext       *context,
+                                                         JSObjectRef        parent);
+JSObjectRef        gwkjs_cairo_solid_pattern_from_pattern   (JSContextRef       context,
                                                          cairo_pattern_t *pattern);
 
 #endif /* __CAIRO_PRIVATE_H__ */

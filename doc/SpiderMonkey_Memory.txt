@@ -73,7 +73,7 @@ Note that the argument to JS_AddRoot() is the location of your value, not the va
 
 Here is the trickier part. If you create an object, say:
 
- JSObject *obj = JS_ConstructObject(NULL, NULL, whatever, ...);
+ JSObjectRef obj = JS_ConstructObject(NULL, NULL, whatever, ...);
 
 "obj" is NOT now referenced by any other object. If the GC ran right away, "obj" would be collected.
 

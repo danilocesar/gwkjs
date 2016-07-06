@@ -31,7 +31,7 @@ GWKJS_DEFINE_PROTO_ABSTRACT("CairoGradient", cairo_gradient, JSCLASS_BACKGROUND_
 
 static void
 gwkjs_cairo_gradient_finalize(JSFreeOp *fop,
-                            JSObject *obj)
+                            JSObjectRef obj)
 {
     gwkjs_cairo_pattern_finalize_pattern(fop, obj);
 }
@@ -44,12 +44,12 @@ JSPropertySpec gwkjs_cairo_gradient_proto_props[] = {
 /* Methods */
 
 static JSBool
-addColorStopRGB_func(JSContext *context,
+addColorStopRGB_func(JSContextRef context,
                      unsigned   argc,
                      jsval     *vp)
 {
     JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-    JSObject *obj = JSVAL_TO_OBJECT(argv.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
 
     double offset, red, green, blue;
     cairo_pattern_t *pattern;
@@ -73,12 +73,12 @@ addColorStopRGB_func(JSContext *context,
 }
 
 static JSBool
-addColorStopRGBA_func(JSContext *context,
+addColorStopRGBA_func(JSContextRef context,
                       unsigned   argc,
                       jsval     *vp)
 {
     JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-    JSObject *obj = JSVAL_TO_OBJECT(argv.thisv());
+    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
 
     double offset, red, green, blue, alpha;
     cairo_pattern_t *pattern;

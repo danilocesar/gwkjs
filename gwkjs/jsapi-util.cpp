@@ -232,10 +232,10 @@ gwkjs_make_function(JSContextRef ctx, const gchar *name, JSObjectCallAsFunctionC
 // * Returns: %TRUE on success, %FALSE otherwise
 // */
 //gboolean
-//gwkjs_init_context_standard (JSContext  *context,
-//                           JSObject  **global_out)
+//gwkjs_init_context_standard (JSContextRef  context,
+//                           JSObjectRef  *global_out)
 //{
-//    JSObject *global;
+//    JSObjectRef global;
 //    JS::CompartmentOptions options;
 //    guint32 options_flags;
 //
@@ -283,20 +283,20 @@ gwkjs_make_function(JSContextRef ctx, const gchar *name, JSObjectCallAsFunctionC
 //}
 //
 //void
-//gwkjs_set_global_slot (JSContext     *context,
+//gwkjs_set_global_slot (JSContextRef     context,
 //                     GwkjsGlobalSlot  slot,
 //                     jsval          value)
 //{
-//    JSObject *global;
+//    JSObjectRef global;
 //    global = JS_GetGlobalObject(context);
 //    JS_SetReservedSlot(global, JSCLASS_GLOBAL_SLOT_COUNT + slot, value);
 //}
 //
 //jsval
-//gwkjs_get_global_slot (JSContext     *context,
+//gwkjs_get_global_slot (JSContextRef     context,
 //                     GwkjsGlobalSlot  slot)
 //{
-//    JSObject *global;
+//    JSObjectRef global;
 //    global = JS_GetGlobalObject(context);
 //    return JS_GetReservedSlot(global, JSCLASS_GLOBAL_SLOT_COUNT + slot);
 //}
@@ -398,7 +398,7 @@ out:
 }
 
 //void
-//gwkjs_throw_constructor_error(JSContext *context)
+//gwkjs_throw_constructor_error(JSContextRef context)
 //{
 //    gwkjs_throw(context,
 //              "Constructor called as normal method. Use 'new SomeObject()' not 'SomeObject()'");
@@ -480,7 +480,7 @@ gwkjs_define_string_array(JSContextRef context,
 // *
 // */
 //static char *
-//gwkjs_string_readable (JSContext   *context,
+//gwkjs_string_readable (JSContextRef   context,
 //                     JSString    *string)
 //{
 //    GString *buf = g_string_new("");
@@ -523,7 +523,7 @@ gwkjs_define_string_array(JSContextRef context,
 // * Returns: A UTF-8 encoded string describing @value
 // */
 //char*
-//gwkjs_value_debug_string(JSContext      *context,
+//gwkjs_value_debug_string(JSContextRef      context,
 //                       jsval           value)
 //{
 //    JSString *str;
@@ -584,12 +584,12 @@ gwkjs_define_string_array(JSContextRef context,
 //}
 //
 //void
-//gwkjs_log_object_props(JSContext      *context,
-//                     JSObject       *obj,
+//gwkjs_log_object_props(JSContextRef      context,
+//                     JSObjectRef       obj,
 //                     GwkjsDebugTopic   topic,
 //                     const char     *prefix)
 //{
-//    JSObject *props_iter;
+//    JSObjectRef props_iter;
 //    jsid prop_id;
 //
 //    JS_BeginRequest(context);
@@ -634,11 +634,11 @@ gwkjs_define_string_array(JSContextRef context,
 //}
 //
 //void
-//gwkjs_explain_scope(JSContext  *context,
+//gwkjs_explain_scope(JSContextRef  context,
 //                  const char *title)
 //{
-//    JSObject *global;
-//    JSObject *parent;
+//    JSObjectRef global;
+//    JSObjectRef parent;
 //    GString *chain;
 //    char *debugstr;
 //
@@ -803,7 +803,7 @@ gwkjs_log_exception_full(JSContextRef context,
 
 //
 //static JSBool
-//log_and_maybe_keep_exception(JSContext  *context,
+//log_and_maybe_keep_exception(JSContextRef  context,
 //                             gboolean    keep)
 //{
 //    jsval exc = JSVAL_VOID;
@@ -853,13 +853,13 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 }
 
 //JSBool
-//gwkjs_log_and_keep_exception(JSContext *context)
+//gwkjs_log_and_keep_exception(JSContextRef context)
 //{
 //    return log_and_maybe_keep_exception(context, TRUE);
 //}
 //
 //static void
-//try_to_chain_stack_trace(JSContext *src_context, JSContext *dst_context,
+//try_to_chain_stack_trace(JSContextRef src_context, JSContextRef dst_context,
 //                         jsval src_exc) {
 //    /* append current stack of dst_context to stack trace for src_exc.
 //     * we bail if anything goes wrong, just using the src_exc unmodified
@@ -904,8 +904,8 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 //}
 //
 //JSBool
-//gwkjs_move_exception(JSContext      *src_context,
-//                   JSContext      *dest_context)
+//gwkjs_move_exception(JSContextRef      src_context,
+//                   JSContextRef      dest_context)
 //{
 //    JSBool success;
 //
@@ -935,8 +935,8 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 //}
 //
 //JSBool
-//gwkjs_call_function_value(JSContext      *context,
-//                        JSObject       *obj,
+//gwkjs_call_function_value(JSContextRef      context,
+//                        JSObjectRef       obj,
 //                        jsval           fval,
 //                        unsigned        argc,
 //                        jsval          *argv,
@@ -957,8 +957,8 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 //}
 //
 //static JSBool
-//log_prop(JSContext  *context,
-//         JSObject   *obj,
+//log_prop(JSContextRef  context,
+//         JSObjectRef   obj,
 //         jsval       id,
 //         jsval      *value_p,
 //         const char *what)
@@ -985,8 +985,8 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 //}
 //
 //JSBool
-//gwkjs_get_prop_verbose_stub(JSContext *context,
-//                          JSObject  *obj,
+//gwkjs_get_prop_verbose_stub(JSContextRef context,
+//                          JSObjectRef  obj,
 //                          jsval      id,
 //                          jsval     *value_p)
 //{
@@ -994,8 +994,8 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 //}
 //
 //JSBool
-//gwkjs_set_prop_verbose_stub(JSContext *context,
-//                          JSObject  *obj,
+//gwkjs_set_prop_verbose_stub(JSContextRef context,
+//                          JSObjectRef  obj,
 //                          jsval      id,
 //                          jsval     *value_p)
 //{
@@ -1003,8 +1003,8 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 //}
 //
 //JSBool
-//gwkjs_add_prop_verbose_stub(JSContext *context,
-//                          JSObject  *obj,
+//gwkjs_add_prop_verbose_stub(JSContextRef context,
+//                          JSObjectRef  obj,
 //                          jsval      id,
 //                          jsval     *value_p)
 //{
@@ -1012,8 +1012,8 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 //}
 //
 //JSBool
-//gwkjs_delete_prop_verbose_stub(JSContext *context,
-//                             JSObject  *obj,
+//gwkjs_delete_prop_verbose_stub(JSContextRef context,
+//                             JSObjectRef  obj,
 //                             jsval      id,
 //                             jsval     *value_p)
 //{
@@ -1063,7 +1063,7 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 // *   undefined throws, but null => 0, false => 0, true => 1.
 // */
 //JSBool
-//gwkjs_value_to_int64  (JSContext  *context,
+//gwkjs_value_to_int64  (JSContextRef  context,
 //                     const jsval val,
 //                     gint64     *result)
 //{
@@ -1090,7 +1090,7 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 //}
 //
 //static JSBool
-//gwkjs_parse_args_valist (JSContext  *context,
+//gwkjs_parse_args_valist (JSContextRef  context,
 //                       const char *function_name,
 //                       const char *format,
 //                       unsigned    argc,
@@ -1194,7 +1194,7 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 //            if (!JSVAL_IS_OBJECT(js_value)) {
 //                arg_error_message = "Not an object";
 //            } else {
-//                JSObject **arg = (JSObject**) arg_location;
+//                JSObjectRef *arg = (JSObject**) arg_location;
 //                *arg = JSVAL_TO_OBJECT(js_value);
 //            }
 //        }
@@ -1313,7 +1313,7 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 // * i: A number, will be converted to a C "gint32"
 // * u: A number, converted into a C "guint32"
 // * t: A 64-bit number, converted into a C "gint64" by way of gwkjs_value_to_int64()
-// * o: A JavaScript object, as a "JSObject *"
+// * o: A JavaScript object, as a "JSObjectRef "
 // *
 // * If the first character in the format string is a '!', then JS is allowed
 // * to pass extra arguments that are ignored, to the function.
@@ -1326,7 +1326,7 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 // * which case the C value %NULL is returned.
 // */
 //JSBool
-//gwkjs_parse_args (JSContext  *context,
+//gwkjs_parse_args (JSContextRef  context,
 //                const char *function_name,
 //                const char *format,
 //                unsigned    argc,
@@ -1342,7 +1342,7 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 //}
 //
 //JSBool
-//gwkjs_parse_call_args (JSContext    *context,
+//gwkjs_parse_call_args (JSContextRef    context,
 //                     const char   *function_name,
 //                     const char   *format,
 //                     JS::CallArgs &call_args,
@@ -1393,7 +1393,7 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 //#endif
 //
 //void
-//gwkjs_gc_if_needed (JSContext *context)
+//gwkjs_gc_if_needed (JSContextRef context)
 //{
 //#ifdef __linux__
 //    {
@@ -1438,7 +1438,7 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 // * Low level version of gwkjs_context_maybe_gc().
 // */
 //void
-//gwkjs_maybe_gc (JSContext *context)
+//gwkjs_maybe_gc (JSContextRef context)
 //{
 //    JS_MaybeGC(context);
 //    gwkjs_gc_if_needed(context);

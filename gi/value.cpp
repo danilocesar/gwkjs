@@ -41,7 +41,7 @@
 //
 //#include <girepository.h>
 //
-//static JSBool gwkjs_value_from_g_value_internal(JSContext    *context,
+//static JSBool gwkjs_value_from_g_value_internal(JSContextRef    context,
 //                                              jsval        *value_p,
 //                                              const GValue *gvalue,
 //                                              gboolean      no_copy,
@@ -84,7 +84,7 @@
 // * in array_value, with its length stored in array_length_value.
 // */
 //static JSBool
-//gwkjs_value_from_array_and_length_values(JSContext    *context,
+//gwkjs_value_from_array_and_length_values(JSContextRef    context,
 //                                       jsval        *value_p,
 //                                       GITypeInfo   *array_type_info,
 //                                       const GValue *array_value,
@@ -118,9 +118,9 @@
 //                gpointer         invocation_hint,
 //                gpointer         marshal_data)
 //{
-//    JSContext *context;
+//    JSContextRef context;
 //    JSRuntime *runtime;
-//    JSObject *obj;
+//    JSObjectRef obj;
 //    int argc;
 //    jsval *argv;
 //    jsval rval;
@@ -308,8 +308,8 @@
 //}
 //
 //GClosure*
-//gwkjs_closure_new_for_signal(JSContext  *context,
-//                           JSObject   *callable,
+//gwkjs_closure_new_for_signal(JSContextRef  context,
+//                           JSObjectRef   callable,
 //                           const char *description,
 //                           guint       signal_id)
 //{
@@ -323,8 +323,8 @@
 //}
 //
 //GClosure*
-//gwkjs_closure_new_marshaled (JSContext    *context,
-//                           JSObject     *callable,
+//gwkjs_closure_new_marshaled (JSContextRef    context,
+//                           JSObjectRef     callable,
 //                           const char   *description)
 //{
 //    GClosure *closure;
@@ -337,7 +337,7 @@
 //}
 //
 //static GType
-//gwkjs_value_guess_g_type(JSContext *context,
+//gwkjs_value_guess_g_type(JSContextRef context,
 //                       jsval      value)
 //{
 //    if (JSVAL_IS_NULL(value))
@@ -362,7 +362,7 @@
 //}
 //
 //static JSBool
-//gwkjs_value_to_g_value_internal(JSContext    *context,
+//gwkjs_value_to_g_value_internal(JSContextRef    context,
 //                              jsval         value,
 //                              GValue       *gvalue,
 //                              gboolean      no_copy)
@@ -492,7 +492,7 @@
 //        if (JSVAL_IS_NULL(value)) {
 //            /* nothing to do */
 //        } else if (JSVAL_IS_OBJECT(value)) {
-//            JSObject *obj;
+//            JSObjectRef obj;
 //            obj = JSVAL_TO_OBJECT(value);
 //
 //            if (!gwkjs_typecheck_object(context, obj,
@@ -555,7 +555,7 @@
 //        if (JSVAL_IS_NULL(value)) {
 //            /* nothing to do */
 //        } else if (JSVAL_IS_OBJECT(value)) {
-//            JSObject *obj;
+//            JSObjectRef obj;
 //            obj = JSVAL_TO_OBJECT(value);
 //
 //            if (g_type_is_a(gtype, G_TYPE_ERROR)) {
@@ -626,7 +626,7 @@
 //        if (JSVAL_IS_NULL(value)) {
 //            /* nothing to do */
 //        } else if (JSVAL_IS_OBJECT(value)) {
-//            JSObject *obj = JSVAL_TO_OBJECT(value);
+//            JSObjectRef obj = JSVAL_TO_OBJECT(value);
 //
 //            if (!gwkjs_typecheck_boxed(context, obj,
 //                                     NULL, G_TYPE_VARIANT, JS_TRUE))
@@ -691,7 +691,7 @@
 //        if (JSVAL_IS_NULL(value)) {
 //            /* nothing to do */
 //        } else if (JSVAL_IS_OBJECT(value)) {
-//            JSObject *obj;
+//            JSObjectRef obj;
 //            obj = JSVAL_TO_OBJECT(value);
 //
 //            if (!gwkjs_typecheck_param(context, obj, gtype, JS_TRUE))
@@ -761,7 +761,7 @@
 //}
 //
 //JSBool
-//gwkjs_value_to_g_value(JSContext    *context,
+//gwkjs_value_to_g_value(JSContextRef    context,
 //                     jsval         value,
 //                     GValue       *gvalue)
 //{
@@ -769,7 +769,7 @@
 //}
 //
 //JSBool
-//gwkjs_value_to_g_value_no_copy(JSContext    *context,
+//gwkjs_value_to_g_value_no_copy(JSContextRef    context,
 //                             jsval         value,
 //                             GValue       *gvalue)
 //{
@@ -777,7 +777,7 @@
 //}
 //
 //static JSBool
-//convert_int_to_enum (JSContext *context,
+//convert_int_to_enum (JSContextRef context,
 //                     jsval     *value_p,
 //                     GType      gtype,
 //                     int        v)
@@ -803,7 +803,7 @@
 //}
 //
 //static JSBool
-//gwkjs_value_from_g_value_internal(JSContext    *context,
+//gwkjs_value_from_g_value_internal(JSContextRef    context,
 //                                jsval        *value_p,
 //                                const GValue *gvalue,
 //                                gboolean      no_copy,
@@ -859,7 +859,7 @@
 //        *value_p = BOOLEAN_TO_JSVAL(!!v);
 //    } else if (g_type_is_a(gtype, G_TYPE_OBJECT) || g_type_is_a(gtype, G_TYPE_INTERFACE)) {
 //        GObject *gobj;
-//        JSObject *obj;
+//        JSObjectRef obj;
 //
 //        gobj = (GObject*) g_value_get_object(gvalue);
 //
@@ -884,7 +884,7 @@
 //        GwkjsBoxedCreationFlags boxed_flags;
 //        GIBaseInfo *info;
 //        void *gboxed;
-//        JSObject *obj;
+//        JSObjectRef obj;
 //
 //        if (g_type_is_a(gtype, G_TYPE_BOXED))
 //            gboxed = g_value_get_boxed(gvalue);
@@ -946,7 +946,7 @@
 //        return convert_int_to_enum(context, value_p, gtype, g_value_get_enum(gvalue));
 //    } else if (g_type_is_a(gtype, G_TYPE_PARAM)) {
 //        GParamSpec *gparam;
-//        JSObject *obj;
+//        JSObjectRef obj;
 //
 //        gparam = g_value_get_param(gvalue);
 //
@@ -1018,7 +1018,7 @@
 //    } else if (G_TYPE_IS_INSTANTIATABLE(gtype)) {
 //        /* The gtype is none of the above, it should be a custom
 //           fundamental type. */
-//        JSObject *obj;
+//        JSObjectRef obj;
 //        obj = gwkjs_fundamental_from_g_value(context, (const GValue*)gvalue, gtype);
 //        if (obj == NULL)
 //            return JS_FALSE;
@@ -1035,7 +1035,7 @@
 //}
 //
 //JSBool
-//gwkjs_value_from_g_value(JSContext    *context,
+//gwkjs_value_from_g_value(JSContextRef    context,
 //                       jsval        *value_p,
 //                       const GValue *gvalue)
 //{

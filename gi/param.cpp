@@ -58,7 +58,7 @@
 // * if id was resolved.
 // */
 //static JSBool
-//param_new_resolve(JSContext *context,
+//param_new_resolve(JSContextRef context,
 //                  JS::HandleObject obj,
 //                  JS::HandleId id,
 //                  unsigned flags,
@@ -127,7 +127,7 @@
 //
 //static void
 //param_finalize(JSFreeOp *fop,
-//               JSObject *obj)
+//               JSObjectRef obj)
 //{
 //    Param *priv;
 //
@@ -182,10 +182,10 @@
 //};
 //
 //static JSObject*
-//gwkjs_lookup_param_prototype(JSContext    *context)
+//gwkjs_lookup_param_prototype(JSContextRef    context)
 //{
-//    JSObject *in_object;
-//    JSObject *constructor;
+//    JSObjectRef in_object;
+//    JSObjectRef constructor;
 //    jsid gobject_name;
 //    jsval value;
 //
@@ -215,13 +215,13 @@
 //}
 //
 //void
-//gwkjs_define_param_class(JSContext    *context,
-//                       JSObject     *in_object)
+//gwkjs_define_param_class(JSContextRef    context,
+//                       JSObjectRef     in_object)
 //{
 //    const char *constructor_name;
-//    JSObject *prototype;
+//    JSObjectRef prototype;
 //    jsval value;
-//    JSObject *constructor;
+//    JSObjectRef constructor;
 //    GIObjectInfo *info;
 //
 //    constructor_name = "ParamSpec";
@@ -258,11 +258,11 @@
 //}
 //
 //JSObject*
-//gwkjs_param_from_g_param(JSContext    *context,
+//gwkjs_param_from_g_param(JSContextRef    context,
 //                       GParamSpec   *gparam)
 //{
-//    JSObject *obj;
-//    JSObject *proto;
+//    JSObjectRef obj;
+//    JSObjectRef proto;
 //    Param *priv;
 //
 //    if (gparam == NULL)
@@ -294,8 +294,8 @@
 //}
 //
 //GParamSpec*
-//gwkjs_g_param_from_param(JSContext    *context,
-//                       JSObject     *obj)
+//gwkjs_g_param_from_param(JSContextRef    context,
+//                       JSObjectRef     obj)
 //{
 //    Param *priv;
 //
@@ -308,8 +308,8 @@
 //}
 //
 //JSBool
-//gwkjs_typecheck_param(JSContext     *context,
-//                    JSObject      *object,
+//gwkjs_typecheck_param(JSContextRef     context,
+//                    JSObjectRef      object,
 //                    GType          expected_type,
 //                    JSBool         throw_error)
 //{

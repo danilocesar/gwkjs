@@ -41,7 +41,7 @@
 //#include <util/log.h>
 //
 //JSBool
-//_gwkjs_flags_value_is_valid(JSContext   *context,
+//_gwkjs_flags_value_is_valid(JSContextRef   context,
 //                          GType        gtype,
 //                          gint64       value)
 //{
@@ -81,7 +81,7 @@
 //}
 //
 //JSBool
-//_gwkjs_enum_value_is_valid(JSContext  *context,
+//_gwkjs_enum_value_is_valid(JSContextRef  context,
 //                         GIEnumInfo *enum_info,
 //                         gint64      value)
 //{
@@ -274,7 +274,7 @@
 //}
 //
 //static JSBool
-//gwkjs_array_to_g_list(JSContext   *context,
+//gwkjs_array_to_g_list(JSContextRef   context,
 //                    jsval        array_value,
 //                    unsigned int length,
 //                    GITypeInfo  *param_info,
@@ -351,7 +351,7 @@
 //}
 //
 //static JSBool
-//gwkjs_object_to_g_hash(JSContext   *context,
+//gwkjs_object_to_g_hash(JSContextRef   context,
 //                     jsval        hash_value,
 //                     GITypeInfo  *key_param_info,
 //                     GITypeInfo  *val_param_info,
@@ -359,8 +359,8 @@
 //                     GHashTable **hash_p)
 //{
 //    GHashTable *result = NULL;
-//    JSObject *props;
-//    JSObject *iter;
+//    JSObjectRef props;
+//    JSObjectRef iter;
 //    jsid prop_id;
 //
 //    g_assert(JSVAL_IS_OBJECT(hash_value));
@@ -436,11 +436,11 @@
 //}
 //
 //JSBool
-//gwkjs_array_from_strv(JSContext   *context,
+//gwkjs_array_from_strv(JSContextRef   context,
 //                    jsval       *value_p,
 //                    const char **strv)
 //{
-//    JSObject *obj;
+//    JSObjectRef obj;
 //    jsval elem;
 //    guint i;
 //    JSBool result = JS_FALSE;
@@ -473,7 +473,7 @@
 //}
 //
 //JSBool
-//gwkjs_array_to_strv(JSContext   *context,
+//gwkjs_array_to_strv(JSContextRef   context,
 //                  jsval        array_value,
 //                  unsigned int length,
 //                  void       **arr_p)
@@ -514,7 +514,7 @@
 //}
 //
 //static JSBool
-//gwkjs_string_to_intarray(JSContext   *context,
+//gwkjs_string_to_intarray(JSContextRef   context,
 //                       jsval        string_val,
 //                       GITypeInfo  *param_info,
 //                       void       **arr_p,
@@ -552,7 +552,7 @@
 //}
 //
 //static JSBool
-//gwkjs_array_to_intarray(JSContext   *context,
+//gwkjs_array_to_intarray(JSContextRef   context,
 //                      jsval        array_value,
 //                      unsigned int length,
 //                      void       **arr_p,
@@ -611,7 +611,7 @@
 //}
 //
 //static JSBool
-//gwkjs_gtypearray_to_array(JSContext   *context,
+//gwkjs_gtypearray_to_array(JSContextRef   context,
 //                        jsval        array_value,
 //                        unsigned int length,
 //                        void       **arr_p)
@@ -655,7 +655,7 @@
 //}
 //
 //static JSBool
-//gwkjs_array_to_floatarray(JSContext   *context,
+//gwkjs_array_to_floatarray(JSContextRef   context,
 //                        jsval        array_value,
 //                        unsigned int length,
 //                        void       **arr_p,
@@ -708,7 +708,7 @@
 //}
 //
 //static JSBool
-//gwkjs_array_to_ptrarray(JSContext   *context,
+//gwkjs_array_to_ptrarray(JSContextRef   context,
 //                      jsval        array_value,
 //                      unsigned int length,
 //                      GITransfer   transfer,
@@ -762,7 +762,7 @@
 //}
 //
 //static JSBool
-//gwkjs_array_to_flat_gvalue_array(JSContext   *context,
+//gwkjs_array_to_flat_gvalue_array(JSContextRef   context,
 //                               jsval        array_value,
 //                               unsigned int length,
 //                               void       **arr_p)
@@ -797,7 +797,7 @@
 //}
 //
 //static JSBool
-//gwkjs_array_from_flat_gvalue_array(JSContext   *context,
+//gwkjs_array_from_flat_gvalue_array(JSContextRef   context,
 //                                 gpointer     array,
 //                                 unsigned int length,
 //                                 jsval       *value)
@@ -815,7 +815,7 @@
 //    }
 //
 //    if (result) {
-//        JSObject *jsarray;
+//        JSObjectRef jsarray;
 //        jsarray = JS_NewArrayObject(context, length, elems);
 //        *value = OBJECT_TO_JSVAL(jsarray);
 //    }
@@ -874,7 +874,7 @@
 //}
 //
 //static JSBool
-//gwkjs_array_to_array(JSContext   *context,
+//gwkjs_array_to_array(JSContextRef   context,
 //                   jsval        array_value,
 //                   gsize        length,
 //                   GITransfer   transfer,
@@ -951,7 +951,7 @@
 //}
 //
 //static GArray*
-//gwkjs_g_array_new_for_type(JSContext    *context,
+//gwkjs_g_array_new_for_type(JSContextRef    context,
 //                         unsigned int  length,
 //                         GITypeInfo   *param_info)
 //{
@@ -1060,7 +1060,7 @@
 //}
 //
 //static void
-//throw_invalid_argument(JSContext      *context,
+//throw_invalid_argument(JSContextRef      context,
 //                       jsval           value,
 //                       GITypeInfo     *arginfo,
 //                       const char     *arg_name,
@@ -1076,7 +1076,7 @@
 //}
 //
 //static JSBool
-//gwkjs_array_to_explicit_array_internal(JSContext       *context,
+//gwkjs_array_to_explicit_array_internal(JSContextRef       context,
 //                                     jsval            value,
 //                                     GITypeInfo      *type_info,
 //                                     const char      *arg_name,
@@ -1144,7 +1144,7 @@
 //}
 //
 //JSBool
-//gwkjs_value_to_g_argument(JSContext      *context,
+//gwkjs_value_to_g_argument(JSContextRef      context,
 //                        jsval           value,
 //                        GITypeInfo     *type_info,
 //                        const char     *arg_name,
@@ -1452,7 +1452,7 @@
 //                    /* Handle Struct/Union first since we don't necessarily need a GType for them */
 //                    /* We special case Closures later, so skip them here */
 //                    !g_type_is_a(gtype, G_TYPE_CLOSURE)) {
-//                    JSObject *obj = JSVAL_TO_OBJECT(value);
+//                    JSObjectRef obj = JSVAL_TO_OBJECT(value);
 //
 //                    if (g_type_is_a(gtype, G_TYPE_BYTES)
 //                        && gwkjs_typecheck_bytearray(context, obj, FALSE)) {
@@ -1755,7 +1755,7 @@
 //                                    JSVAL_TO_OBJECT(value),
 //                                    FALSE))
 //            {
-//                JSObject *bytearray_obj = JSVAL_TO_OBJECT(value);
+//                JSObjectRef bytearray_obj = JSVAL_TO_OBJECT(value);
 //                if (array_type == GI_ARRAY_TYPE_BYTE_ARRAY) {
 //                    arg->v_pointer = gwkjs_byte_array_get_byte_array(context, bytearray_obj);
 //                    break;
@@ -1854,7 +1854,7 @@
 // * has a fixed size large enough for the union of all types.)
 // */
 //void
-//gwkjs_g_argument_init_default(JSContext      *context,
+//gwkjs_g_argument_init_default(JSContextRef      context,
 //                            GITypeInfo     *type_info,
 //                            GArgument      *arg)
 //{
@@ -1968,7 +1968,7 @@
 //}
 //
 //JSBool
-//gwkjs_value_to_arg(JSContext  *context,
+//gwkjs_value_to_arg(JSContextRef  context,
 //                 jsval       value,
 //                 GIArgInfo  *arg_info,
 //                 GArgument  *arg)
@@ -1988,7 +1988,7 @@
 //}
 //
 //JSBool
-//gwkjs_value_to_explicit_array (JSContext  *context,
+//gwkjs_value_to_explicit_array (JSContextRef  context,
 //                             jsval       value,
 //                             GIArgInfo  *arg_info,
 //                             GArgument  *arg,
@@ -2010,14 +2010,14 @@
 //}
 //
 //static JSBool
-//gwkjs_array_from_g_list (JSContext  *context,
+//gwkjs_array_from_g_list (JSContextRef  context,
 //                       jsval      *value_p,
 //                       GITypeTag   list_tag,
 //                       GITypeInfo *param_info,
 //                       GList      *list,
 //                       GSList     *slist)
 //{
-//    JSObject *obj;
+//    JSObjectRef obj;
 //    unsigned int i;
 //    jsval elem;
 //    GArgument arg;
@@ -2078,13 +2078,13 @@
 //}
 //
 //static JSBool
-//gwkjs_array_from_carray_internal (JSContext  *context,
+//gwkjs_array_from_carray_internal (JSContextRef  context,
 //                                jsval      *value_p,
 //                                GITypeInfo *param_info,
 //                                guint       length,
 //                                gpointer    array)
 //{
-//    JSObject *obj;
+//    JSObjectRef obj;
 //    jsval elem;
 //    GArgument arg;
 //    JSBool result;
@@ -2220,7 +2220,7 @@
 //}
 //
 //static JSBool
-//gwkjs_array_from_fixed_size_array (JSContext  *context,
+//gwkjs_array_from_fixed_size_array (JSContextRef  context,
 //                                 jsval      *value_p,
 //                                 GITypeInfo *type_info,
 //                                 gpointer    array)
@@ -2243,7 +2243,7 @@
 //}
 //
 //JSBool
-//gwkjs_value_from_explicit_array(JSContext  *context,
+//gwkjs_value_from_explicit_array(JSContextRef  context,
 //                              jsval      *value_p,
 //                              GITypeInfo *type_info,
 //                              GArgument  *arg,
@@ -2262,7 +2262,7 @@
 //}
 //
 //static JSBool
-//gwkjs_array_from_boxed_array (JSContext   *context,
+//gwkjs_array_from_boxed_array (JSContextRef   context,
 //                            jsval       *value_p,
 //                            GIArrayType  array_type,
 //                            GITypeInfo  *param_info,
@@ -2299,12 +2299,12 @@
 //}
 //
 //static JSBool
-//gwkjs_array_from_zero_terminated_c_array (JSContext  *context,
+//gwkjs_array_from_zero_terminated_c_array (JSContextRef  context,
 //                                        jsval      *value_p,
 //                                        GITypeInfo *param_info,
 //                                        gpointer    c_array)
 //{
-//    JSObject *obj;
+//    JSObjectRef obj;
 //    jsval elem;
 //    GArgument arg;
 //    JSBool result;
@@ -2408,14 +2408,14 @@
 //
 //
 //static JSBool
-//gwkjs_object_from_g_hash (JSContext  *context,
+//gwkjs_object_from_g_hash (JSContextRef  context,
 //                        jsval      *value_p,
 //                        GITypeInfo *key_param_info,
 //                        GITypeInfo *val_param_info,
 //                        GHashTable *hash)
 //{
 //    GHashTableIter iter;
-//    JSObject *obj;
+//    JSObjectRef obj;
 //    JSString *keystr;
 //    char     *keyutf8 = NULL;
 //    jsval     keyjs,  valjs;
@@ -2487,7 +2487,7 @@
 //}
 //
 //JSBool
-//gwkjs_value_from_g_argument (JSContext  *context,
+//gwkjs_value_from_g_argument (JSContextRef  context,
 //                           jsval      *value_p,
 //                           GITypeInfo *type_info,
 //                           GArgument  *arg,
@@ -2544,7 +2544,7 @@
 //
 //    case GI_TYPE_TAG_GTYPE:
 //        {
-//            JSObject *obj;
+//            JSObjectRef obj;
 //            obj = gwkjs_gtype_create_gtype_wrapper(context, arg->v_ssize);
 //            *value_p = OBJECT_TO_JSVAL(obj);
 //        }
@@ -2591,7 +2591,7 @@
 //    case GI_TYPE_TAG_ERROR:
 //        {
 //            if (arg->v_pointer) {
-//                JSObject *obj = gwkjs_error_from_gerror(context, (GError *) arg->v_pointer, FALSE);
+//                JSObjectRef obj = gwkjs_error_from_gerror(context, (GError *) arg->v_pointer, FALSE);
 //                if (obj) {
 //                    *value_p = OBJECT_TO_JSVAL(obj);
 //                    return JS_TRUE;
@@ -2695,7 +2695,7 @@
 //                goto out;
 //            }
 //            if (g_type_is_a(gtype, G_TYPE_ERROR)) {
-//                JSObject *obj;
+//                JSObjectRef obj;
 //
 //                obj = gwkjs_error_from_gerror(context, (GError *) arg->v_pointer, FALSE);
 //                if (obj)
@@ -2707,7 +2707,7 @@
 //            }
 //
 //            if (interface_type == GI_INFO_TYPE_STRUCT || interface_type == GI_INFO_TYPE_BOXED) {
-//                JSObject *obj;
+//                JSObjectRef obj;
 //                GwkjsBoxedCreationFlags flags;
 //
 //                if (copy_structs)
@@ -2727,7 +2727,7 @@
 //
 //                goto out;
 //            } else if (interface_type == GI_INFO_TYPE_UNION) {
-//                JSObject *obj;
+//                JSObjectRef obj;
 //                obj = gwkjs_union_from_c_union(context, (GIUnionInfo *)interface_info, arg->v_pointer);
 //                if (obj)
 //                        value = OBJECT_TO_JSVAL(obj);
@@ -2736,7 +2736,7 @@
 //            }
 //
 //            if (g_type_is_a(gtype, G_TYPE_OBJECT)) {
-//                JSObject *obj;
+//                JSObjectRef obj;
 //                obj = gwkjs_object_from_g_object(context, G_OBJECT(arg->v_pointer));
 //                if (obj)
 //                    value = OBJECT_TO_JSVAL(obj);
@@ -2750,14 +2750,14 @@
 //                          interface_type);
 //                return JS_FALSE;
 //            } else if (g_type_is_a(gtype, G_TYPE_PARAM)) {
-//                JSObject *obj;
+//                JSObjectRef obj;
 //                obj = gwkjs_param_from_g_param(context, G_PARAM_SPEC(arg->v_pointer));
 //                if (obj)
 //                    value = OBJECT_TO_JSVAL(obj);
 //            } else if (gtype == G_TYPE_NONE) {
 //                gwkjs_throw(context, "Unexpected unregistered type packing GArgument into jsval");
 //            } else if (G_TYPE_IS_INSTANTIATABLE(gtype) || G_TYPE_IS_INTERFACE(gtype)) {
-//                JSObject *obj;
+//                JSObjectRef obj;
 //                obj = gwkjs_object_from_g_fundamental(context, (GIObjectInfo *)interface_info, arg->v_pointer);
 //                if (obj)
 //                    value = OBJECT_TO_JSVAL(obj);
@@ -2803,7 +2803,7 @@
 //                return gwkjs_array_from_fixed_size_array(context, value_p, type_info, arg->v_pointer);
 //            }
 //        } else if (g_type_info_get_array_type(type_info) == GI_ARRAY_TYPE_BYTE_ARRAY) {
-//            JSObject *array = gwkjs_byte_array_from_byte_array(context,
+//            JSObjectRef array = gwkjs_byte_array_from_byte_array(context,
 //                                                             (GByteArray*)arg->v_pointer);
 //            if (!array) {
 //                gwkjs_throw(context, "Couldn't convert GByteArray to a ByteArray");
@@ -2887,14 +2887,14 @@
 //    return JS_TRUE;
 //}
 //
-//static JSBool gwkjs_g_arg_release_internal(JSContext  *context,
+//static JSBool gwkjs_g_arg_release_internal(JSContextRef  context,
 //                                         GITransfer  transfer,
 //                                         GITypeInfo *type_info,
 //                                         GITypeTag   type_tag,
 //                                         GArgument  *arg);
 //
 //typedef struct {
-//    JSContext *context;
+//    JSContextRef context;
 //    GITypeInfo *key_param_info, *val_param_info;
 //    GITransfer transfer;
 //    JSBool failed;
@@ -2927,7 +2927,7 @@
 //#define TRANSFER_IN_NOTHING (GI_TRANSFER_EVERYTHING + 1)
 //
 //static JSBool
-//gwkjs_g_arg_release_internal(JSContext  *context,
+//gwkjs_g_arg_release_internal(JSContextRef  context,
 //                           GITransfer  transfer,
 //                           GITypeInfo *type_info,
 //                           GITypeTag   type_tag,
@@ -3337,7 +3337,7 @@
 //}
 //
 //JSBool
-//gwkjs_g_argument_release(JSContext  *context,
+//gwkjs_g_argument_release(JSContextRef  context,
 //                       GITransfer  transfer,
 //                       GITypeInfo *type_info,
 //                       GArgument  *arg)
@@ -3357,7 +3357,7 @@
 //}
 //
 //JSBool
-//gwkjs_g_argument_release_in_arg(JSContext  *context,
+//gwkjs_g_argument_release_in_arg(JSContextRef  context,
 //                              GITransfer  transfer,
 //                              GITypeInfo *type_info,
 //                              GArgument  *arg)
@@ -3387,7 +3387,7 @@
 //}
 //
 //JSBool
-//gwkjs_g_argument_release_in_array (JSContext  *context,
+//gwkjs_g_argument_release_in_array (JSContextRef  context,
 //                                 GITransfer  transfer,
 //                                 GITypeInfo *type_info,
 //                                 guint       length,
@@ -3436,7 +3436,7 @@
 //}
 //
 //JSBool
-//gwkjs_g_argument_release_out_array (JSContext  *context,
+//gwkjs_g_argument_release_out_array (JSContextRef  context,
 //                                  GITransfer  transfer,
 //                                  GITypeInfo *type_info,
 //                                  guint       length,
