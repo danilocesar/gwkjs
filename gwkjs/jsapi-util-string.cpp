@@ -1,32 +1,32 @@
-///* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-///*
-// * Copyright (c) 2008  litl, LLC
-// *
-// * Permission is hereby granted, free of charge, to any person obtaining a copy
-// * of this software and associated documentation files (the "Software"), to
-// * deal in the Software without restriction, including without limitation the
-// * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-// * sell copies of the Software, and to permit persons to whom the Software is
-// * furnished to do so, subject to the following conditions:
-// *
-// * The above copyright notice and this permission notice shall be included in
-// * all copies or substantial portions of the Software.
-// *
-// * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-// * IN THE SOFTWARE.
-// */
-//
-//#include <config.h>
-//
-//#include <string.h>
-//
-//#include "jsapi-util.h"
-//#include "compat.h"
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+/*
+ * Copyright (c) 2008  litl, LLC
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+#include <config.h>
+
+#include <string.h>
+
+#include "jsapi-util.h"
+#include "compat.h"
 //
 //gboolean
 //gwkjs_string_to_utf8 (JSContextRef  context,
@@ -64,47 +64,45 @@
 //    return JS_TRUE;
 //}
 //
-//JSBool
-//gwkjs_string_from_utf8(JSContextRef  context,
-//                     const char *utf8_string,
-//                     gssize      n_bytes,
-//                     jsval      *value_p)
-//{
-//    jschar *u16_string;
-//    glong u16_string_length;
-//    JSString *str;
-//    GError *error;
-//
-//    /* intentionally using n_bytes even though glib api suggests n_chars; with
-//    * n_chars (from g_utf8_strlen()) the result appears truncated
-//    */
-//
-//    error = NULL;
-//    u16_string = g_utf8_to_utf16(utf8_string,
-//                                 n_bytes,
-//                                 NULL,
-//                                 &u16_string_length,
-//                                 &error);
-//    if (!u16_string) {
-//        gwkjs_throw(context,
-//                  "Failed to convert UTF-8 string to "
-//                  "JS string: %s",
-//                  error->message);
-//                  g_error_free(error);
-//        return JS_FALSE;
-//    }
-//
-//    JS_BeginRequest(context);
-//
-//    /* Avoid a copy - assumes that g_malloc == js_malloc == malloc */
-//    str = JS_NewUCString(context, u16_string, u16_string_length);
-//
-//    if (str && value_p)
-//        *value_p = STRING_TO_JSVAL(str);
-//
-//    JS_EndRequest(context);
-//    return str != NULL;
-//}
+JSBool
+gwkjs_string_from_utf8(JSContextRef  context,
+                     const char      *utf8_string,
+                     gssize          n_bytes,
+                     JSValueRef      *value_p)
+{
+    JSChar *u16_string;
+    glong u16_string_length;
+    JSStringRef str;
+    GError *error;
+
+    /* intentionally using n_bytes even though glib api suggests n_chars; with
+    * n_chars (from g_utf8_strlen()) the result appears truncated
+    */
+
+    error = NULL;
+    u16_string = g_utf8_to_utf16(utf8_string,
+                                 n_bytes,
+                                 NULL,
+                                 &u16_string_length,
+                                 &error);
+    if (!u16_string) {
+        gwkjs_throw(context,
+                  "Failed to convert UTF-8 string to "
+                  "JS string: %s",
+                  error->message);
+                  g_error_free(error);
+        return JS_FALSE;
+    }
+
+
+    /* Avoid a copy - assumes that g_malloc == js_malloc == malloc */
+    str = JSStringCreateWithCharacters(u16_string, u16_string_length);
+
+    if (str && value_p)
+        *value_p = JSValueMakeString(context, str);
+
+    return str != NULL;
+}
 //
 //gboolean
 //gwkjs_string_to_filename(JSContextRef    context,

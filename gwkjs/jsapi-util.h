@@ -214,6 +214,9 @@ gwkjs_jsvalue_to_uint(JSContextRef ctx, JSValueRef val, JSValueRef* exception);
 gint
 gwkjs_jsvalue_to_int(JSContextRef ctx, JSValueRef val, JSValueRef* exception);
 
+JSValueRef
+gwkjs_int_to_jsvalue(JSContextRef ctx, gint val);
+
 gchar*
 gwkjs_jsvalue_to_cstring(JSContextRef ctx, JSValueRef val, JSValueRef* exception);
 
@@ -323,21 +326,21 @@ JSObjectRef   gwkjs_define_string_array          (JSContextRef       context,
 void        gwkjs_throw                        (JSContextRef       context,
                                                 const char      *format,
                                                 ...)  G_GNUC_PRINTF (2, 3);
-//void        gwkjs_throw_custom                 (JSContextRef       context,
-//                                              const char      *error_class,
-//                                              const char      *format,
-//                                              ...)  G_GNUC_PRINTF (3, 4);
-//void        gwkjs_throw_literal                (JSContextRef       context,
-//                                              const char      *string);
-//void        gwkjs_throw_g_error                (JSContextRef       context,
-//                                              GError          *error);
-//
+void        gwkjs_throw_custom                 (JSContextRef       context,
+                                              const char      *error_class,
+                                              const char      *format,
+                                              ...)  G_GNUC_PRINTF (3, 4);
+void        gwkjs_throw_literal                (JSContextRef       context,
+                                              const char      *string);
+void        gwkjs_throw_g_error                (JSContextRef       context,
+                                              GError          *error);
+
 JSBool      gwkjs_log_exception                (JSContextRef       context,
                                                 JSValueRef         exception);
 
 //JSBool      gwkjs_log_and_keep_exception       (JSContextRef       context);
-//JSBool      gwkjs_move_exception               (JSContextRef       src_context,
-//                                                JSContextRef       dest_context);
+JSBool      gwkjs_move_exception               (JSContextRef       src_context,
+                                                JSContextRef       dest_context);
 //
 JSBool      gwkjs_log_exception_full           (JSContextRef       context,
                                                 JSValueRef         exc,
@@ -385,10 +388,10 @@ JSBool      gwkjs_log_exception_full           (JSContextRef       context,
 //JSBool      gwkjs_string_to_utf8               (JSContextRef       context,
 //                                              const            jsval string_val,
 //                                              char           **utf8_string_p);
-//JSBool      gwkjs_string_from_utf8             (JSContextRef       context,
-//                                              const char      *utf8_string,
-//                                              gssize           n_bytes,
-//                                              jsval           *value_p);
+JSBool      gwkjs_string_from_utf8             (JSContextRef    context,
+                                                const char      *utf8_string,
+                                                gssize           n_bytes,
+                                                JSValueRef       *value_p);
 //JSBool      gwkjs_string_to_filename           (JSContextRef       context,
 //                                              const jsval      string_val,
 //                                              char           **filename_string_p);
@@ -410,9 +413,10 @@ JSBool      gwkjs_log_exception_full           (JSContextRef       context,
 //gboolean    gwkjs_unichar_from_string          (JSContextRef       context,
 //                                              jsval            string,
 //                                              gunichar        *result);
-//
-//const char* gwkjs_get_type_name                (jsval            value);
-//
+
+const char* gwkjs_get_type_name                (JSContextRef context,
+                                                JSValueRef   value);
+
 //JSBool      gwkjs_value_to_int64               (JSContextRef       context,
 //                                              const jsval      val,
 //                                              gint64          *result);
@@ -446,10 +450,12 @@ JSBool      gwkjs_log_exception_full           (JSContextRef       context,
 //jsval*            gwkjs_rooted_array_free       (JSContextRef        context,
 //                                               GwkjsRootedArray *array,
 //                                               gboolean          free_segment);
-//void              gwkjs_set_values              (JSContextRef        context,
-//                                               jsval            *locations,
-//                                               int               n_locations,
-//                                               jsval             initializer);
+
+void              gwkjs_set_values              (JSContextRef     context,
+                                                 jsval            *locations,
+                                                 int              n_locations,
+                                                 JSType           initializer);
+
 //void              gwkjs_root_value_locations    (JSContextRef        context,
 //                                               jsval            *locations,
 //                                               int               n_locations);

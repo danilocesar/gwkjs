@@ -503,9 +503,7 @@ gwkjs_define_info(JSContextRef context,
     switch (g_base_info_get_type(info)) {
     case GI_INFO_TYPE_FUNCTION:
         {
-                gwkjs_throw(context, "Thing was a FUNCTION!");
-// TODO: IMPLEMENT
-//            ret = gwkjs_define_function(context, in_object, 0, (GICallableInfo*) info);
+            ret = gwkjs_define_function(context, in_object, 0, (GICallableInfo*) info);
             if (ret == NULL)
                 return NULL;
         }

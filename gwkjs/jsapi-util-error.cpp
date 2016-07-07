@@ -132,49 +132,50 @@ gwkjs_throw(JSContextRef  context,
     va_end(args);
 }
 
-///*
-// * Like gwkjs_throw, but allows to customize the error
-// * class. Mainly used for throwing TypeError instead of
-// * error.
-// */
-//void
-//gwkjs_throw_custom(JSContextRef       context,
-//                 const char      *error_class,
-//                 const char      *format,
-//                 ...)
-//{
-//    va_list args;
-//
-//    va_start(args, format);
-//    gwkjs_throw_valist(context, error_class, format, args);
-//    va_end(args);
-//}
-//
-///**
-// * gwkjs_throw_literal:
-// *
-// * Similar to gwkjs_throw(), but does not treat its argument as
-// * a format string.
-// */
-//void
-//gwkjs_throw_literal(JSContextRef       context,
-//                  const char      *string)
-//{
-//    gwkjs_throw(context, "%s", string);
-//}
-//
-///**
-// * gwkjs_throw_g_error:
-// *
-// * Convert a GError into a JavaScript Exception, and
-// * frees the GError. Differently from gwkjs_throw(), it
-// * will overwrite an existing exception, as it is used
-// * to report errors from C functions.
-// */
-//void
-//gwkjs_throw_g_error (JSContextRef       context,
-//                   GError          *error)
-//{
+/*
+ * Like gwkjs_throw, but allows to customize the error
+ * class. Mainly used for throwing TypeError instead of
+ * error.
+ */
+void
+gwkjs_throw_custom(JSContextRef       context,
+                 const char      *error_class,
+                 const char      *format,
+                 ...)
+{
+    va_list args;
+
+    va_start(args, format);
+    gwkjs_throw_valist(context, error_class, format, args);
+    va_end(args);
+}
+
+/**
+ * gwkjs_throw_literal:
+ *
+ * Similar to gwkjs_throw(), but does not treat its argument as
+ * a format string.
+ */
+void
+gwkjs_throw_literal(JSContextRef       context,
+                  const char      *string)
+{
+    gwkjs_throw(context, "%s", string);
+}
+
+/**
+ * gwkjs_throw_g_error:
+ *
+ * Convert a GError into a JavaScript Exception, and
+ * frees the GError. Differently from gwkjs_throw(), it
+ * will overwrite an existing exception, as it is used
+ * to report errors from C functions.
+ */
+void
+gwkjs_throw_g_error (JSContextRef       context,
+                   GError          *error)
+{
+    g_warning("NOT IMPLEMENTED THROW ERROR");
 //    JSObjectRef err_obj;
 //
 //    if (error == NULL)
@@ -188,4 +189,4 @@ gwkjs_throw(JSContextRef  context,
 //        JS_SetPendingException(context, OBJECT_TO_JSVAL(err_obj));
 //
 //    JS_EndRequest(context);
-//}
+}

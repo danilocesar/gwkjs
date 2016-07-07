@@ -136,6 +136,13 @@ gwkjs_jsvalue_to_int(JSContextRef ctx, JSValueRef val, JSValueRef* exception)
 }
 
 JSValueRef
+gwkjs_int_to_jsvalue(JSContextRef ctx, gint val)
+{
+    return JSValueMakeNumber(ctx, (gdouble) val);
+}
+
+
+JSValueRef
 gwkjs_object_get_property(JSContextRef ctx,
                           JSObjectRef object,
                           const gchar* propertyName,
@@ -902,11 +909,14 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 //    JS_EndRequest(dst_context);
 //    JS_EndRequest(src_context);
 //}
-//
-//JSBool
-//gwkjs_move_exception(JSContextRef      src_context,
-//                   JSContextRef      dest_context)
-//{
+
+JSBool
+gwkjs_move_exception(JSContextRef      src_context,
+                   JSContextRef      dest_context)
+{
+    gwkjs_throw(src_context, "gwkjs_move_exception NOT IMPLEMENTED!");
+    return TRUE;
+//TODO: IMPLEMENT
 //    JSBool success;
 //
 //    JS_BeginRequest(src_context);
@@ -932,8 +942,8 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 //    JS_EndRequest(src_context);
 //
 //    return success;
-//}
-//
+}
+
 //JSBool
 //gwkjs_call_function_value(JSContextRef      context,
 //                        JSObjectRef       obj,
@@ -1020,29 +1030,33 @@ gwkjs_log_exception(JSContextRef  context, JSValueRef exception)
 //    return log_prop(context, obj, id, value_p, "delete");
 //}
 //
-///* get a debug string for type tag in jsval */
-//const char*
-//gwkjs_get_type_name(jsval value)
-//{
-//    if (JSVAL_IS_NULL(value)) {
-//        return "null";
-//    } else if (JSVAL_IS_VOID(value)) {
-//        return "undefined";
-//    } else if (JSVAL_IS_INT(value)) {
-//        return "integer";
-//    } else if (JSVAL_IS_DOUBLE(value)) {
-//        return "double";
-//    } else if (JSVAL_IS_BOOLEAN(value)) {
-//        return "boolean";
-//    } else if (JSVAL_IS_STRING(value)) {
-//        return "string";
-//    } else if (JSVAL_IS_OBJECT(value)) {
-//        return "object";
-//    } else {
-//        return "<unknown>";
-//    }
-//}
-//
+/* get a debug string for type tag in jsval */
+const char*
+gwkjs_get_type_name(JSContextRef context, JSValueRef value)
+{
+    JSType t = JSValueGetType(context, value);
+    if (value == NULL) {
+        return "NULL";
+    }
+    switch (t) {
+        case kJSTypeUndefined:
+            return "undefined";
+        case kJSTypeNull:
+            return "null";
+        case kJSTypeBoolean:
+            return "boolean";
+        case kJSTypeNumber:
+            return "number";
+        case kJSTypeString:
+            return "string";
+        case kJSTypeObject:
+            return "object";
+
+        default:
+            return "<unknown>";
+    }
+}
+
 ///**
 // * gwkjs_value_to_int64:
 // * @context: the Javascript context object

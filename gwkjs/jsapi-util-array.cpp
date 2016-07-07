@@ -1,38 +1,38 @@
-///* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-///*
-// * Copyright (c) 2008  litl, LLC
-// *
-// * Permission is hereby granted, free of charge, to any person obtaining a copy
-// * of this software and associated documentation files (the "Software"), to
-// * deal in the Software without restriction, including without limitation the
-// * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-// * sell copies of the Software, and to permit persons to whom the Software is
-// * furnished to do so, subject to the following conditions:
-// *
-// * The above copyright notice and this permission notice shall be included in
-// * all copies or substantial portions of the Software.
-// *
-// * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-// * IN THE SOFTWARE.
-// */
-//
-//#include <config.h>
-//
-//#include "jsapi-util.h"
-//#include "compat.h"
-//
-///* Maximum number of elements allowed in a GArray of rooted jsvals.
-// * We pre-alloc that amount and then never allow the array to grow,
-// * or we'd have invalid memory rooted if the internals of GArray decide
-// * to move the contents to a new memory area
-// */
-//#define ARRAY_MAX_LEN 32
-//
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+/*
+ * Copyright (c) 2008  litl, LLC
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+#include <config.h>
+
+#include "jsapi-util.h"
+#include "compat.h"
+
+/* Maximum number of elements allowed in a GArray of rooted jsvals.
+ * We pre-alloc that amount and then never allow the array to grow,
+ * or we'd have invalid memory rooted if the internals of GArray decide
+ * to move the contents to a new memory area
+ */
+#define ARRAY_MAX_LEN 32
+
 ///**
 // * gwkjs_rooted_array_new:
 // *
@@ -228,34 +228,39 @@
 //    }
 //    JS_EndRequest(context);
 //}
-//
-///**
-// * gwkjs_set_values:
-// * @context: a #JSContext
-// * @locations: array of jsval
-// * @n_locations: the number of elements to set
-// * @initializer: what to set each element to
-// *
-// * Assigns initializer to each member of the given array.
-// *
-// **/
-//void
-//gwkjs_set_values(JSContextRef        context,
-//               jsval            *locations,
-//               int               n_locations,
-//               jsval             initializer)
-//{
-//    int i;
-//
-//    g_return_if_fail(context != NULL);
-//    g_return_if_fail(locations != NULL);
-//    g_return_if_fail(n_locations >= 0);
-//
-//    for (i = 0; i < n_locations; i++) {
-//        locations[i] = initializer;
-//    }
-//}
-//
+
+/**
+ * gwkjs_set_values:
+ * @context: a #JSContext
+ * @locations: array of jsval
+ * @n_locations: the number of elements to set
+ * @initializer: what to set each element to
+ *
+ * Assigns initializer to each member of the given array.
+ *
+ **/
+void
+gwkjs_set_values(JSContextRef        context,
+               jsval            *locations,
+               int               n_locations,
+               JSType            initializerType)
+{
+    int i;
+
+    g_return_if_fail(context != NULL);
+    g_return_if_fail(locations != NULL);
+    g_return_if_fail(n_locations >= 0);
+
+    for (i = 0; i < n_locations; i++) {
+        JSValueRef v = NULL;
+        if (initializerType == kJSTypeUndefined)
+            v = JSValueMakeUndefined(context);
+        else
+            g_error("gwkjs_set_values with unimplemented type");
+        locations[i] = v;
+    }
+}
+
 ///**
 // * gwkjs_rooted_array_free:
 // * @context: a #JSContext

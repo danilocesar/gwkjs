@@ -1,45 +1,45 @@
-///* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-///*
-// * Copyright (c) 2008  litl, LLC
-// *
-// * Permission is hereby granted, free of charge, to any person obtaining a copy
-// * of this software and associated documentation files (the "Software"), to
-// * deal in the Software without restriction, including without limitation the
-// * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-// * sell copies of the Software, and to permit persons to whom the Software is
-// * furnished to do so, subject to the following conditions:
-// *
-// * The above copyright notice and this permission notice shall be included in
-// * all copies or substantial portions of the Software.
-// *
-// * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-// * IN THE SOFTWARE.
-// */
-//
-//#include <config.h>
-//
-//#include "arg.h"
-//#include "gtype.h"
-//#include "object.h"
-//#include "interface.h"
-//#include "foreign.h"
-//#include "fundamental.h"
-//#include "boxed.h"
-//#include "union.h"
-//#include "param.h"
-//#include "value.h"
-//#include "gerror.h"
-//#include "gwkjs/byteArray.h"
-//#include <gwkjs/gwkjs-module.h>
-//#include <gwkjs/compat.h>
-//
-//#include <util/log.h>
-//
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+/*
+ * Copyright (c) 2008  litl, LLC
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+#include <config.h>
+
+#include "arg.h"
+#include "gtype.h"
+#include "object.h"
+#include "interface.h"
+#include "foreign.h"
+#include "fundamental.h"
+#include "boxed.h"
+#include "union.h"
+#include "param.h"
+#include "value.h"
+#include "gerror.h"
+#include "gwkjs/byteArray.h"
+#include <gwkjs/gwkjs-module.h>
+#include <gwkjs/compat.h>
+
+#include <util/log.h>
+
 //JSBool
 //_gwkjs_flags_value_is_valid(JSContextRef   context,
 //                          GType        gtype,
@@ -153,126 +153,126 @@
 //{
 //    return (int)value;
 //}
-//
-///* Check if an argument of the given needs to be released if we created it
-// * from a JS value to pass it into a function and aren't transfering ownership.
-// */
-//static gboolean
-//type_needs_release (GITypeInfo *type_info,
-//                    GITypeTag   type_tag)
-//{
-//    switch (type_tag) {
-//    case GI_TYPE_TAG_UTF8:
-//    case GI_TYPE_TAG_FILENAME:
-//    case GI_TYPE_TAG_ARRAY:
-//    case GI_TYPE_TAG_GLIST:
-//    case GI_TYPE_TAG_GSLIST:
-//    case GI_TYPE_TAG_GHASH:
-//    case GI_TYPE_TAG_ERROR:
-//        return TRUE;
-//    case GI_TYPE_TAG_INTERFACE: {
-//        GIBaseInfo* interface_info;
-//        GIInfoType interface_type;
-//        GType gtype;
-//        gboolean needs_release;
-//
-//        interface_info = g_type_info_get_interface(type_info);
-//        g_assert(interface_info != NULL);
-//
-//        interface_type = g_base_info_get_type(interface_info);
-//
-//        switch(interface_type) {
-//
-//        case GI_INFO_TYPE_STRUCT:
-//        case GI_INFO_TYPE_ENUM:
-//        case GI_INFO_TYPE_FLAGS:
-//        case GI_INFO_TYPE_OBJECT:
-//        case GI_INFO_TYPE_INTERFACE:
-//        case GI_INFO_TYPE_UNION:
-//        case GI_INFO_TYPE_BOXED:
-//            /* These are subtypes of GIRegisteredTypeInfo for which the
-//             * cast is safe */
-//            gtype = g_registered_type_info_get_g_type
-//                ((GIRegisteredTypeInfo*)interface_info);
-//            break;
-//
-//        case GI_INFO_TYPE_VALUE:
-//            /* Special case for GValues */
-//            gtype = G_TYPE_VALUE;
-//            break;
-//
-//        default:
-//            /* Everything else */
-//            gtype = G_TYPE_NONE;
-//            break;
-//        }
-//
-//        if (g_type_is_a(gtype, G_TYPE_CLOSURE))
-//            needs_release = TRUE;
-//        else if (g_type_is_a(gtype, G_TYPE_VALUE))
-//            needs_release = g_type_info_is_pointer(type_info);
-//        else
-//            needs_release = FALSE;
-//
-//        g_base_info_unref(interface_info);
-//
-//        return needs_release;
-//    }
-//    default:
-//        return FALSE;
-//    }
-//}
-//
-///* Check if an argument of the given needs to be released if we obtained it
-// * from out argument (or the return value), and we're transferring ownership
-// */
-//static JSBool
-//type_needs_out_release(GITypeInfo *type_info,
-//                       GITypeTag   type_tag)
-//{
-//    switch (type_tag) {
-//    case GI_TYPE_TAG_UTF8:
-//    case GI_TYPE_TAG_FILENAME:
-//    case GI_TYPE_TAG_ARRAY:
-//    case GI_TYPE_TAG_GLIST:
-//    case GI_TYPE_TAG_GSLIST:
-//    case GI_TYPE_TAG_GHASH:
-//    case GI_TYPE_TAG_ERROR:
-//        return TRUE;
-//    case GI_TYPE_TAG_INTERFACE: {
-//        GIBaseInfo* interface_info;
-//        GIInfoType interface_type;
-//        gboolean needs_release;
-//
-//        interface_info = g_type_info_get_interface(type_info);
-//        g_assert(interface_info != NULL);
-//
-//        interface_type = g_base_info_get_type(interface_info);
-//
-//        switch(interface_type) {
-//        case GI_INFO_TYPE_ENUM:
-//        case GI_INFO_TYPE_FLAGS:
-//            needs_release = FALSE;
-//            break;
-//
-//        case GI_INFO_TYPE_STRUCT:
-//        case GI_INFO_TYPE_UNION:
-//            needs_release = g_type_info_is_pointer (type_info);
-//            break;
-//
-//        default:
-//            needs_release = TRUE;
-//        }
-//
-//        g_base_info_unref(interface_info);
-//
-//        return needs_release;
-//    }
-//    default:
-//        return FALSE;
-//    }
-//}
-//
+
+/* Check if an argument of the given needs to be released if we created it
+ * from a JS value to pass it into a function and aren't transfering ownership.
+ */
+static gboolean
+type_needs_release (GITypeInfo *type_info,
+                    GITypeTag   type_tag)
+{
+    switch (type_tag) {
+    case GI_TYPE_TAG_UTF8:
+    case GI_TYPE_TAG_FILENAME:
+    case GI_TYPE_TAG_ARRAY:
+    case GI_TYPE_TAG_GLIST:
+    case GI_TYPE_TAG_GSLIST:
+    case GI_TYPE_TAG_GHASH:
+    case GI_TYPE_TAG_ERROR:
+        return TRUE;
+    case GI_TYPE_TAG_INTERFACE: {
+        GIBaseInfo* interface_info;
+        GIInfoType interface_type;
+        GType gtype;
+        gboolean needs_release;
+
+        interface_info = g_type_info_get_interface(type_info);
+        g_assert(interface_info != NULL);
+
+        interface_type = g_base_info_get_type(interface_info);
+
+        switch(interface_type) {
+
+        case GI_INFO_TYPE_STRUCT:
+        case GI_INFO_TYPE_ENUM:
+        case GI_INFO_TYPE_FLAGS:
+        case GI_INFO_TYPE_OBJECT:
+        case GI_INFO_TYPE_INTERFACE:
+        case GI_INFO_TYPE_UNION:
+        case GI_INFO_TYPE_BOXED:
+            /* These are subtypes of GIRegisteredTypeInfo for which the
+             * cast is safe */
+            gtype = g_registered_type_info_get_g_type
+                ((GIRegisteredTypeInfo*)interface_info);
+            break;
+
+        case GI_INFO_TYPE_VALUE:
+            /* Special case for GValues */
+            gtype = G_TYPE_VALUE;
+            break;
+
+        default:
+            /* Everything else */
+            gtype = G_TYPE_NONE;
+            break;
+        }
+
+        if (g_type_is_a(gtype, G_TYPE_CLOSURE))
+            needs_release = TRUE;
+        else if (g_type_is_a(gtype, G_TYPE_VALUE))
+            needs_release = g_type_info_is_pointer(type_info);
+        else
+            needs_release = FALSE;
+
+        g_base_info_unref(interface_info);
+
+        return needs_release;
+    }
+    default:
+        return FALSE;
+    }
+}
+
+/* Check if an argument of the given needs to be released if we obtained it
+ * from out argument (or the return value), and we're transferring ownership
+ */
+static JSBool
+type_needs_out_release(GITypeInfo *type_info,
+                       GITypeTag   type_tag)
+{
+    switch (type_tag) {
+    case GI_TYPE_TAG_UTF8:
+    case GI_TYPE_TAG_FILENAME:
+    case GI_TYPE_TAG_ARRAY:
+    case GI_TYPE_TAG_GLIST:
+    case GI_TYPE_TAG_GSLIST:
+    case GI_TYPE_TAG_GHASH:
+    case GI_TYPE_TAG_ERROR:
+        return TRUE;
+    case GI_TYPE_TAG_INTERFACE: {
+        GIBaseInfo* interface_info;
+        GIInfoType interface_type;
+        gboolean needs_release;
+
+        interface_info = g_type_info_get_interface(type_info);
+        g_assert(interface_info != NULL);
+
+        interface_type = g_base_info_get_type(interface_info);
+
+        switch(interface_type) {
+        case GI_INFO_TYPE_ENUM:
+        case GI_INFO_TYPE_FLAGS:
+            needs_release = FALSE;
+            break;
+
+        case GI_INFO_TYPE_STRUCT:
+        case GI_INFO_TYPE_UNION:
+            needs_release = g_type_info_is_pointer (type_info);
+            break;
+
+        default:
+            needs_release = TRUE;
+        }
+
+        g_base_info_unref(interface_info);
+
+        return needs_release;
+    }
+    default:
+        return FALSE;
+    }
+}
+
 //static JSBool
 //gwkjs_array_to_g_list(JSContextRef   context,
 //                    jsval        array_value,
@@ -822,57 +822,57 @@
 //
 //    return result;
 //}
-//
-//static gboolean
-//is_gvalue(GIBaseInfo *info,
-//          GIInfoType  info_type)
-//{
-//    gboolean result = FALSE;
-//
-//    switch(info_type) {
-//    case GI_INFO_TYPE_VALUE:
-//        result = TRUE;
-//        break;
-//    case GI_INFO_TYPE_STRUCT:
-//    case GI_INFO_TYPE_OBJECT:
-//    case GI_INFO_TYPE_INTERFACE:
-//    case GI_INFO_TYPE_BOXED:
-//        {
-//            GType gtype;
-//            gtype = g_registered_type_info_get_g_type((GIRegisteredTypeInfo *) info);
-//
-//            result = g_type_is_a(gtype, G_TYPE_VALUE);
-//        }
-//        break;
-//    default:
-//        break;
-//    }
-//
-//    return result;
-//}
-//
-//static gboolean
-//is_gvalue_flat_array(GITypeInfo *param_info,
-//                     GITypeTag   element_type)
-//{
-//    GIBaseInfo *interface_info;
-//    GIInfoType info_type;
-//    gboolean result;
-//
-//    if (element_type != GI_TYPE_TAG_INTERFACE)
-//        return FALSE;
-//
-//    interface_info = g_type_info_get_interface(param_info);
-//    info_type = g_base_info_get_type(interface_info);
-//
-//    /* Special case for GValue "flat arrays" */
-//    result = (is_gvalue(interface_info, info_type) &&
-//              !g_type_info_is_pointer(param_info));
-//    g_base_info_unref(interface_info);
-//
-//    return result;
-//}
-//
+
+static gboolean
+is_gvalue(GIBaseInfo *info,
+          GIInfoType  info_type)
+{
+    gboolean result = FALSE;
+
+    switch(info_type) {
+    case GI_INFO_TYPE_VALUE:
+        result = TRUE;
+        break;
+    case GI_INFO_TYPE_STRUCT:
+    case GI_INFO_TYPE_OBJECT:
+    case GI_INFO_TYPE_INTERFACE:
+    case GI_INFO_TYPE_BOXED:
+        {
+            GType gtype;
+            gtype = g_registered_type_info_get_g_type((GIRegisteredTypeInfo *) info);
+
+            result = g_type_is_a(gtype, G_TYPE_VALUE);
+        }
+        break;
+    default:
+        break;
+    }
+
+    return result;
+}
+
+static gboolean
+is_gvalue_flat_array(GITypeInfo *param_info,
+                     GITypeTag   element_type)
+{
+    GIBaseInfo *interface_info;
+    GIInfoType info_type;
+    gboolean result;
+
+    if (element_type != GI_TYPE_TAG_INTERFACE)
+        return FALSE;
+
+    interface_info = g_type_info_get_interface(param_info);
+    info_type = g_base_info_get_type(interface_info);
+
+    /* Special case for GValue "flat arrays" */
+    result = (is_gvalue(interface_info, info_type) &&
+              !g_type_info_is_pointer(param_info));
+    g_base_info_unref(interface_info);
+
+    return result;
+}
+
 //static JSBool
 //gwkjs_array_to_array(JSContextRef   context,
 //                   jsval        array_value,
