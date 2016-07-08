@@ -32,11 +32,14 @@
 
 #include <glib-object.h>
 #include "gwkjs/jsapi-util.h"
+#include "gwkjs/context.h"
 
 G_BEGIN_DECLS
 
 void gwkjs_schedule_gc_if_needed (JSContextRef context);
 void gwkjs_gc_if_needed          (JSContextRef context);
+
+GwkjsContext* gwkjs_get_private_context (JSContextRef ctx);
 
 G_END_DECLS
 

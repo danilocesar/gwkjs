@@ -90,8 +90,8 @@ typedef struct {
 //static GSList *object_init_list;
 //static GHashTable *class_init_properties;
 //
-//extern JSClassDefinition gwkjs_object_instance_class;
-//static JSClassRef gwkjs_object_instanceclass_ref = NULL;
+extern JSClassDefinition gwkjs_object_instance_class;
+static JSClassRef gwkjs_object_instance_class_ref = NULL;
 //static GThread *gwkjs_eval_thread;
 //static volatile gint pending_idle_toggles;
 //
@@ -2126,75 +2126,75 @@ gwkjs_g_object_from_object(JSContextRef    context,
     return priv->gobj;
 }
 
-//JSBool
-//gwkjs_typecheck_is_object(JSContextRef     context,
-//                        JSObjectRef      object,
-//                        JSBool         throw_error)
-//{
-//    return do_base_typecheck(context, object, throw_error);
-//}
-//
-//JSBool
-//gwkjs_typecheck_object(JSContextRef     context,
-//                     JSObjectRef      object,
-//                     GType          expected_type,
-//                     JSBool         throw_error)
-//{
-//    ObjectInstance *priv;
-//    JSBool result;
-//
-//    if (!do_base_typecheck(context, object, throw_error))
-//        return JS_FALSE;
-//
-//    priv = priv_from_js(context, object);
-//
-//    if (priv == NULL) {
-//        if (throw_error) {
-//            gwkjs_throw(context,
-//                      "Object instance or prototype has not been properly initialized yet. "
-//                      "Did you forget to chain-up from _init()?");
-//        }
-//
-//        return JS_FALSE;
-//    }
-//
-//    if (priv->gobj == NULL) {
-//        if (throw_error) {
-//            gwkjs_throw(context,
-//                      "Object is %s.%s.prototype, not an object instance - cannot convert to GObject*",
-//                      priv->info ? g_base_info_get_namespace( (GIBaseInfo*) priv->info) : "",
-//                      priv->info ? g_base_info_get_name( (GIBaseInfo*) priv->info) : g_type_name(priv->gtype));
-//        }
-//
-//        return JS_FALSE;
-//    }
-//
-//    g_assert(priv->gtype == G_OBJECT_TYPE(priv->gobj));
-//
-//    if (expected_type != G_TYPE_NONE)
-//        result = g_type_is_a (priv->gtype, expected_type);
-//    else
-//        result = JS_TRUE;
-//
-//    if (!result && throw_error) {
-//        if (priv->info) {
-//            gwkjs_throw_custom(context, "TypeError",
-//                             "Object is of type %s.%s - cannot convert to %s",
-//                             g_base_info_get_namespace((GIBaseInfo*) priv->info),
-//                             g_base_info_get_name((GIBaseInfo*) priv->info),
-//                             g_type_name(expected_type));
-//        } else {
-//            gwkjs_throw_custom(context, "TypeError",
-//                             "Object is of type %s - cannot convert to %s",
-//                             g_type_name(priv->gtype),
-//                             g_type_name(expected_type));
-//        }
-//    }
-//
-//    return result;
-//}
-//
-//
+JSBool
+gwkjs_typecheck_is_object(JSContextRef     context,
+                        JSObjectRef      object,
+                        JSBool         throw_error)
+{
+    return do_base_typecheck(context, object, throw_error);
+}
+
+JSBool
+gwkjs_typecheck_object(JSContextRef context,
+                     JSObjectRef    object,
+                     GType          expected_type,
+                     JSBool         throw_error)
+{
+    ObjectInstance *priv;
+    JSBool result;
+
+    if (!do_base_typecheck(context, object, throw_error))
+        return JS_FALSE;
+
+    priv = priv_from_js(object);
+
+    if (priv == NULL) {
+        if (throw_error) {
+            gwkjs_throw(context,
+                      "Object instance or prototype has not been properly initialized yet. "
+                      "Did you forget to chain-up from _init()?");
+        }
+
+        return JS_FALSE;
+    }
+
+    if (priv->gobj == NULL) {
+        if (throw_error) {
+            gwkjs_throw(context,
+                      "Object is %s.%s.prototype, not an object instance - cannot convert to GObject*",
+                      priv->info ? g_base_info_get_namespace( (GIBaseInfo*) priv->info) : "",
+                      priv->info ? g_base_info_get_name( (GIBaseInfo*) priv->info) : g_type_name(priv->gtype));
+        }
+
+        return JS_FALSE;
+    }
+
+    g_assert(priv->gtype == G_OBJECT_TYPE(priv->gobj));
+
+    if (expected_type != G_TYPE_NONE)
+        result = g_type_is_a (priv->gtype, expected_type);
+    else
+        result = JS_TRUE;
+
+    if (!result && throw_error) {
+        if (priv->info) {
+            gwkjs_throw_custom(context, "TypeError",
+                             "Object is of type %s.%s - cannot convert to %s",
+                             g_base_info_get_namespace((GIBaseInfo*) priv->info),
+                             g_base_info_get_name((GIBaseInfo*) priv->info),
+                             g_type_name(expected_type));
+        } else {
+            gwkjs_throw_custom(context, "TypeError",
+                             "Object is of type %s - cannot convert to %s",
+                             g_type_name(priv->gtype),
+                             g_type_name(expected_type));
+        }
+    }
+
+    return result;
+}
+
+
 //static void
 //find_vfunc_info (JSContextRef context,
 //                 GType implementor_gtype,

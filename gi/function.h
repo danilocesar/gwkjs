@@ -44,7 +44,7 @@ typedef struct {
     gint ref_count;
     JSContextRef context;
     GICallableInfo *info;
-    jsval js_function;
+    JSValueRef js_function;
     ffi_cif cif;
     ffi_closure *closure;
     GIScopeType scope;

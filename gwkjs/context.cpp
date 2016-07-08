@@ -741,18 +741,24 @@ gwkjs_context_get_const_string(JSContextRef      context,
 {
     return const_strings[name];
 }
-//
-//gboolean
-//gwkjs_object_get_property_const(JSContextRef      context,
-//                              JSObjectRef       obj,
-//                              GwkjsConstString  property_name,
-//                              jsval          *value_p)
-//{
-//    jsid pname;
-//    pname = gwkjs_context_get_const_string(context, property_name);
-//    return JS_GetPropertyById(context, obj, pname, value_p);
-//}
-//
+
+gboolean
+gwkjs_object_get_property_const(JSContextRef      context,
+                              JSObjectRef       obj,
+                              GwkjsConstString  property_name,
+                              jsval          *value_p)
+{
+    const char* pname = gwkjs_context_get_const_string(context, property_name);
+    JSValueRef ret = NULL;
+    JSValueRef exception = NULL;
+
+    ret = gwkjs_object_get_property(context, obj, pname, &exception);
+    if (!exception)
+        *value_p = ret;
+
+    return !exception;
+}
+
 
 /**
  * gwkjs_get_import_global:

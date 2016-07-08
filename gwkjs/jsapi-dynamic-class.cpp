@@ -165,37 +165,36 @@
 //
 //    return res;
 //}
-//
-//static const char*
-//format_dynamic_class_name (const char *name)
-//{
-//    if (g_str_has_prefix(name, "_private_"))
-//        return name + strlen("_private_");
-//    else
-//        return name;
-//}
-//
-//JSBool
-//gwkjs_typecheck_instance(JSContextRef context,
-//                       JSObjectRef  obj,
-//                       JSClass   *static_clasp,
-//                       JSBool     throw_error)
-//{
-//    if (!JS_InstanceOf(context, obj, static_clasp, NULL)) {
-//        if (throw_error) {
-//            JSClass *obj_class = JS_GetClass(obj);
-//
-//            gwkjs_throw_custom(context, "TypeError",
-//                             "Object %p is not a subclass of %s, it's a %s",
-//                             obj, static_clasp->name, format_dynamic_class_name (obj_class->name));
-//        }
-//
-//        return JS_FALSE;
-//    }
-//
-//    return JS_TRUE;
-//}
-//
+
+static const char*
+format_dynamic_class_name (const char *name)
+{
+    if (g_str_has_prefix(name, "_private_"))
+        return name + strlen("_private_");
+    else
+        return name;
+}
+
+JSBool
+gwkjs_typecheck_instance(JSContextRef context,
+                       JSObjectRef  obj,
+                       JSClassRef   classref,
+                       JSClassDefinition classdef,
+                       JSBool     throw_error)
+{
+    if (!JSValueIsObjectOfClass(context, obj, classref)) {
+        if (throw_error) {
+            gwkjs_throw_custom(context, "TypeError",
+                             "Object %p is not a subclass of %s, it's a %s",
+                             obj, classdef.className, gwkjs_jsvalue_to_cstring(context, obj, NULL));
+        }
+
+        return JS_FALSE;
+    }
+
+    return JS_TRUE;
+}
+
 //JSObject*
 //gwkjs_construct_object_dynamic(JSContextRef      context,
 //                             JSObjectRef       proto,

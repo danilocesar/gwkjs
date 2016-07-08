@@ -46,7 +46,7 @@ typedef struct {
 } Union;
 
 extern JSClassDefinition gwkjs_union_class;
-static JSClassRef gwkjs_unionclass_ref = NULL;
+static JSClassRef gwkjs_union_class_ref = NULL;
 
 GWKJS_DEFINE_PRIV_FROM_JS(Union, gwkjs_union_class)
 
@@ -63,26 +63,22 @@ GWKJS_DEFINE_PRIV_FROM_JS(Union, gwkjs_union_class)
  * was not resolved; and non-null, referring to obj or one of its prototypes,
  * if id was resolved.
  */
-static JSBool
-union_new_resolve(JSContextRef context,
-                  JS::HandleObject obj,
-                  JS::HandleId id,
-                  unsigned flags,
-                  JS::MutableHandleObject objp)
+static JSValueRef
+union_get_property(JSContextRef context,
+                  JSObjectRef obj,
+                  JSStringRef property_name,
+                  JSValueRef* exception)
 {
-    Union *priv;
-    char *name;
-    JSBool ret = JS_TRUE;
+    Union *priv = NULL;
+    JSValueRef ret = NULL;
+    char *name = gwkjs_jsstring_to_cstring(property_name);
 
-    if (!gwkjs_get_string_id(context, id, &name))
-        return JS_TRUE; /* not resolved, but no error */
-
-    priv = priv_from_js(context, obj);
+    priv = priv_from_js(obj);
     gwkjs_debug_jsprop(GWKJS_DEBUG_GBOXED, "Resolve prop '%s' hook obj %p priv %p",
                      name, (void *)obj, priv);
 
     if (priv == NULL) {
-        ret = JS_FALSE; /* wrong class */
+        ret = NULL; /* wrong class */
         goto out;
     }
 
@@ -94,7 +90,7 @@ union_new_resolve(JSContextRef context,
                                                name);
 
         if (method_info != NULL) {
-            JSObjectRef union_proto;
+            JSObjectRef union_proto = NULL;
             const char *method_name;
 
 #if GWKJS_VERBOSE_ENABLE_GI_USAGE
@@ -119,7 +115,7 @@ union_new_resolve(JSContextRef context,
                     goto out;
                 }
 
-                objp.set(union_proto); /* we defined the prop in object_proto */
+                ret = union_proto; /* we defined the prop in object_proto */
             }
 
             g_base_info_unref( (GIBaseInfo*) method_info);
@@ -161,9 +157,8 @@ union_new(JSContextRef   context,
         if ((flags & GI_FUNCTION_IS_CONSTRUCTOR) != 0 &&
             g_callable_info_get_n_args((GICallableInfo*) func_info) == 0) {
 
-            jsval rval;
+            JSValueRef rval = NULL;
 
-            rval = JSVAL_NULL;
             gwkjs_invoke_c_function_uncached(context, func_info, obj,
                                            0, NULL, &rval);
 
@@ -176,7 +171,7 @@ union_new(JSContextRef   context,
             if (JSVAL_IS_NULL(context, rval))
                 return NULL;
             else
-                return gwkjs_c_union_from_union(context, JSVAL_TO_OBJECT(rval));
+                return gwkjs_c_union_from_union(context, JSValueToObject(context, rval, NULL));
         }
 
         g_base_info_unref((GIBaseInfo*) func_info);
@@ -191,9 +186,10 @@ union_new(JSContextRef   context,
 GWKJS_NATIVE_CONSTRUCTOR_DECLARE(union)
 {
     GWKJS_NATIVE_CONSTRUCTOR_VARIABLES(union)
-    Union *priv;
-    Union *proto_priv;
-    JSObjectRef proto;
+    Union *priv = NULL;
+    Union *proto_priv = NULL;
+    JSValueRef proto_val = NULL;
+    JSObjectRef proto = NULL;
     void *gboxed;
 
     GWKJS_NATIVE_CONSTRUCTOR_PRELUDE(union);
@@ -202,25 +198,31 @@ GWKJS_NATIVE_CONSTRUCTOR_DECLARE(union)
 
     GWKJS_INC_COUNTER(boxed);
 
-    g_assert(priv_from_js(context, object) == NULL);
-    JS_SetPrivate(object, priv);
+    g_assert(priv_from_js(object) == NULL);
+    JSObjectSetPrivate(object, priv);
 
     gwkjs_debug_lifecycle(GWKJS_DEBUG_GBOXED,
                         "union constructor, obj %p priv %p",
                         object, priv);
 
-    JS_GetPrototype(context, object, &proto);
+    proto_val = JSObjectGetPrototype(context, object);
     gwkjs_debug_lifecycle(GWKJS_DEBUG_GBOXED, "union instance __proto__ is %p", proto);
 
     /* If we're the prototype, then post-construct we'll fill in priv->info.
      * If we are not the prototype, though, then we'll get ->info from the
      * prototype and then create a GObject if we don't have one already.
      */
-    proto_priv = priv_from_js(context, proto);
+    proto = JSValueToObject(context, proto_val, NULL);
+    if (!proto) {
+        gwkjs_debug(GWKJS_DEBUG_GBOXED,
+                  "Bad prototype set on union!");
+    }
+
+    proto_priv = priv_from_js(proto);
     if (proto_priv == NULL) {
         gwkjs_debug(GWKJS_DEBUG_GBOXED,
                   "Bad prototype set on union? Must match JSClass of object. JS error should have been reported.");
-        return JS_FALSE;
+        return NULL;
     }
 
     priv->info = proto_priv->info;
@@ -235,7 +237,7 @@ GWKJS_NATIVE_CONSTRUCTOR_DECLARE(union)
     gboxed = union_new(context, object, priv->info);
 
     if (gboxed == NULL) {
-        return JS_FALSE;
+        return NULL;
     }
 
     /* Because "gboxed" is owned by a jsval and will
@@ -249,8 +251,6 @@ GWKJS_NATIVE_CONSTRUCTOR_DECLARE(union)
                         priv->gboxed, g_type_name(priv->gtype));
 
     GWKJS_NATIVE_CONSTRUCTOR_FINISH(union);
-
-    return JS_TRUE;
 }
 
 static void
@@ -279,29 +279,26 @@ union_finalize(JSObjectRef obj)
     g_slice_free(Union, priv);
 }
 
-static JSBool
+static JSValueRef
 to_string_func(JSContextRef context,
-               unsigned   argc,
-               jsval     *vp)
+               JSObjectRef function,
+               JSObjectRef obj,
+               size_t argumentCount,
+               const JSValueRef arguments[],
+               JSValueRef* exception)
 {
-    JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-    JSObjectRef obj = JSVAL_TO_OBJECT(rec.thisv());
-
-    Union *priv;
-    JSBool ret = JS_FALSE;
-    jsval retval;
+    Union *priv = NULL;
+    JSValueRef retval = NULL;
 
     if (!priv_from_js_with_typecheck(context, obj, &priv))
         goto out;
-    
+
     if (!_gwkjs_proxy_to_string_func(context, obj, "union", (GIBaseInfo*)priv->info,
                                    priv->gtype, priv->gboxed, &retval))
         goto out;
 
-    ret = JS_TRUE;
-    rec.rval().set(retval);
  out:
-    return ret;
+    return retval;
 }
 
 /* The bizarre thing about this vtable is that it applies to both
@@ -316,54 +313,39 @@ JSClassDefinition gwkjs_union_class = {
     NULL,                      //     const JSStaticValue*                staticValues;
     NULL,                      //     const JSStaticFunction*             staticFunctions;
     NULL,                      //     JSObjectInitializeCallback          initialize;
-    union_finalize,             //     JSObjectFinalizeCallback            finalize;
+    union_finalize,            //     JSObjectFinalizeCallback            finalize;
     NULL,                      //     JSObjectHasPropertyCallback         hasProperty;
-    union_get_property,         //     JSObjectGetPropertyCallback         getProperty;
+    union_get_property,        //     JSObjectGetPropertyCallback         getProperty;
     NULL,                      //     JSObjectSetPropertyCallback         setProperty;
     NULL,                      //     JSObjectDeletePropertyCallback      deleteProperty;
     NULL,                      //     JSObjectGetPropertyNamesCallback    getPropertyNames;
     NULL,                      //     JSObjectCallAsFunctionCallback      callAsFunction;
-    gwkjs_repo_constructor,    //     JSObjectCallAsConstructorCallback   callAsConstructor;
+    gwkjs_union_constructor,   //     JSObjectCallAsConstructorCallback   callAsConstructor;
     NULL,                      //     JSObjectHasInstanceCallback         hasInstance;
     NULL,                      //     JSObjectConvertToTypeCallback       convertToType;
 };
-JSClassDefinition gwkjs_union_class = {
-    "GObject_Union",
-    JSCLASS_HAS_PRIVATE |
-    JSCLASS_NEW_RESOLVE,
-    JS_PropertyStub,
-    JS_DeletePropertyStub,
-    JS_PropertyStub,
-    JS_StrictPropertyStub,
-    JS_EnumerateStub,
-    (JSResolveOp) union_new_resolve, /* needs cast since it's the new resolve signature */
-    JS_ConvertStub,
-    union_finalize,
-    NULL,
-    NULL,
-    NULL, NULL, NULL
+
+
+JSStaticValue gwkjs_union_proto_props[] = {
+    { 0,0,0,0 }
 };
 
-JSPropertySpec gwkjs_union_proto_props[] = {
+JSStaticFunction gwkjs_union_proto_funcs[] = {
+    { "toString", to_string_func, 0 },
     { NULL }
 };
 
-JSFunctionSpec gwkjs_union_proto_funcs[] = {
-    { "toString", JSOP_WRAPPER((JSNative)to_string_func), 0, 0 },
-    { NULL }
-};
-
-JSBool
+JSObjectRef
 gwkjs_define_union_class(JSContextRef    context,
                        JSObjectRef     in_object,
                        GIUnionInfo  *info)
 {
     const char *constructor_name;
-    JSObjectRef prototype;
-    jsval value;
-    Union *priv;
+    JSObjectRef prototype = NULL;
+    jsval value = NULL;
+    Union *priv = NULL;
     GType gtype;
-    JSObjectRef constructor;
+    JSObjectRef constructor = NULL;
 
     /* For certain unions, we may be able to relax this in the future by
      * directly allocating union memory, as we do for structures in boxed.c
@@ -381,84 +363,86 @@ gwkjs_define_union_class(JSContextRef    context,
 
     constructor_name = g_base_info_get_name( (GIBaseInfo*) info);
 
-    if (!gwkjs_init_class_dynamic(context, in_object,
-                                NULL,
-                                g_base_info_get_namespace( (GIBaseInfo*) info),
-                                constructor_name,
-                                &gwkjs_union_class,
-                                gwkjs_union_constructor, 0,
-                                /* props of prototype */
-                                &gwkjs_union_proto_props[0],
-                                /* funcs of prototype */
-                                &gwkjs_union_proto_funcs[0],
-                                /* props of constructor, MyConstructor.myprop */
-                                NULL,
-                                /* funcs of constructor, MyConstructor.myfunc() */
-                                NULL,
-                                &prototype,
-                                &constructor)) {
-        g_error("Can't init class %s", constructor_name);
-    }
+// TODO: IMPLEMENT - Not sure what to do with the dynamic class
+//    if (!gwkjs_init_class_dynamic(context, in_object,
+//                                NULL,
+//                                g_base_info_get_namespace( (GIBaseInfo*) info),
+//                                constructor_name,
+//                                &gwkjs_union_class,
+//                                gwkjs_union_constructor, 0,
+//                                /* props of prototype */
+//                                &gwkjs_union_proto_props[0],
+//                                /* funcs of prototype */
+//                                &gwkjs_union_proto_funcs[0],
+//                                /* props of constructor, MyConstructor.myprop */
+//                                NULL,
+//                                /* funcs of constructor, MyConstructor.myfunc() */
+//                                NULL,
+//                                &prototype,
+//                                &constructor)) {
+//        g_error("Can't init class %s", constructor_name);
+//    }
 
     GWKJS_INC_COUNTER(boxed);
     priv = g_slice_new0(Union);
     priv->info = info;
     g_base_info_ref( (GIBaseInfo*) priv->info);
     priv->gtype = gtype;
-    JS_SetPrivate(prototype, priv);
+    JSObjectSetPrivate(prototype, priv);
 
-    gwkjs_debug(GWKJS_DEBUG_GBOXED, "Defined class %s prototype is %p class %p in object %p",
-              constructor_name, prototype, JS_GetClass(prototype), in_object);
+//    gwkjs_debug(GWKJS_DEBUG_GBOXED, "Defined class %s prototype is %p class %p in object %p",
+//              constructor_name, prototype, JS_GetClass(prototype), in_object);
 
-    value = OBJECT_TO_JSVAL(gwkjs_gtype_create_gtype_wrapper(context, gtype));
-    JS_DefineProperty(context, constructor, "$gtype", value,
-                      NULL, NULL, JSPROP_PERMANENT);
+    value = gwkjs_gtype_create_gtype_wrapper(context, gtype);
+    gwkjs_object_set_property(context, constructor, "$gtype", value,
+                              kJSPropertyAttributeDontDelete, NULL);
 
-    return JS_TRUE;
+    return constructor;
 }
 
-JSObject*
-gwkjs_union_from_c_union(JSContextRef    context,
-                       GIUnionInfo  *info,
-                       void         *gboxed)
-{
-    JSObjectRef obj;
-    JSObjectRef proto;
-    Union *priv;
-    GType gtype;
-
-    if (gboxed == NULL)
-        return NULL;
-
-    /* For certain unions, we may be able to relax this in the future by
-     * directly allocating union memory, as we do for structures in boxed.c
-     */
-    gtype = g_registered_type_info_get_g_type( (GIRegisteredTypeInfo*) info);
-    if (gtype == G_TYPE_NONE) {
-        gwkjs_throw(context, "Unions must currently be registered as boxed types");
-        return NULL;
-    }
-
-    gwkjs_debug_marshal(GWKJS_DEBUG_GBOXED,
-                      "Wrapping union %s %p with JSObject",
-                      g_base_info_get_name((GIBaseInfo *)info), gboxed);
-
-    proto = gwkjs_lookup_generic_prototype(context, (GIUnionInfo*) info);
-
-    obj = JS_NewObjectWithGivenProto(context,
-                                     JS_GetClass(proto), proto,
-                                     gwkjs_get_import_global (context));
-
-    GWKJS_INC_COUNTER(boxed);
-    priv = g_slice_new0(Union);
-    JS_SetPrivate(obj, priv);
-    priv->info = info;
-    g_base_info_ref( (GIBaseInfo *) priv->info);
-    priv->gtype = gtype;
-    priv->gboxed = g_boxed_copy(gtype, gboxed);
-
-    return obj;
-}
+// TODO: implement
+//JSObject*
+//gwkjs_union_from_c_union(JSContextRef    context,
+//                       GIUnionInfo  *info,
+//                       void         *gboxed)
+//{
+//    JSObjectRef obj;
+//    JSObjectRef proto;
+//    Union *priv;
+//    GType gtype;
+//
+//    if (gboxed == NULL)
+//        return NULL;
+//
+//    /* For certain unions, we may be able to relax this in the future by
+//     * directly allocating union memory, as we do for structures in boxed.c
+//     */
+//    gtype = g_registered_type_info_get_g_type( (GIRegisteredTypeInfo*) info);
+//    if (gtype == G_TYPE_NONE) {
+//        gwkjs_throw(context, "Unions must currently be registered as boxed types");
+//        return NULL;
+//    }
+//
+//    gwkjs_debug_marshal(GWKJS_DEBUG_GBOXED,
+//                      "Wrapping union %s %p with JSObject",
+//                      g_base_info_get_name((GIBaseInfo *)info), gboxed);
+//
+//    proto = gwkjs_lookup_generic_prototype(context, (GIUnionInfo*) info);
+//
+//    obj = JS_NewObjectWithGivenProto(context,
+//                                     JS_GetClass(proto), proto,
+//                                     gwkjs_get_import_global (context));
+//
+//    GWKJS_INC_COUNTER(boxed);
+//    priv = g_slice_new0(Union);
+//    JSObjectSetPrivate(obj, priv);
+//    priv->info = info;
+//    g_base_info_ref( (GIBaseInfo *) priv->info);
+//    priv->gtype = gtype;
+//    priv->gboxed = g_boxed_copy(gtype, gboxed);
+//
+//    return obj;
+//}
 
 void*
 gwkjs_c_union_from_union(JSContextRef    context,
@@ -469,7 +453,7 @@ gwkjs_c_union_from_union(JSContextRef    context,
     if (obj == NULL)
         return NULL;
 
-    priv = priv_from_js(context, obj);
+    priv = priv_from_js(obj);
 
     return priv->gboxed;
 }
@@ -487,7 +471,7 @@ gwkjs_typecheck_union(JSContextRef     context,
     if (!do_base_typecheck(context, object, throw_error))
         return JS_FALSE;
 
-    priv = priv_from_js(context, object);
+    priv = priv_from_js(object);
 
     if (priv->gboxed == NULL) {
         if (throw_error) {

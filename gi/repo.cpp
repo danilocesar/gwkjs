@@ -418,73 +418,73 @@ out:
     }
     return JSValueToObject(context, value, NULL);
 }
-//
-//#if GWKJS_VERBOSE_ENABLE_GI_USAGE
-//void
-//_gwkjs_log_info_usage(GIBaseInfo *info)
-//{
-//#define DIRECTION_STRING(d) ( ((d) == GI_DIRECTION_IN) ? "IN" : ((d) == GI_DIRECTION_OUT) ? "OUT" : "INOUT" )
-//#define TRANSFER_STRING(t) ( ((t) == GI_TRANSFER_NOTHING) ? "NOTHING" : ((t) == GI_TRANSFER_CONTAINER) ? "CONTAINER" : "EVERYTHING" )
-//
-//    {
-//        char *details;
-//        GIInfoType info_type;
-//        GIBaseInfo *container;
-//
-//        info_type = g_base_info_get_type(info);
-//
-//        if (info_type == GI_INFO_TYPE_FUNCTION) {
-//            GString *args;
-//            int n_args;
-//            int i;
-//            GITransfer retval_transfer;
-//
-//            args = g_string_new("{ ");
-//
-//            n_args = g_callable_info_get_n_args((GICallableInfo*) info);
-//            for (i = 0; i < n_args; ++i) {
-//                GIArgInfo *arg;
-//                GIDirection direction;
-//                GITransfer transfer;
-//
-//                arg = g_callable_info_get_arg((GICallableInfo*)info, i);
-//                direction = g_arg_info_get_direction(arg);
-//                transfer = g_arg_info_get_ownership_transfer(arg);
-//
-//                g_string_append_printf(args,
-//                                       "{ GI_DIRECTION_%s, GI_TRANSFER_%s }, ",
-//                                       DIRECTION_STRING(direction),
-//                                       TRANSFER_STRING(transfer));
-//
-//                g_base_info_unref((GIBaseInfo*) arg);
-//            }
-//            if (args->len > 2)
-//                g_string_truncate(args, args->len - 2); /* chop comma */
-//
-//            g_string_append(args, " }");
-//
-//            retval_transfer = g_callable_info_get_caller_owns((GICallableInfo*) info);
-//
-//            details = g_strdup_printf(".details = { .func = { .retval_transfer = GI_TRANSFER_%s, .n_args = %d, .args = %s } }",
-//                                      TRANSFER_STRING(retval_transfer), n_args, args->str);
-//            g_string_free(args, TRUE);
-//        } else {
-//            details = g_strdup_printf(".details = { .nothing = {} }");
-//        }
-//
-//        container = g_base_info_get_container(info);
-//
-//        gwkjs_debug_gi_usage("{ GI_INFO_TYPE_%s, \"%s\", \"%s\", \"%s\", %s },",
-//                           gwkjs_info_type_name(info_type),
-//                           g_base_info_get_namespace(info),
-//                           container ? g_base_info_get_name(container) : "",
-//                           g_base_info_get_name(info),
-//                           details);
-//        g_free(details);
-//    }
-//}
-//#endif /* GWKJS_VERBOSE_ENABLE_GI_USAGE */
-//
+
+#if GWKJS_VERBOSE_ENABLE_GI_USAGE
+void
+_gwkjs_log_info_usage(GIBaseInfo *info)
+{
+#define DIRECTION_STRING(d) ( ((d) == GI_DIRECTION_IN) ? "IN" : ((d) == GI_DIRECTION_OUT) ? "OUT" : "INOUT" )
+#define TRANSFER_STRING(t) ( ((t) == GI_TRANSFER_NOTHING) ? "NOTHING" : ((t) == GI_TRANSFER_CONTAINER) ? "CONTAINER" : "EVERYTHING" )
+
+    {
+        char *details;
+        GIInfoType info_type;
+        GIBaseInfo *container;
+
+        info_type = g_base_info_get_type(info);
+
+        if (info_type == GI_INFO_TYPE_FUNCTION) {
+            GString *args;
+            int n_args;
+            int i;
+            GITransfer retval_transfer;
+
+            args = g_string_new("{ ");
+
+            n_args = g_callable_info_get_n_args((GICallableInfo*) info);
+            for (i = 0; i < n_args; ++i) {
+                GIArgInfo *arg;
+                GIDirection direction;
+                GITransfer transfer;
+
+                arg = g_callable_info_get_arg((GICallableInfo*)info, i);
+                direction = g_arg_info_get_direction(arg);
+                transfer = g_arg_info_get_ownership_transfer(arg);
+
+                g_string_append_printf(args,
+                                       "{ GI_DIRECTION_%s, GI_TRANSFER_%s }, ",
+                                       DIRECTION_STRING(direction),
+                                       TRANSFER_STRING(transfer));
+
+                g_base_info_unref((GIBaseInfo*) arg);
+            }
+            if (args->len > 2)
+                g_string_truncate(args, args->len - 2); /* chop comma */
+
+            g_string_append(args, " }");
+
+            retval_transfer = g_callable_info_get_caller_owns((GICallableInfo*) info);
+
+            details = g_strdup_printf(".details = { .func = { .retval_transfer = GI_TRANSFER_%s, .n_args = %d, .args = %s } }",
+                                      TRANSFER_STRING(retval_transfer), n_args, args->str);
+            g_string_free(args, TRUE);
+        } else {
+            details = g_strdup_printf(".details = { .nothing = {} }");
+        }
+
+        container = g_base_info_get_container(info);
+
+        gwkjs_debug_gi_usage("{ GI_INFO_TYPE_%s, \"%s\", \"%s\", \"%s\", %s },",
+                           gwkjs_info_type_name(info_type),
+                           g_base_info_get_namespace(info),
+                           container ? g_base_info_get_name(container) : "",
+                           g_base_info_get_name(info),
+                           details);
+        g_free(details);
+    }
+}
+#endif /* GWKJS_VERBOSE_ENABLE_GI_USAGE */
+
 
 //TODO:  RENAME the following methods to DEFINE_AND_RETURN
 JSObjectRef
@@ -824,50 +824,50 @@ gwkjs_hyphen_from_camel(const char *camel_name)
     return g_string_free(s, FALSE);
 }
 
-//JSObjectRef 
-//gwkjs_lookup_generic_constructor(JSContextRef  context,
-//                               GIBaseInfo *info)
-//{
-//    JSObjectRef in_object;
-//    JSObjectRef constructor;
-//    const char *constructor_name;
-//    jsval value;
-//
-//    in_object = gwkjs_lookup_namespace_object(context, (GIBaseInfo*) info);
-//    constructor_name = g_base_info_get_name((GIBaseInfo*) info);
-//
-//    if (G_UNLIKELY (!in_object))
-//        return NULL;
-//
-//    if (!JS_GetProperty(context, in_object, constructor_name, &value))
-//        return NULL;
-//
-//    if (G_UNLIKELY (!JSVAL_IS_OBJECT(value) || JSVAL_IS_NULL(value)))
-//        return NULL;
-//
-//    constructor = JSVAL_TO_OBJECT(value);
-//    g_assert(constructor != NULL);
-//
-//    return constructor;
-//}
-//
-//JSObjectRef 
-//gwkjs_lookup_generic_prototype(JSContextRef  context,
-//                             GIBaseInfo *info)
-//{
-//    JSObjectRef constructor;
-//    jsval value;
-//
-//    constructor = gwkjs_lookup_generic_constructor(context, info);
-//    if (G_UNLIKELY (constructor == NULL))
-//        return NULL;
-//
-//    if (!gwkjs_object_get_property_const(context, constructor,
-//                                       GWKJS_STRING_PROTOTYPE, &value))
-//        return NULL;
-//
-//    if (G_UNLIKELY (!JSVAL_IS_OBJECT(value)))
-//        return NULL;
-//
-//    return JSVAL_TO_OBJECT(value);
-//}
+JSObjectRef
+gwkjs_lookup_generic_constructor(JSContextRef  context,
+                               GIBaseInfo *info)
+{
+    JSObjectRef in_object;
+    JSObjectRef constructor;
+    const char *constructor_name;
+    jsval value;
+
+    in_object = gwkjs_lookup_namespace_object(context, (GIBaseInfo*) info);
+    constructor_name = g_base_info_get_name((GIBaseInfo*) info);
+
+    if (G_UNLIKELY (!in_object))
+        return NULL;
+
+    if (!(value = gwkjs_object_get_property(context, in_object, constructor_name, NULL)))
+        return NULL;
+
+    if (G_UNLIKELY (!JSValueIsObject(context, value) || JSVAL_IS_NULL(context, value)))
+        return NULL;
+
+    constructor = JSValueToObject(context, value, NULL);
+    g_assert(constructor != NULL);
+
+    return constructor;
+}
+
+JSObjectRef
+gwkjs_lookup_generic_prototype(JSContextRef  context,
+                             GIBaseInfo *info)
+{
+    JSObjectRef constructor;
+    jsval value;
+
+    constructor = gwkjs_lookup_generic_constructor(context, info);
+    if (G_UNLIKELY (constructor == NULL))
+        return NULL;
+
+    if (!gwkjs_object_get_property_const(context, constructor,
+                                       GWKJS_STRING_PROTOTYPE, &value))
+        return NULL;
+
+    if (G_UNLIKELY (!JSValueIsObject(context, value)))
+        return NULL;
+
+    return JSValueToObject(context, value, NULL);
+}

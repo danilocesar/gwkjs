@@ -160,35 +160,37 @@ set_return_ffi_arg_from_giargument (GITypeInfo  *ret_type,
     }
 }
 
-///* This is our main entry point for ffi_closure callbacks.
-// * ffi_prep_closure is doing pure magic and replaces the original
-// * function call with this one which gives us the ffi arguments,
-// * a place to store the return value and our use data.
-// * In other words, everything we need to call the JS function and
-// * getting the return value back.
-// */
-//static void
-//gwkjs_callback_closure(ffi_cif *cif,
-//                     void *result,
-//                     void **args,
-//                     void *data)
-//{
-//    JSContextRef context;
-//    JSRuntime *runtime;
-//    JSObjectRef func_obj;
-//    GwkjsCallbackTrampoline *trampoline;
-//    int i, n_args, n_jsargs, n_outargs;
-//    jsval *jsargs, rval;
-//    JSObjectRef this_object;
-//    GITypeInfo ret_type;
-//    gboolean success = FALSE;
-//    gboolean ret_type_is_void;
-//
-//    trampoline = (GwkjsCallbackTrampoline *) data;
-//    g_assert(trampoline);
-//    gwkjs_callback_trampoline_ref(trampoline);
-//
-//    context = trampoline->context;
+/* This is our main entry point for ffi_closure callbacks.
+ * ffi_prep_closure is doing pure magic and replaces the original
+ * function call with this one which gives us the ffi arguments,
+ * a place to store the return value and our use data.
+ * In other words, everything we need to call the JS function and
+ * getting the return value back.
+ */
+static void
+gwkjs_callback_closure(ffi_cif *cif,
+                     void *result,
+                     void **args,
+                     void *data)
+{
+    JSContextRef context = NULL;
+    JSObjectRef func_obj = NULL;
+    GwkjsCallbackTrampoline *trampoline;
+    int i, n_args, n_jsargs, n_outargs;
+    jsval *jsargs, rval;
+    JSObjectRef rval_obj = NULL;
+    JSObjectRef this_object = NULL;
+    GITypeInfo ret_type;
+    gboolean success = FALSE;
+    gboolean ret_type_is_void;
+    JSValueRef exception = NULL;
+
+    trampoline = (GwkjsCallbackTrampoline *) data;
+    g_assert(trampoline);
+    gwkjs_callback_trampoline_ref(trampoline);
+
+    context = trampoline->context;
+//TODO: implement - Might not be necessary
 //    runtime = JS_GetRuntime(context);
 //    if (G_UNLIKELY (gwkjs_runtime_is_sweeping(runtime))) {
 //        g_critical("Attempting to call back into JSAPI during the sweeping phase of GC. "
@@ -204,210 +206,212 @@ set_return_ffi_arg_from_giargument (GITypeInfo  *ret_type,
 //        gwkjs_callback_trampoline_unref(trampoline);
 //        return;
 //    }
-//
-//    JS_BeginRequest(context);
-//    func_obj = &trampoline->js_function.toObject();
-//    JSAutoCompartment ac(context, func_obj);
-//
-//    n_args = g_callable_info_get_n_args(trampoline->info);
-//
-//    g_assert(n_args >= 0);
-//
-//    n_outargs = 0;
-//    jsargs = (jsval*)g_newa(jsval, n_args);
-//    for (i = 0, n_jsargs = 0; i < n_args; i++) {
-//        GIArgInfo arg_info;
-//        GITypeInfo type_info;
-//        GwkjsParamType param_type;
-//
-//        g_callable_info_load_arg(trampoline->info, i, &arg_info);
-//        g_arg_info_load_type(&arg_info, &type_info);
-//
-//        /* Skip void * arguments */
-//        if (g_type_info_get_tag(&type_info) == GI_TYPE_TAG_VOID)
-//            continue;
-//
-//        if (g_arg_info_get_direction(&arg_info) == GI_DIRECTION_OUT) {
-//            n_outargs++;
-//            continue;
-//        }
-//
-//        if (g_arg_info_get_direction(&arg_info) == GI_DIRECTION_INOUT)
-//            n_outargs++;
-//
-//        param_type = trampoline->param_types[i];
-//
-//        switch (param_type) {
-//            case PARAM_SKIPPED:
-//                continue;
-//            case PARAM_ARRAY: {
-//                gint array_length_pos = g_type_info_get_array_length(&type_info);
-//                GIArgInfo array_length_arg;
-//                GITypeInfo arg_type_info;
-//                jsval length;
-//
-//                g_callable_info_load_arg(trampoline->info, array_length_pos, &array_length_arg);
-//                g_arg_info_load_type(&array_length_arg, &arg_type_info);
-//                if (!gwkjs_value_from_g_argument(context, &length,
-//                                               &arg_type_info,
-//                                               (GArgument *) args[array_length_pos], TRUE))
-//                    goto out;
-//
-//                if (!gwkjs_value_from_explicit_array(context, &jsargs[n_jsargs++],
-//                                                   &type_info, (GArgument*) args[i], JSVAL_TO_INT(length)))
-//                    goto out;
-//                break;
-//            }
-//            case PARAM_NORMAL:
-//                if (!gwkjs_value_from_g_argument(context,
-//                                               &jsargs[n_jsargs++],
-//                                               &type_info,
-//                                               (GArgument *) args[i], FALSE))
-//                    goto out;
-//                break;
-//            default:
-//                g_assert_not_reached();
-//        }
-//    }
-//
-//    if (trampoline->is_vfunc) {
-//        g_assert(n_args > 0);
-//        this_object = JSVAL_TO_OBJECT(jsargs[0]);
-//        jsargs++;
-//        n_jsargs--;
-//    } else {
-//        this_object = NULL;
-//    }
-//
-//    if (!JS_CallFunctionValue(context,
-//                              this_object,
-//                              trampoline->js_function,
-//                              n_jsargs,
-//                              jsargs,
-//                              &rval)) {
-//        goto out;
-//    }
-//
-//    g_callable_info_load_return_type(trampoline->info, &ret_type);
-//    ret_type_is_void = g_type_info_get_tag (&ret_type) == GI_TYPE_TAG_VOID;
-//
-//    if (n_outargs == 0 && !ret_type_is_void) {
-//        GIArgument argument;
-//        GITransfer transfer;
-//
-//        transfer = g_callable_info_get_caller_owns (trampoline->info);
-//        /* non-void return value, no out args. Should
-//         * be a single return value. */
-//        if (!gwkjs_value_to_g_argument(context,
-//                                     rval,
-//                                     &ret_type,
-//                                     "callback",
-//                                     GWKJS_ARGUMENT_RETURN_VALUE,
-//                                     transfer,
-//                                     TRUE,
-//                                     &argument))
-//            goto out;
-//
-//        set_return_ffi_arg_from_giargument(&ret_type,
-//                                           result,
-//                                           &argument);
-//    } else if (n_outargs == 1 && ret_type_is_void) {
-//        /* void return value, one out args. Should
-//         * be a single return value. */
-//        for (i = 0; i < n_args; i++) {
-//            GIArgInfo arg_info;
-//            GITypeInfo type_info;
-//            g_callable_info_load_arg(trampoline->info, i, &arg_info);
-//            if (g_arg_info_get_direction(&arg_info) == GI_DIRECTION_IN)
-//                continue;
-//
-//            g_arg_info_load_type(&arg_info, &type_info);
-//            if (!gwkjs_value_to_g_argument(context,
-//                                         rval,
-//                                         &type_info,
-//                                         "callback",
-//                                         GWKJS_ARGUMENT_ARGUMENT,
-//                                         GI_TRANSFER_NOTHING,
-//                                         TRUE,
-//                                         *(GArgument **)args[i]))
-//                goto out;
-//
-//            break;
-//        }
-//    } else {
-//        jsval elem;
-//        gsize elem_idx = 0;
-//        /* more than one of a return value or an out argument.
-//         * Should be an array of output values. */
-//
-//        if (!ret_type_is_void) {
-//            GIArgument argument;
-//
-//            if (!JS_GetElement(context, JSVAL_TO_OBJECT(rval), elem_idx, &elem))
-//                goto out;
-//
-//            if (!gwkjs_value_to_g_argument(context,
-//                                         elem,
-//                                         &ret_type,
-//                                         "callback",
-//                                         GWKJS_ARGUMENT_ARGUMENT,
-//                                         GI_TRANSFER_NOTHING,
-//                                         TRUE,
-//                                         &argument))
-//                goto out;
-//
-//            set_return_ffi_arg_from_giargument(&ret_type,
-//                                               result,
-//                                               &argument);
-//
-//            elem_idx++;
-//        }
-//
-//        for (i = 0; i < n_args; i++) {
-//            GIArgInfo arg_info;
-//            GITypeInfo type_info;
-//            g_callable_info_load_arg(trampoline->info, i, &arg_info);
-//            if (g_arg_info_get_direction(&arg_info) == GI_DIRECTION_IN)
-//                continue;
-//
-//            g_arg_info_load_type(&arg_info, &type_info);
-//            if (!JS_GetElement(context, JSVAL_TO_OBJECT(rval), elem_idx, &elem))
-//                goto out;
-//
-//            if (!gwkjs_value_to_g_argument(context,
-//                                         elem,
-//                                         &type_info,
-//                                         "callback",
-//                                         GWKJS_ARGUMENT_ARGUMENT,
-//                                         GI_TRANSFER_NOTHING,
-//                                         TRUE,
-//                                         *(GArgument **)args[i]))
-//                goto out;
-//
-//            elem_idx++;
-//        }
-//    }
-//
-//    success = TRUE;
-//
-//out:
-//    if (!success) {
-//        gwkjs_log_exception (context);
-//
-//        /* Fill in the result with some hopefully neutral value */
-//        g_callable_info_load_return_type(trampoline->info, &ret_type);
-//        gwkjs_g_argument_init_default (context, &ret_type, (GArgument *) result);
-//    }
-//
-//    if (trampoline->scope == GI_SCOPE_TYPE_ASYNC) {
-//        completed_trampolines = g_slist_prepend(completed_trampolines, trampoline);
-//    }
-//
-//    gwkjs_callback_trampoline_unref(trampoline);
-//    gwkjs_schedule_gc_if_needed(context);
-//
-//    JS_EndRequest(context);
-//}
+
+    func_obj = JSValueToObject(context, trampoline->js_function, NULL);
+
+    n_args = g_callable_info_get_n_args(trampoline->info);
+
+    g_assert(n_args >= 0);
+
+    n_outargs = 0;
+    jsargs = (jsval*)g_newa(jsval, n_args);
+    for (i = 0, n_jsargs = 0; i < n_args; i++) {
+        GIArgInfo arg_info;
+        GITypeInfo type_info;
+        GwkjsParamType param_type;
+
+        g_callable_info_load_arg(trampoline->info, i, &arg_info);
+        g_arg_info_load_type(&arg_info, &type_info);
+
+        /* Skip void * arguments */
+        if (g_type_info_get_tag(&type_info) == GI_TYPE_TAG_VOID)
+            continue;
+
+        if (g_arg_info_get_direction(&arg_info) == GI_DIRECTION_OUT) {
+            n_outargs++;
+            continue;
+        }
+
+        if (g_arg_info_get_direction(&arg_info) == GI_DIRECTION_INOUT)
+            n_outargs++;
+
+        param_type = trampoline->param_types[i];
+
+        switch (param_type) {
+            case PARAM_SKIPPED:
+                continue;
+            case PARAM_ARRAY: {
+                gint array_length_pos = g_type_info_get_array_length(&type_info);
+                GIArgInfo array_length_arg;
+                GITypeInfo arg_type_info;
+                jsval length;
+
+                g_callable_info_load_arg(trampoline->info, array_length_pos, &array_length_arg);
+                g_arg_info_load_type(&array_length_arg, &arg_type_info);
+                if (!gwkjs_value_from_g_argument(context, &length,
+                                               &arg_type_info,
+                                               (GArgument *) args[array_length_pos], TRUE))
+                    goto out;
+
+                if (!gwkjs_value_from_explicit_array(context, &jsargs[n_jsargs++],
+                                                   &type_info, (GArgument*) args[i], gwkjs_jsvalue_to_int(context, length, NULL)))
+                    goto out;
+                break;
+            }
+            case PARAM_NORMAL:
+                if (!gwkjs_value_from_g_argument(context,
+                                               &jsargs[n_jsargs++],
+                                               &type_info,
+                                               (GArgument *) args[i], FALSE))
+                    goto out;
+                break;
+            default:
+                g_assert_not_reached();
+        }
+    }
+
+    if (trampoline->is_vfunc) {
+        g_assert(n_args > 0);
+        this_object = JSValueToObject(context, jsargs[0], NULL);
+        jsargs++;
+        n_jsargs--;
+    } else {
+        this_object = NULL;
+    }
+
+    rval = JSObjectCallAsFunction(context,
+                                  JSValueToObject(context, trampoline->js_function, NULL),
+                                  this_object,
+                                  n_jsargs, jsargs, &exception);
+
+    rval_obj = JSValueToObject(context, rval, NULL);
+    if (exception)
+        goto out;
+
+    g_callable_info_load_return_type(trampoline->info, &ret_type);
+    ret_type_is_void = g_type_info_get_tag (&ret_type) == GI_TYPE_TAG_VOID;
+
+    if (n_outargs == 0 && !ret_type_is_void) {
+        GIArgument argument;
+        GITransfer transfer;
+
+        transfer = g_callable_info_get_caller_owns (trampoline->info);
+        /* non-void return value, no out args. Should
+         * be a single return value. */
+        if (!gwkjs_value_to_g_argument(context,
+                                     rval,
+                                     &ret_type,
+                                     "callback",
+                                     GWKJS_ARGUMENT_RETURN_VALUE,
+                                     transfer,
+                                     TRUE,
+                                     &argument))
+            goto out;
+
+        set_return_ffi_arg_from_giargument(&ret_type,
+                                           result,
+                                           &argument);
+    } else if (n_outargs == 1 && ret_type_is_void) {
+        /* void return value, one out args. Should
+         * be a single return value. */
+        for (i = 0; i < n_args; i++) {
+            GIArgInfo arg_info;
+            GITypeInfo type_info;
+            g_callable_info_load_arg(trampoline->info, i, &arg_info);
+            if (g_arg_info_get_direction(&arg_info) == GI_DIRECTION_IN)
+                continue;
+
+            g_arg_info_load_type(&arg_info, &type_info);
+            if (!gwkjs_value_to_g_argument(context,
+                                         rval,
+                                         &type_info,
+                                         "callback",
+                                         GWKJS_ARGUMENT_ARGUMENT,
+                                         GI_TRANSFER_NOTHING,
+                                         TRUE,
+                                         *(GArgument **)args[i]))
+                goto out;
+
+            break;
+        }
+    } else {
+        jsval elem = NULL;
+        gsize elem_idx = 0;
+        /* more than one of a return value or an out argument.
+         * Should be an array of output values. */
+
+        JSObjectRef rval_obj = JSValueToObject(context, rval, NULL);
+        if (!ret_type_is_void) {
+            GIArgument argument;
+
+            exception = NULL;
+            elem = JSObjectGetPropertyAtIndex(context, rval_obj, elem_idx, &exception);
+            if (!elem || exception)
+                goto out;
+
+            if (!gwkjs_value_to_g_argument(context,
+                                         elem,
+                                         &ret_type,
+                                         "callback",
+                                         GWKJS_ARGUMENT_ARGUMENT,
+                                         GI_TRANSFER_NOTHING,
+                                         TRUE,
+                                         &argument))
+                goto out;
+
+            set_return_ffi_arg_from_giargument(&ret_type,
+                                               result,
+                                               &argument);
+
+            elem_idx++;
+        }
+
+        for (i = 0; i < n_args; i++) {
+            GIArgInfo arg_info;
+            GITypeInfo type_info;
+            g_callable_info_load_arg(trampoline->info, i, &arg_info);
+            if (g_arg_info_get_direction(&arg_info) == GI_DIRECTION_IN)
+                continue;
+
+            g_arg_info_load_type(&arg_info, &type_info);
+
+            exception = NULL;
+            elem = JSObjectGetPropertyAtIndex(context, rval_obj, elem_idx, &exception);
+            if (!elem || exception)
+                goto out;
+
+            if (!gwkjs_value_to_g_argument(context,
+                                         elem,
+                                         &type_info,
+                                         "callback",
+                                         GWKJS_ARGUMENT_ARGUMENT,
+                                         GI_TRANSFER_NOTHING,
+                                         TRUE,
+                                         *(GArgument **)args[i]))
+                goto out;
+
+            elem_idx++;
+        }
+    }
+
+    success = TRUE;
+
+out:
+    if (!success) {
+        gwkjs_log_exception (context, exception);
+
+        /* Fill in the result with some hopefully neutral value */
+        g_callable_info_load_return_type(trampoline->info, &ret_type);
+        gwkjs_g_argument_init_default (context, &ret_type, (GArgument *) result);
+    }
+
+    if (trampoline->scope == GI_SCOPE_TYPE_ASYNC) {
+        completed_trampolines = g_slist_prepend(completed_trampolines, trampoline);
+    }
+
+    gwkjs_callback_trampoline_unref(trampoline);
+    gwkjs_schedule_gc_if_needed(context);
+}
 
 /* The global entry point for any invocations of GDestroyNotify;
  * look up the callback through the user_data and then free it.
@@ -421,95 +425,97 @@ gwkjs_destroy_notify_callback(gpointer data)
     gwkjs_callback_trampoline_unref(trampoline);
 }
 
-//GwkjsCallbackTrampoline*
-//gwkjs_callback_trampoline_new(JSContextRef      context,
-//                            jsval           function,
-//                            GICallableInfo *callable_info,
-//                            GIScopeType     scope,
-//                            gboolean        is_vfunc)
-//{
-//    GwkjsCallbackTrampoline *trampoline;
-//    int n_args, i;
-//
-//    if (JSVAL_IS_NULL(function)) {
-//        return NULL;
-//    }
-//
-//    g_assert(JS_TypeOfValue(context, function) == JSTYPE_FUNCTION);
-//
-//    trampoline = g_slice_new(GwkjsCallbackTrampoline);
-//    trampoline->ref_count = 1;
-//    trampoline->context = context;
-//    trampoline->info = callable_info;
-//    g_base_info_ref((GIBaseInfo*)trampoline->info);
-//    trampoline->js_function = function;
+GwkjsCallbackTrampoline*
+gwkjs_callback_trampoline_new(JSContextRef      context,
+                            jsval           function_val,
+                            GICallableInfo *callable_info,
+                            GIScopeType     scope,
+                            gboolean        is_vfunc)
+{
+    GwkjsCallbackTrampoline *trampoline;
+    int n_args, i;
+
+    if (JSVAL_IS_NULL(context, function_val)) {
+        return NULL;
+    }
+
+    JSObjectRef function = JSValueToObject(context, function_val, NULL);
+    g_assert(function && JSObjectIsFunction(context, function));
+
+    trampoline = g_slice_new(GwkjsCallbackTrampoline);
+    trampoline->ref_count = 1;
+    trampoline->context = context;
+    trampoline->info = callable_info;
+    g_base_info_ref((GIBaseInfo*)trampoline->info);
+    trampoline->js_function = function;
+// TODO: Donn't think the following is necessary in JSC
 //    if (!is_vfunc)
 //        JS_AddValueRoot(context, &trampoline->js_function);
-//
-//    /* Analyze param types and directions, similarly to init_cached_function_data */
-//    n_args = g_callable_info_get_n_args(trampoline->info);
-//    trampoline->param_types = g_new0(GwkjsParamType, n_args);
-//
-//    for (i = 0; i < n_args; i++) {
-//        GIDirection direction;
-//        GIArgInfo arg_info;
-//        GITypeInfo type_info;
-//        GITypeTag type_tag;
-//
-//        if (trampoline->param_types[i] == PARAM_SKIPPED)
-//            continue;
-//
-//        g_callable_info_load_arg(trampoline->info, i, &arg_info);
-//        g_arg_info_load_type(&arg_info, &type_info);
-//
-//        direction = g_arg_info_get_direction(&arg_info);
-//        type_tag = g_type_info_get_tag(&type_info);
-//
-//        if (direction != GI_DIRECTION_IN) {
-//            /* INOUT and OUT arguments are handled differently. */
-//            continue;
-//        }
-//
-//        if (type_tag == GI_TYPE_TAG_INTERFACE) {
-//            GIBaseInfo* interface_info;
-//            GIInfoType interface_type;
-//
-//            interface_info = g_type_info_get_interface(&type_info);
-//            interface_type = g_base_info_get_type(interface_info);
-//            if (interface_type == GI_INFO_TYPE_CALLBACK) {
-//                gwkjs_throw(context, "Callback accepts another callback as a parameter. This is not supported");
-//                g_base_info_unref(interface_info);
-//                return NULL;
-//            }
-//            g_base_info_unref(interface_info);
-//        } else if (type_tag == GI_TYPE_TAG_ARRAY) {
-//            if (g_type_info_get_array_type(&type_info) == GI_ARRAY_TYPE_C) {
-//                int array_length_pos = g_type_info_get_array_length(&type_info);
-//
-//                if (array_length_pos >= 0 && array_length_pos < n_args) {
-//                    GIArgInfo length_arg_info;
-//
-//                    g_callable_info_load_arg(trampoline->info, array_length_pos, &length_arg_info);
-//                    if (g_arg_info_get_direction(&length_arg_info) != direction) {
-//                        gwkjs_throw(context, "Callback has an array with different-direction length arg, not supported");
-//                        return NULL;
-//                    }
-//
-//                    trampoline->param_types[array_length_pos] = PARAM_SKIPPED;
-//                    trampoline->param_types[i] = PARAM_ARRAY;
-//                }
-//            }
-//        }
-//    }
-//
-//    trampoline->closure = g_callable_info_prepare_closure(callable_info, &trampoline->cif,
-//                                                          gwkjs_callback_closure, trampoline);
-//
-//    trampoline->scope = scope;
-//    trampoline->is_vfunc = is_vfunc;
-//
-//    return trampoline;
-//}
+
+    /* Analyze param types and directions, similarly to init_cached_function_data */
+    n_args = g_callable_info_get_n_args(trampoline->info);
+    trampoline->param_types = g_new0(GwkjsParamType, n_args);
+
+    for (i = 0; i < n_args; i++) {
+        GIDirection direction;
+        GIArgInfo arg_info;
+        GITypeInfo type_info;
+        GITypeTag type_tag;
+
+        if (trampoline->param_types[i] == PARAM_SKIPPED)
+            continue;
+
+        g_callable_info_load_arg(trampoline->info, i, &arg_info);
+        g_arg_info_load_type(&arg_info, &type_info);
+
+        direction = g_arg_info_get_direction(&arg_info);
+        type_tag = g_type_info_get_tag(&type_info);
+
+        if (direction != GI_DIRECTION_IN) {
+            /* INOUT and OUT arguments are handled differently. */
+            continue;
+        }
+
+        if (type_tag == GI_TYPE_TAG_INTERFACE) {
+            GIBaseInfo* interface_info;
+            GIInfoType interface_type;
+
+            interface_info = g_type_info_get_interface(&type_info);
+            interface_type = g_base_info_get_type(interface_info);
+            if (interface_type == GI_INFO_TYPE_CALLBACK) {
+                gwkjs_throw(context, "Callback accepts another callback as a parameter. This is not supported");
+                g_base_info_unref(interface_info);
+                return NULL;
+            }
+            g_base_info_unref(interface_info);
+        } else if (type_tag == GI_TYPE_TAG_ARRAY) {
+            if (g_type_info_get_array_type(&type_info) == GI_ARRAY_TYPE_C) {
+                int array_length_pos = g_type_info_get_array_length(&type_info);
+
+                if (array_length_pos >= 0 && array_length_pos < n_args) {
+                    GIArgInfo length_arg_info;
+
+                    g_callable_info_load_arg(trampoline->info, array_length_pos, &length_arg_info);
+                    if (g_arg_info_get_direction(&length_arg_info) != direction) {
+                        gwkjs_throw(context, "Callback has an array with different-direction length arg, not supported");
+                        return NULL;
+                    }
+
+                    trampoline->param_types[array_length_pos] = PARAM_SKIPPED;
+                    trampoline->param_types[i] = PARAM_ARRAY;
+                }
+            }
+        }
+    }
+
+    trampoline->closure = g_callable_info_prepare_closure(callable_info, &trampoline->cif,
+                                                          gwkjs_callback_closure, trampoline);
+
+    trampoline->scope = scope;
+    trampoline->is_vfunc = is_vfunc;
+
+    return trampoline;
+}
 
 /* an helper function to retrieve array lengths from a GArgument
    (letting the compiler generate good instructions in case of

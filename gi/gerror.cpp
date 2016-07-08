@@ -1,61 +1,61 @@
-///* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-///*
-// * Copyright (c) 2008  litl, LLC
-// *
-// * Permission is hereby granted, free of charge, to any person obtaining a copy
-// * of this software and associated documentation files (the "Software"), to
-// * deal in the Software without restriction, including without limitation the
-// * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-// * sell copies of the Software, and to permit persons to whom the Software is
-// * furnished to do so, subject to the following conditions:
-// *
-// * The above copyright notice and this permission notice shall be included in
-// * all copies or substantial portions of the Software.
-// *
-// * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-// * IN THE SOFTWARE.
-// */
-//
-//#include <config.h>
-//
-//#include <string.h>
-//
-//#include <gwkjs/gwkjs-module.h>
-//#include <gwkjs/compat.h>
-//#include "boxed.h"
-//#include "enumeration.h"
-//#include "repo.h"
-//#include "gerror.h"
-//
-//#include <util/log.h>
-//
-//#include <girepository.h>
-//
-//typedef struct {
-//    GIEnumInfo *info;
-//    GQuark domain;
-//    GError *gerror; /* NULL if we are the prototype and not an instance */
-//} Error;
-//
-//enum {
-//    PROP_0,
-//    PROP_DOMAIN,
-//    PROP_CODE,
-//    PROP_MESSAGE
-//};
-//
-//extern JSClassDefinition gwkjs_error_class;
-//static JSClassRef gwkjs_errorclass_ref = NULL;
-//
-//static void define_error_properties(JSContextRef , JSObjectRef );
-//
-//GWKJS_DEFINE_PRIV_FROM_JS(Error, gwkjs_error_class)
-//
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+/*
+ * Copyright (c) 2008  litl, LLC
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+#include <config.h>
+
+#include <string.h>
+
+#include <gwkjs/gwkjs-module.h>
+#include <gwkjs/compat.h>
+#include "boxed.h"
+#include "enumeration.h"
+#include "repo.h"
+#include "gerror.h"
+
+#include <util/log.h>
+
+#include <girepository.h>
+
+typedef struct {
+    GIEnumInfo *info;
+    GQuark domain;
+    GError *gerror; /* NULL if we are the prototype and not an instance */
+} Error;
+
+enum {
+    PROP_0,
+    PROP_DOMAIN,
+    PROP_CODE,
+    PROP_MESSAGE
+};
+
+extern JSClassDefinition gwkjs_error_class;
+static JSClassRef gwkjs_error_class_ref = NULL;
+
+static void define_error_properties(JSContextRef , JSObjectRef );
+
+GWKJS_DEFINE_PRIV_FROM_JS(Error, gwkjs_error_class)
+
 //GWKJS_NATIVE_CONSTRUCTOR_DECLARE(error)
 //{
 //    GWKJS_NATIVE_CONSTRUCTOR_VARIABLES(error)
@@ -524,37 +524,37 @@
 //    return obj;
 //}
 //
-//GError*
-//gwkjs_gerror_from_error(JSContextRef    context,
-//                      JSObjectRef     obj)
-//{
-//    Error *priv;
-//
-//    if (obj == NULL)
-//        return NULL;
-//
-//    /* If this is a plain GBoxed (i.e. a GError without metadata),
-//       delegate marshalling.
-//    */
-//    if (gwkjs_typecheck_boxed (context, obj, NULL, G_TYPE_ERROR, JS_FALSE))
-//        return (GError*) gwkjs_c_struct_from_boxed (context, obj);
-//
-//    priv = priv_from_js(context, obj);
-//
-//    if (priv == NULL)
-//        return NULL;
-//
-//    if (priv->gerror == NULL) {
-//        gwkjs_throw(context,
-//                  "Object is %s.%s.prototype, not an object instance - cannot convert to a boxed instance",
-//                  g_base_info_get_namespace( (GIBaseInfo*) priv->info),
-//                  g_base_info_get_name( (GIBaseInfo*) priv->info));
-//        return NULL;
-//    }
-//
-//    return priv->gerror;
-//}
-//
+GError*
+gwkjs_gerror_from_error(JSContextRef    context,
+                      JSObjectRef     obj)
+{
+    Error *priv;
+
+    if (obj == NULL)
+        return NULL;
+
+    /* If this is a plain GBoxed (i.e. a GError without metadata),
+       delegate marshalling.
+    */
+    if (gwkjs_typecheck_boxed (context, obj, NULL, G_TYPE_ERROR, JS_FALSE))
+        return (GError*) gwkjs_c_struct_from_boxed (context, obj);
+
+    priv = priv_from_js(obj);
+
+    if (priv == NULL)
+        return NULL;
+
+    if (priv->gerror == NULL) {
+        gwkjs_throw(context,
+                  "Object is %s.%s.prototype, not an object instance - cannot convert to a boxed instance",
+                  g_base_info_get_namespace( (GIBaseInfo*) priv->info),
+                  g_base_info_get_name( (GIBaseInfo*) priv->info));
+        return NULL;
+    }
+
+    return priv->gerror;
+}
+
 //JSBool
 //gwkjs_typecheck_gerror (JSContextRef context,
 //                      JSObjectRef  obj,

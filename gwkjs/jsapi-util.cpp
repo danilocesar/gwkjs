@@ -476,6 +476,18 @@ gwkjs_define_string_array(JSContextRef context,
 
     return array;
 }
+
+GwkjsContext *
+gwkjs_get_private_context(JSContextRef ctx)
+{
+    JSObjectRef global = gwkjs_get_import_global(ctx);
+
+    GwkjsContext *priv = (GwkjsContext*) JSObjectGetPrivate(global);
+    if (priv != NULL)
+        return priv;
+
+    return NULL;
+}
 //
 ///**
 // * gwkjs_string_readable:

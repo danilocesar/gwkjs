@@ -40,7 +40,7 @@ typedef struct {
 } Ns;
 
 extern JSClassDefinition gwkjs_ns_class;
-static JSClassRef gwkjs_importer_class_ref = NULL;
+static JSClassRef gwkjs_ns_class_ref = NULL;
 
 
 GWKJS_DEFINE_PRIV_FROM_JS(Ns, gwkjs_ns_class)
@@ -197,8 +197,8 @@ ns_new(JSContextRef context,
     JSValueRef exception = NULL;
 
     // XXX: NOT THREAD SAFE?
-    if (!gwkjs_importer_class_ref) {
-        gwkjs_importer_class_ref = JSClassCreate(&gwkjs_ns_class);
+    if (!gwkjs_ns_class_ref) {
+        gwkjs_ns_class_ref = JSClassCreate(&gwkjs_ns_class);
     }
 
     global = gwkjs_get_import_global(context);
@@ -206,7 +206,7 @@ ns_new(JSContextRef context,
                                             global,
                                             gwkjs_ns_class.className))) {
         proto = JSObjectMake(context,
-                             gwkjs_importer_class_ref,
+                             gwkjs_ns_class_ref,
                              NULL);
 
         gwkjs_object_set_property(context, global,
@@ -233,7 +233,7 @@ ns_new(JSContextRef context,
     }
     g_assert(proto != NULL);
 
-    ret = JSObjectMake(context, gwkjs_importer_class_ref, NULL);
+    ret = JSObjectMake(context, gwkjs_ns_class_ref, NULL);
 
     if (ret == NULL)
         return ret;

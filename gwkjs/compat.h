@@ -103,9 +103,11 @@ gwkjs_##name##_constructor(JSContextRef context,        \
  * GWKJS_NATIVE_CONSTRUCTOR_PRELUDE:
  * Call after the initial variable declaration.
  */
-#define GWKJS_NATIVE_CONSTRUCTOR_PRELUDE(name)                            \
-    {                                                                   \
-        object = gwkjs_new_object_for_constructor(context, &gwkjs_##name##_class); \
+#define GWKJS_NATIVE_CONSTRUCTOR_PRELUDE(name)                         \
+    {                                                                  \
+        if (!gwkjs_##name##_class_ref)                                 \
+            gwkjs_##name##_class_ref = JSClassCreate(&gwkjs_##name##_class);   \
+        object = gwkjs_new_object_for_constructor(context, gwkjs_##name##_class_ref); \
         if (object == NULL) {                                            \
             g_warning("Couldn't create object");                    \
             return object;                           \
@@ -118,7 +120,7 @@ gwkjs_##name##_constructor(JSContextRef context,        \
  * successfully.
  */
 #define GWKJS_NATIVE_CONSTRUCTOR_FINISH(name)             \
-    argv.rval().set(OBJECT_TO_JSVAL(object));
+    return object;
 
 /**
  * GWKJS_NATIVE_CONSTRUCTOR_DEFINE_ABSTRACT:

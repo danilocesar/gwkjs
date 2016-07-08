@@ -85,24 +85,24 @@ G_BEGIN_DECLS
     {                                                                   \
         return (type *) JSObjectGetPrivate(object);                     \
     }                                                                   \
-// TODO: IMPLEMENT                                                      \
-//    __attribute__((unused)) static inline JSBool                        \
-//    do_base_typecheck(JSContextRef context,                             \
-//                      JSObjectRef  object,                              \
-//                      JSBool       throw_error)                         \
-//    {                                                                   \
-//        return gwkjs_typecheck_instance(context, object, &klass, throw_error);  \
-//    }                                                                   \
-//    __attribute__((unused)) static JSBool                               \
-//    priv_from_js_with_typecheck(JSContextRef context,                   \
-//                                JSObjectRef  object,                    \
-//                                type         **out)                     \
-//    {                                                                   \
-//        if (!do_base_typecheck(context, object, JS_FALSE))              \
-//            return JS_FALSE;                                            \
-//        *out = priv_from_js(object);                                    \
-//        return JS_TRUE;                                                 \
-//    }
+    __attribute__((unused)) static inline JSBool                        \
+    do_base_typecheck(JSContextRef context,                             \
+                      JSObjectRef  object,                              \
+                      JSBool       throw_error)                         \
+    {                                                                   \
+        return gwkjs_typecheck_instance(context, object,                \
+                                        klass##_ref, klass, throw_error);        \
+    }                                                                   \
+    __attribute__((unused)) static JSBool                               \
+    priv_from_js_with_typecheck(JSContextRef context,                   \
+                                JSObjectRef  object,                    \
+                                type         **out)                     \
+    {                                                                   \
+        if (!do_base_typecheck(context, object, JS_FALSE))              \
+            return JS_FALSE;                                            \
+        *out = priv_from_js(object);                                    \
+        return JS_TRUE;                                                 \
+    }
 
 /**
  * GWKJS_DEFINE_PROTO:
@@ -275,9 +275,9 @@ gboolean    gwkjs_object_require_property      (JSContextRef     context,
                                                 const char       *property_name,
                                                 JSValueRef       *value_p);
 
-//JSObjectRef gwkjs_new_object_for_constructor   (JSContextRef    context,
-//                                                JSClassRef      clasp);
-//
+JSObjectRef gwkjs_new_object_for_constructor   (JSContextRef    context,
+                                                JSClassRef      clasp);
+
 ///*
 // * XXX: FIX
 //JSBool      gwkjs_init_class_dynamic           (JSContextRef  context,
@@ -301,11 +301,12 @@ void gwkjs_throw_abstract_constructor_error    (JSContextRef       context,
                                                 JSObjectRef     obj,
                                                 JSValueRef      *exception);
 
-//JSBool gwkjs_typecheck_instance                 (JSContextRef  context,
-//                                               JSObjectRef   obj,
-//                                               JSClassDefinition    *static_clasp,
-//                                               JSBool      _throw);
-//
+JSBool gwkjs_typecheck_instance                 (JSContextRef  context,
+                                                 JSObjectRef   obj,
+                                                 JSClassRef    classref,
+                                                 JSClassDefinition    static_clasp,
+                                                 JSBool      _throw);
+
 //JSObjectRef   gwkjs_construct_object_dynamic     (JSContextRef       context,
 //                                                  JSObjectRef        proto,
 //                                                  unsigned         argc,
@@ -385,9 +386,9 @@ JSBool      gwkjs_log_exception_full           (JSContextRef       context,
 //                                              jsval            id,
 //                                              jsval           *value_p);
 //
-//JSBool      gwkjs_string_to_utf8               (JSContextRef       context,
-//                                              const            jsval string_val,
-//                                              char           **utf8_string_p);
+gboolean      gwkjs_string_to_utf8               (JSContextRef       context,
+                                                const            jsval string_val,
+                                                char           **utf8_string_p);
 JSBool      gwkjs_string_from_utf8             (JSContextRef    context,
                                                 const char      *utf8_string,
                                                 gssize           n_bytes,
@@ -399,11 +400,11 @@ JSBool      gwkjs_string_from_utf8             (JSContextRef    context,
 //                                              const char      *filename_string,
 //                                              gssize           n_bytes,
 //                                              jsval           *value_p);
-//JSBool      gwkjs_string_get_uint16_data       (JSContextRef       context,
-//                                              jsval            value,
-//                                              guint16        **data_p,
-//                                              gsize           *len_p);
-//
+JSBool      gwkjs_string_get_uint16_data       (JSContextRef       context,
+                                              jsval            value,
+                                              guint16        **data_p,
+                                              gsize           *len_p);
+
 //JSBool      gwkjs_get_string_id                (JSContextRef       context,
 //                                              jsid             id,
 //                                              char           **name_p);
@@ -512,15 +513,15 @@ typedef enum {
 
 const gchar*              gwkjs_context_get_const_string  (JSContextRef       context,
                                                            GwkjsConstString   string);
-//gboolean          gwkjs_object_get_property_const (JSContextRef       context,
-//                                                 JSObjectRef        obj,
-//                                                 GwkjsConstString   property_name,
-//                                                 jsval           *value_p);
-//
-//const char * gwkjs_strip_unix_shebang(const char *script,
-//                                    gssize     *script_len,
-//                                    int        *new_start_line_number);
-//
+gboolean          gwkjs_object_get_property_const (JSContextRef       context,
+                                                   JSObjectRef        obj,
+                                                   GwkjsConstString   property_name,
+                                                   jsval           *value_p);
+
+const char * gwkjs_strip_unix_shebang(const char *script,
+                                    gssize     *script_len,
+                                    int        *new_start_line_number);
+
 G_END_DECLS
 
 #endif  /* __GWKJS_JSAPI_UTIL_H__ */

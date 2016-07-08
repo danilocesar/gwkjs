@@ -46,7 +46,8 @@ GType           gwkjs_context_get_type             (void) G_GNUC_CONST;
 
 GwkjsContext*     gwkjs_context_new                  (void);
 GwkjsContext*     gwkjs_context_new_with_search_path (char         **search_path);
-gboolean        gwkjs_context_eval_file            (GwkjsContext  *js_context,
+
+gboolean        gwkjs_context_eval_file          (GwkjsContext  *js_context,
                                                   const char    *filename,
                                                   int           *exit_status_p,
                                                   GError       **error);

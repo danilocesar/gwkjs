@@ -1,115 +1,115 @@
-///* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-///*
-// * Copyright (c) 2008  litl, LLC
-// *
-// * Permission is hereby granted, free of charge, to any person obtaining a copy
-// * of this software and associated documentation files (the "Software"), to
-// * deal in the Software without restriction, including without limitation the
-// * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-// * sell copies of the Software, and to permit persons to whom the Software is
-// * furnished to do so, subject to the following conditions:
-// *
-// * The above copyright notice and this permission notice shall be included in
-// * all copies or substantial portions of the Software.
-// *
-// * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-// * IN THE SOFTWARE.
-// */
-//
-//#include <config.h>
-//
-//#include <util/log.h>
-//
-//#include "foreign.h"
-//#include "value.h"
-//#include "closure.h"
-//#include "arg.h"
-//#include "param.h"
-//#include "object.h"
-//#include "fundamental.h"
-//#include "boxed.h"
-//#include "union.h"
-//#include "gtype.h"
-//#include "gerror.h"
-//#include <gwkjs/gwkjs-module.h>
-//#include <gwkjs/compat.h>
-//
-//#include <girepository.h>
-//
-//static JSBool gwkjs_value_from_g_value_internal(JSContextRef    context,
-//                                              jsval        *value_p,
-//                                              const GValue *gvalue,
-//                                              gboolean      no_copy,
-//                                              GSignalQuery *signal_query,
-//                                              gint          arg_n);
-//
-///*
-// * Gets signal introspection info about closure, or NULL if not found. Currently
-// * only works for signals on introspected GObjects, not signals on GWKJS-defined
-// * GObjects nor standalone closures. The return value must be unreffed.
-// */
-//static GISignalInfo *
-//get_signal_info_if_available(GSignalQuery *signal_query)
-//{
-//    GIBaseInfo *obj;
-//    GIInfoType info_type;
-//    GISignalInfo *signal_info = NULL;
-//
-//    if (!signal_query->itype)
-//        return NULL;
-//
-//    obj = g_irepository_find_by_gtype(NULL, signal_query->itype);
-//    if (!obj)
-//        return NULL;
-//
-//    info_type = g_base_info_get_type (obj);
-//    if (info_type == GI_INFO_TYPE_OBJECT)
-//      signal_info = g_object_info_find_signal((GIObjectInfo*)obj,
-//                                              signal_query->signal_name);
-//    else if (info_type == GI_INFO_TYPE_INTERFACE)
-//      signal_info = g_interface_info_find_signal((GIInterfaceInfo*)obj,
-//                                                 signal_query->signal_name);
-//    g_base_info_unref((GIBaseInfo*)obj);
-//
-//    return signal_info;
-//}
-//
-///*
-// * Fill in value_p with a JS array, converted from a C array stored as a pointer
-// * in array_value, with its length stored in array_length_value.
-// */
-//static JSBool
-//gwkjs_value_from_array_and_length_values(JSContextRef    context,
-//                                       jsval        *value_p,
-//                                       GITypeInfo   *array_type_info,
-//                                       const GValue *array_value,
-//                                       const GValue *array_length_value,
-//                                       gboolean      no_copy,
-//                                       GSignalQuery *signal_query,
-//                                       int           array_length_arg_n)
-//{
-//    jsval array_length;
-//    GArgument array_arg;
-//
-//    g_assert(G_VALUE_HOLDS_POINTER(array_value));
-//    g_assert(G_VALUE_HOLDS_INT(array_length_value));
-//
-//    if (!gwkjs_value_from_g_value_internal(context, &array_length,
-//                                         array_length_value, no_copy,
-//                                         signal_query, array_length_arg_n))
-//        return JS_FALSE;
-//
-//    array_arg.v_pointer = g_value_get_pointer(array_value);
-//
-//    return gwkjs_value_from_explicit_array(context, value_p, array_type_info,
-//                                         &array_arg, JSVAL_TO_INT(array_length));
-//}
-//
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+/*
+ * Copyright (c) 2008  litl, LLC
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+#include <config.h>
+
+#include <util/log.h>
+
+#include "foreign.h"
+#include "value.h"
+#include "closure.h"
+#include "arg.h"
+#include "param.h"
+#include "object.h"
+#include "fundamental.h"
+#include "boxed.h"
+#include "union.h"
+#include "gtype.h"
+#include "gerror.h"
+#include <gwkjs/gwkjs-module.h>
+#include <gwkjs/compat.h>
+
+#include <girepository.h>
+
+static JSBool gwkjs_value_from_g_value_internal(JSContextRef    context,
+                                              jsval        *value_p,
+                                              const GValue *gvalue,
+                                              gboolean      no_copy,
+                                              GSignalQuery *signal_query,
+                                              gint          arg_n);
+
+/*
+ * Gets signal introspection info about closure, or NULL if not found. Currently
+ * only works for signals on introspected GObjects, not signals on GWKJS-defined
+ * GObjects nor standalone closures. The return value must be unreffed.
+ */
+static GISignalInfo *
+get_signal_info_if_available(GSignalQuery *signal_query)
+{
+    GIBaseInfo *obj;
+    GIInfoType info_type;
+    GISignalInfo *signal_info = NULL;
+
+    if (!signal_query->itype)
+        return NULL;
+
+    obj = g_irepository_find_by_gtype(NULL, signal_query->itype);
+    if (!obj)
+        return NULL;
+
+    info_type = g_base_info_get_type (obj);
+    if (info_type == GI_INFO_TYPE_OBJECT)
+      signal_info = g_object_info_find_signal((GIObjectInfo*)obj,
+                                              signal_query->signal_name);
+    else if (info_type == GI_INFO_TYPE_INTERFACE)
+      signal_info = g_interface_info_find_signal((GIInterfaceInfo*)obj,
+                                                 signal_query->signal_name);
+    g_base_info_unref((GIBaseInfo*)obj);
+
+    return signal_info;
+}
+
+/*
+ * Fill in value_p with a JS array, converted from a C array stored as a pointer
+ * in array_value, with its length stored in array_length_value.
+ */
+static JSBool
+gwkjs_value_from_array_and_length_values(JSContextRef    context,
+                                       jsval        *value_p,
+                                       GITypeInfo   *array_type_info,
+                                       const GValue *array_value,
+                                       const GValue *array_length_value,
+                                       gboolean      no_copy,
+                                       GSignalQuery *signal_query,
+                                       int           array_length_arg_n)
+{
+    jsval array_length;
+    GArgument array_arg;
+
+    g_assert(G_VALUE_HOLDS_POINTER(array_value));
+    g_assert(G_VALUE_HOLDS_INT(array_length_value));
+
+    if (!gwkjs_value_from_g_value_internal(context, &array_length,
+                                         array_length_value, no_copy,
+                                         signal_query, array_length_arg_n))
+        return JS_FALSE;
+
+    array_arg.v_pointer = g_value_get_pointer(array_value);
+
+    return gwkjs_value_from_explicit_array(context, value_p, array_type_info,
+                                         &array_arg, gwkjs_jsvalue_to_int(context, array_length, NULL));
+}
+
 //static void
 //closure_marshal(GClosure        *closure,
 //                GValue          *return_value,
