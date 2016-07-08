@@ -35,18 +35,20 @@
 #include <string.h>
 #include <math.h>
 
-///*
-// * JS 1.8.5 has JS_NewObjectForConstructor, but it attempts
-// * to retrieve the JSClass from private fields in the constructor function,
-// * which fails for our "dynamic classes".
-// * This is the version included in SpiderMonkey 1.9 and later, to be
-// * used until we rebase on a newer libmozjs.
-// */
-//JSObjectRef 
-//gwkjs_new_object_for_constructor(JSContextRef context,
-//                               JSClass   *clasp,
-//                               jsval     *vp)
-//{
+/*
+ * JS 1.8.5 has JS_NewObjectForConstructor, but it attempts
+ * to retrieve the JSClass from private fields in the constructor function,
+ * which fails for our "dynamic classes".
+ * This is the version included in SpiderMonkey 1.9 and later, to be
+ * used until we rebase on a newer libmozjs.
+ */
+JSObjectRef
+gwkjs_new_object_for_constructor(JSContextRef context,
+                               JSClassRef  clasp)
+{
+gwkjs_throw(context, "gwkjs_new_object_for_constructor  not implemented");
+return NULL;
+//TODO: implement
 //    jsval     callee;
 //    JSObjectRef parent;
 //    jsval     prototype;
@@ -59,8 +61,8 @@
 //
 //    return JS_NewObjectWithGivenProto(context, clasp,
 //                                      JSVAL_TO_OBJECT(prototype), parent);
-//}
-//
+}
+
 //JSBool
 //gwkjs_init_class_dynamic(JSContextRef       context,
 //                       JSObjectRef        in_object,

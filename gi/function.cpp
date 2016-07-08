@@ -932,7 +932,7 @@ gwkjs_invoke_c_function(JSContextRef      context,
                 }
                 /* Also handle the INOUT for the length here */
                 if (direction == GI_DIRECTION_INOUT) {
-                    if (in_value->v_pointer == NULL) { 
+                    if (in_value->v_pointer == NULL) {
                         /* Special case where we were given JS null to
                          * also pass null for length, and not a
                          * pointer to an integer that derefs to 0.
@@ -1808,25 +1808,25 @@ gwkjs_define_function(JSContextRef      context,
 }
 
 
-//JSBool
-//gwkjs_invoke_c_function_uncached (JSContextRef      context,
-//                                GIFunctionInfo *info,
-//                                JSObjectRef       obj,
-//                                unsigned        argc,
-//                                jsval          *argv,
-//                                jsval          *rval)
-//{
-//  Function function;
-//  JSBool result;
-//
-//  memset (&function, 0, sizeof (Function));
-//  if (!init_cached_function_data (context, &function, 0, info))
-//    return JS_FALSE;
-//
-//  result = gwkjs_invoke_c_function (context, &function, obj, argc, argv, rval, NULL);
-//  uninit_cached_function_data (&function);
-//  return result;
-//}
+JSBool
+gwkjs_invoke_c_function_uncached (JSContextRef      context,
+                                GIFunctionInfo *info,
+                                JSObjectRef       obj,
+                                unsigned        argc,
+                                jsval          *argv,
+                                jsval          *rval)
+{
+  Function function;
+  JSBool result;
+
+  memset (&function, 0, sizeof (Function));
+  if (!init_cached_function_data (context, &function, 0, info))
+    return JS_FALSE;
+
+  result = gwkjs_invoke_c_function (context, &function, obj, argc, argv, rval, NULL);
+  uninit_cached_function_data (&function);
+  return result;
+}
 
 JSBool
 gwkjs_invoke_constructor_from_c (JSContextRef      context,

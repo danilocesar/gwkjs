@@ -154,11 +154,14 @@ gwkjs_gtype_create_gtype_wrapper (JSContextRef context,
     return object;
 }
 
-//static GType
-//_gwkjs_gtype_get_actual_gtype (JSContextRef context,
-//                             JSObjectRef  object,
-//                             int        recurse)
-//{
+static GType
+_gwkjs_gtype_get_actual_gtype (JSContextRef context,
+                             JSObjectRef  object,
+                             int        recurse)
+{
+    gwkjs_throw(context, " _gwkjs_gtype_get_actual_gtype not implemented");
+    return G_TYPE_INVALID;
+//TODO: implement
 //    GType gtype = G_TYPE_INVALID;
 //    jsval gtype_val = JSVAL_VOID;
 //
@@ -185,23 +188,23 @@ gwkjs_gtype_create_gtype_wrapper (JSContextRef context,
 // out:
 //    JS_EndRequest(context);
 //    return gtype;
-//}
-//
-//GType
-//gwkjs_gtype_get_actual_gtype (JSContextRef context,
-//                            JSObjectRef  object)
-//{
-//    /* 2 means: recurse at most three times (including this
-//       call).
-//       The levels are calculated considering that, in the
-//       worst case we need to go from instance to class, from
-//       class to GType object and from GType object to
-//       GType value.
-//     */
-//
-//    return _gwkjs_gtype_get_actual_gtype(context, object, 2);
-//}
-//
+}
+
+GType
+gwkjs_gtype_get_actual_gtype (JSContextRef context,
+                            JSObjectRef  object)
+{
+    /* 2 means: recurse at most three times (including this
+       call).
+       The levels are calculated considering that, in the
+       worst case we need to go from instance to class, from
+       class to GType object and from GType object to
+       GType value.
+     */
+
+    return _gwkjs_gtype_get_actual_gtype(context, object, 2);
+}
+
 //JSBool
 //gwkjs_typecheck_gtype (JSContextRef             context,
 //                     JSObjectRef              obj,

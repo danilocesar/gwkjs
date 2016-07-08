@@ -604,20 +604,26 @@ gwkjs_define_info(JSContextRef context,
 }
 //
 ///* Get the "unknown namespace", which should be used for unnamespaced types */
-//JSObject*
-//gwkjs_lookup_private_namespace(JSContextRef context)
-//{
+JSObjectRef
+gwkjs_lookup_private_namespace(JSContextRef context)
+{
+    gwkjs_throw(context, " gwkjs_lookup_private_namespace  not implemented");
+    return NULL;
+//TODO: implement
 //    jsid ns_name;
 //
 //    ns_name = gwkjs_context_get_const_string(context, GWKJS_STRING_PRIVATE_NS_MARKER);
 //    return gwkjs_lookup_namespace_object_by_name(context, ns_name);
-//}
-//
-///* Get the namespace object that the GIBaseInfo should be inside */
-//JSObject*
-//gwkjs_lookup_namespace_object(JSContextRef  context,
-//                            GIBaseInfo *info)
-//{
+}
+
+/* Get the namespace object that the GIBaseInfo should be inside */
+JSObjectRef
+gwkjs_lookup_namespace_object(JSContextRef  context,
+                            GIBaseInfo *info)
+{
+    gwkjs_throw(context, " gwkjs_lookup_namespace_object not implemented");
+    return NULL;
+    //TODO: implement
 //    const char *ns;
 //    jsid ns_name;
 //
@@ -632,8 +638,8 @@ gwkjs_define_info(JSContextRef context,
 //
 //    ns_name = gwkjs_intern_string_to_id(context, ns);
 //    return gwkjs_lookup_namespace_object_by_name(context, ns_name);
-//}
-//
+}
+
 static JSObjectRef
 lookup_override_function(JSContextRef  context,
                          const gchar   *ns_name)

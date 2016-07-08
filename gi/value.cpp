@@ -322,11 +322,14 @@ gwkjs_value_from_array_and_length_values(JSContextRef    context,
 //    return closure;
 //}
 //
-//GClosure*
-//gwkjs_closure_new_marshaled (JSContextRef    context,
-//                           JSObjectRef     callable,
-//                           const char   *description)
-//{
+GClosure*
+gwkjs_closure_new_marshaled (JSContextRef    context,
+                           JSObjectRef     callable,
+                           const char   *description)
+{
+    gwkjs_throw(context, " gwkjs_closure_new_marshaled  not implemented");
+    return NULL;
+//TODO: implement
 //    GClosure *closure;
 //
 //    closure = gwkjs_closure_new(context, callable, description, TRUE);
@@ -334,8 +337,8 @@ gwkjs_value_from_array_and_length_values(JSContextRef    context,
 //    g_closure_set_marshal(closure, closure_marshal);
 //
 //    return closure;
-//}
-//
+}
+
 //static GType
 //gwkjs_value_guess_g_type(JSContextRef context,
 //                       jsval      value)
@@ -361,12 +364,15 @@ gwkjs_value_from_array_and_length_values(JSContextRef    context,
 //    return G_TYPE_INVALID;
 //}
 //
-//static JSBool
-//gwkjs_value_to_g_value_internal(JSContextRef    context,
-//                              jsval         value,
-//                              GValue       *gvalue,
-//                              gboolean      no_copy)
-//{
+static JSBool
+gwkjs_value_to_g_value_internal(JSContextRef    context,
+                              jsval         value,
+                              GValue       *gvalue,
+                              gboolean      no_copy)
+{
+gwkjs_throw(context, " gwkjs_value_to_g_value_internal not implemented");
+return FALSE;
+//TODO: implement
 //    GType gtype;
 //
 //    gtype = G_VALUE_TYPE(gvalue);
@@ -758,286 +764,286 @@ gwkjs_value_from_array_and_length_values(JSContextRef    context,
 //    }
 //
 //    return JS_TRUE;
-//}
-//
-//JSBool
-//gwkjs_value_to_g_value(JSContextRef    context,
-//                     jsval         value,
-//                     GValue       *gvalue)
-//{
-//    return gwkjs_value_to_g_value_internal(context, value, gvalue, FALSE);
-//}
-//
-//JSBool
-//gwkjs_value_to_g_value_no_copy(JSContextRef    context,
-//                             jsval         value,
-//                             GValue       *gvalue)
-//{
-//    return gwkjs_value_to_g_value_internal(context, value, gvalue, TRUE);
-//}
-//
-//static JSBool
-//convert_int_to_enum (JSContextRef context,
-//                     jsval     *value_p,
-//                     GType      gtype,
-//                     int        v)
-//{
-//    double v_double;
-//
-//    if (v > 0 && v < G_MAXINT) {
-//        /* Optimize the unambiguous case */
-//        v_double = v;
-//    } else {
-//        GIBaseInfo *info;
-//
-//        /* Need to distinguish between negative integers and unsigned integers */
-//
-//        info = g_irepository_find_by_gtype(g_irepository_get_default(), gtype);
-//        g_assert (info);
-//
-//        v_double = _gwkjs_enum_from_int ((GIEnumInfo *)info, v);
-//        g_base_info_unref(info);
-//    }
-//
-//    return JS_NewNumberValue(context, v_double, value_p);
-//}
-//
-//static JSBool
-//gwkjs_value_from_g_value_internal(JSContextRef    context,
-//                                jsval        *value_p,
-//                                const GValue *gvalue,
-//                                gboolean      no_copy,
-//                                GSignalQuery *signal_query,
-//                                gint          arg_n)
-//{
-//    GType gtype;
-//
-//    gtype = G_VALUE_TYPE(gvalue);
-//
-//    gwkjs_debug_marshal(GWKJS_DEBUG_GCLOSURE,
-//                      "Converting gtype %s to jsval",
-//                      g_type_name(gtype));
-//
-//    if (gtype == G_TYPE_STRING) {
-//        const char *v;
-//        v = g_value_get_string(gvalue);
-//        if (v == NULL) {
-//            gwkjs_debug_marshal(GWKJS_DEBUG_GCLOSURE,
-//                              "Converting NULL string to JSVAL_NULL");
-//            *value_p = JSVAL_NULL;
-//        } else {
-//            if (!gwkjs_string_from_utf8(context, v, -1, value_p))
-//                return JS_FALSE;
-//        }
-//    } else if (gtype == G_TYPE_CHAR) {
-//        char v;
-//        v = g_value_get_schar(gvalue);
-//        *value_p = INT_TO_JSVAL(v);
-//    } else if (gtype == G_TYPE_UCHAR) {
-//        unsigned char v;
-//        v = g_value_get_uchar(gvalue);
-//        *value_p = INT_TO_JSVAL(v);
-//    } else if (gtype == G_TYPE_INT) {
-//        int v;
-//        v = g_value_get_int(gvalue);
-//        return JS_NewNumberValue(context, v, value_p);
-//    } else if (gtype == G_TYPE_UINT) {
-//        guint v;
-//        v = g_value_get_uint(gvalue);
-//        return JS_NewNumberValue(context, v, value_p);
-//    } else if (gtype == G_TYPE_DOUBLE) {
-//        double d;
-//        d = g_value_get_double(gvalue);
-//        return JS_NewNumberValue(context, d, value_p);
-//    } else if (gtype == G_TYPE_FLOAT) {
-//        double d;
-//        d = g_value_get_float(gvalue);
-//        return JS_NewNumberValue(context, d, value_p);
-//    } else if (gtype == G_TYPE_BOOLEAN) {
-//        gboolean v;
-//        v = g_value_get_boolean(gvalue);
-//        *value_p = BOOLEAN_TO_JSVAL(!!v);
-//    } else if (g_type_is_a(gtype, G_TYPE_OBJECT) || g_type_is_a(gtype, G_TYPE_INTERFACE)) {
-//        GObject *gobj;
-//        JSObjectRef obj;
-//
-//        gobj = (GObject*) g_value_get_object(gvalue);
-//
-//        obj = gwkjs_object_from_g_object(context, gobj);
-//        *value_p = OBJECT_TO_JSVAL(obj);
-//    } else if (gtype == G_TYPE_STRV) {
-//        if (!gwkjs_array_from_strv (context,
-//                                  value_p,
-//                                  (const char**) g_value_get_boxed (gvalue))) {
-//            gwkjs_throw(context, "Failed to convert strv to array");
-//            return JS_FALSE;
-//        }
-//    } else if (g_type_is_a(gtype, G_TYPE_HASH_TABLE) ||
-//               g_type_is_a(gtype, G_TYPE_ARRAY) ||
-//               g_type_is_a(gtype, G_TYPE_BYTE_ARRAY) ||
-//               g_type_is_a(gtype, G_TYPE_PTR_ARRAY)) {
-//        gwkjs_throw(context,
-//                  "Unable to introspect element-type of container in GValue");
-//        return JS_FALSE;
-//    } else if (g_type_is_a(gtype, G_TYPE_BOXED) ||
-//               g_type_is_a(gtype, G_TYPE_VARIANT)) {
-//        GwkjsBoxedCreationFlags boxed_flags;
-//        GIBaseInfo *info;
-//        void *gboxed;
-//        JSObjectRef obj;
-//
-//        if (g_type_is_a(gtype, G_TYPE_BOXED))
-//            gboxed = g_value_get_boxed(gvalue);
-//        else
-//            gboxed = g_value_get_variant(gvalue);
-//        boxed_flags = GWKJS_BOXED_CREATION_NONE;
-//
-//        /* special case GError */
-//        if (g_type_is_a(gtype, G_TYPE_ERROR)) {
-//            obj = gwkjs_error_from_gerror(context, (GError*) gboxed, FALSE);
-//            *value_p = OBJECT_TO_JSVAL(obj);
-//
-//            return TRUE;
-//        }
-//
-//        /* The only way to differentiate unions and structs is from
-//         * their g-i info as both GBoxed */
-//        info = g_irepository_find_by_gtype(g_irepository_get_default(),
-//                                           gtype);
-//        if (info == NULL) {
-//            gwkjs_throw(context,
-//                      "No introspection information found for %s",
-//                      g_type_name(gtype));
-//            return JS_FALSE;
-//        }
-//
-//        if (g_base_info_get_type(info) == GI_INFO_TYPE_STRUCT &&
-//            g_struct_info_is_foreign((GIStructInfo*)info)) {
-//            JSBool ret;
-//            GIArgument arg;
-//            arg.v_pointer = gboxed;
-//            ret = gwkjs_struct_foreign_convert_from_g_argument(context, value_p, info, &arg);
-//            g_base_info_unref(info);
-//            return ret;
-//        }
-//
-//        switch (g_base_info_get_type(info)) {
-//        case GI_INFO_TYPE_BOXED:
-//        case GI_INFO_TYPE_STRUCT:
-//            if (no_copy)
-//                boxed_flags = (GwkjsBoxedCreationFlags) (boxed_flags | GWKJS_BOXED_CREATION_NO_COPY);
-//            obj = gwkjs_boxed_from_c_struct(context, (GIStructInfo *)info, gboxed, boxed_flags);
-//            break;
-//        case GI_INFO_TYPE_UNION:
-//            obj = gwkjs_union_from_c_union(context, (GIUnionInfo *)info, gboxed);
-//            break;
-//        default:
-//            gwkjs_throw(context,
-//                      "Unexpected introspection type %d for %s",
-//                      g_base_info_get_type(info),
-//                      g_type_name(gtype));
-//            g_base_info_unref(info);
-//            return JS_FALSE;
-//        }
-//
-//        *value_p = OBJECT_TO_JSVAL(obj);
-//        g_base_info_unref(info);
-//    } else if (g_type_is_a(gtype, G_TYPE_ENUM)) {
-//        return convert_int_to_enum(context, value_p, gtype, g_value_get_enum(gvalue));
-//    } else if (g_type_is_a(gtype, G_TYPE_PARAM)) {
-//        GParamSpec *gparam;
-//        JSObjectRef obj;
-//
-//        gparam = g_value_get_param(gvalue);
-//
-//        obj = gwkjs_param_from_g_param(context, gparam);
-//        *value_p = OBJECT_TO_JSVAL(obj);
-//    } else if (signal_query && g_type_is_a(gtype, G_TYPE_POINTER)) {
-//        JSBool res;
-//        GArgument arg;
-//        GIArgInfo *arg_info;
-//        GIBaseInfo *obj;
-//        GISignalInfo *signal_info;
-//        GITypeInfo type_info;
-//
-//        obj = g_irepository_find_by_gtype(NULL, signal_query->itype);
-//        if (!obj) {
-//            gwkjs_throw(context, "Signal argument with GType %s isn't introspectable",
-//                      g_type_name(signal_query->itype));
-//            return JS_FALSE;
-//        }
-//
-//        signal_info = g_object_info_find_signal((GIObjectInfo*)obj, signal_query->signal_name);
-//
-//        if (!signal_info) {
-//            gwkjs_throw(context, "Unknown signal.");
-//            g_base_info_unref((GIBaseInfo*)obj);
-//            return JS_FALSE;
-//        }
-//        arg_info = g_callable_info_get_arg(signal_info, arg_n - 1);
-//        g_arg_info_load_type(arg_info, &type_info);
-//
-//        g_assert(("Check gwkjs_value_from_array_and_length_values() before calling"
-//                  " gwkjs_value_from_g_value_internal()",
-//                  g_type_info_get_array_length(&type_info) == -1));
-//
-//        arg.v_pointer = g_value_get_pointer(gvalue);
-//
-//        res = gwkjs_value_from_g_argument(context, value_p, &type_info, &arg, TRUE);
-//
-//        g_base_info_unref((GIBaseInfo*)arg_info);
-//        g_base_info_unref((GIBaseInfo*)signal_info);
-//        g_base_info_unref((GIBaseInfo*)obj);
-//        return res;
-//    } else if (g_type_is_a(gtype, G_TYPE_POINTER)) {
-//        gpointer pointer;
-//
-//        pointer = g_value_get_pointer(gvalue);
-//
-//        if (pointer == NULL) {
-//            *value_p = JSVAL_NULL;
-//        } else {
-//            gwkjs_throw(context,
-//                      "Can't convert non-null pointer to JS value");
-//            return JS_FALSE;
-//        }
-//    } else if (g_value_type_transformable(gtype, G_TYPE_DOUBLE)) {
-//        GValue double_value = { 0, };
-//        double v;
-//        g_value_init(&double_value, G_TYPE_DOUBLE);
-//        g_value_transform(gvalue, &double_value);
-//        v = g_value_get_double(&double_value);
-//        return JS_NewNumberValue(context, v, value_p);
-//    } else if (g_value_type_transformable(gtype, G_TYPE_INT)) {
-//        GValue int_value = { 0, };
-//        int v;
-//        g_value_init(&int_value, G_TYPE_INT);
-//        g_value_transform(gvalue, &int_value);
-//        v = g_value_get_int(&int_value);
-//        return JS_NewNumberValue(context, v, value_p);
-//    } else if (G_TYPE_IS_INSTANTIATABLE(gtype)) {
-//        /* The gtype is none of the above, it should be a custom
-//           fundamental type. */
-//        JSObjectRef obj;
-//        obj = gwkjs_fundamental_from_g_value(context, (const GValue*)gvalue, gtype);
-//        if (obj == NULL)
-//            return JS_FALSE;
-//        else
-//            *value_p = OBJECT_TO_JSVAL(obj);
-//    } else {
-//        gwkjs_throw(context,
-//                  "Don't know how to convert GType %s to JavaScript object",
-//                  g_type_name(gtype));
-//        return JS_FALSE;
-//    }
-//
-//    return JS_TRUE;
-//}
-//
-//JSBool
-//gwkjs_value_from_g_value(JSContextRef    context,
-//                       jsval        *value_p,
-//                       const GValue *gvalue)
-//{
-//    return gwkjs_value_from_g_value_internal(context, value_p, gvalue, FALSE, NULL, 0);
-//}
+}
+
+JSBool
+gwkjs_value_to_g_value(JSContextRef    context,
+                     jsval         value,
+                     GValue       *gvalue)
+{
+    return gwkjs_value_to_g_value_internal(context, value, gvalue, FALSE);
+}
+
+JSBool
+gwkjs_value_to_g_value_no_copy(JSContextRef    context,
+                             jsval         value,
+                             GValue       *gvalue)
+{
+    return gwkjs_value_to_g_value_internal(context, value, gvalue, TRUE);
+}
+
+static JSBool
+convert_int_to_enum (JSContextRef context,
+                     jsval     *value_p,
+                     GType      gtype,
+                     int        v)
+{
+    double v_double;
+
+    if (v > 0 && v < G_MAXINT) {
+        /* Optimize the unambiguous case */
+        v_double = v;
+    } else {
+        GIBaseInfo *info;
+
+        /* Need to distinguish between negative integers and unsigned integers */
+
+        info = g_irepository_find_by_gtype(g_irepository_get_default(), gtype);
+        g_assert (info);
+
+        v_double = _gwkjs_enum_from_int ((GIEnumInfo *)info, v);
+        g_base_info_unref(info);
+    }
+
+    return JS_NewNumberValue(context, v_double, value_p);
+}
+
+static JSBool
+gwkjs_value_from_g_value_internal(JSContextRef    context,
+                                jsval        *value_p,
+                                const GValue *gvalue,
+                                gboolean      no_copy,
+                                GSignalQuery *signal_query,
+                                gint          arg_n)
+{
+    GType gtype;
+
+    gtype = G_VALUE_TYPE(gvalue);
+
+    gwkjs_debug_marshal(GWKJS_DEBUG_GCLOSURE,
+                      "Converting gtype %s to jsval",
+                      g_type_name(gtype));
+
+    if (gtype == G_TYPE_STRING) {
+        const char *v;
+        v = g_value_get_string(gvalue);
+        if (v == NULL) {
+            gwkjs_debug_marshal(GWKJS_DEBUG_GCLOSURE,
+                              "Converting NULL string to JSVAL_NULL");
+            *value_p = JSValueMakeUndefined(context);
+        } else {
+            if (!gwkjs_string_from_utf8(context, v, -1, value_p))
+                return JS_FALSE;
+        }
+    } else if (gtype == G_TYPE_CHAR) {
+        char v;
+        v = g_value_get_schar(gvalue);
+        *value_p = gwkjs_int_to_jsvalue(context, v);
+    } else if (gtype == G_TYPE_UCHAR) {
+        unsigned char v;
+        v = g_value_get_uchar(gvalue);
+        *value_p = gwkjs_int_to_jsvalue(context, v);
+    } else if (gtype == G_TYPE_INT) {
+        int v;
+        v = g_value_get_int(gvalue);
+        return JS_NewNumberValue(context, v, value_p);
+    } else if (gtype == G_TYPE_UINT) {
+        guint v;
+        v = g_value_get_uint(gvalue);
+        return JS_NewNumberValue(context, v, value_p);
+    } else if (gtype == G_TYPE_DOUBLE) {
+        double d;
+        d = g_value_get_double(gvalue);
+        return JS_NewNumberValue(context, d, value_p);
+    } else if (gtype == G_TYPE_FLOAT) {
+        double d;
+        d = g_value_get_float(gvalue);
+        return JS_NewNumberValue(context, d, value_p);
+    } else if (gtype == G_TYPE_BOOLEAN) {
+        gboolean v;
+        v = g_value_get_boolean(gvalue);
+        *value_p = JSValueMakeBoolean(context, !!v);
+    } else if (g_type_is_a(gtype, G_TYPE_OBJECT) || g_type_is_a(gtype, G_TYPE_INTERFACE)) {
+        GObject *gobj;
+        JSObjectRef obj;
+
+        gobj = (GObject*) g_value_get_object(gvalue);
+
+        obj = gwkjs_object_from_g_object(context, gobj);
+        *value_p = obj;
+    } else if (gtype == G_TYPE_STRV) {
+        if (!gwkjs_array_from_strv (context,
+                                  value_p,
+                                  (const char**) g_value_get_boxed (gvalue))) {
+            gwkjs_throw(context, "Failed to convert strv to array");
+            return JS_FALSE;
+        }
+    } else if (g_type_is_a(gtype, G_TYPE_HASH_TABLE) ||
+               g_type_is_a(gtype, G_TYPE_ARRAY) ||
+               g_type_is_a(gtype, G_TYPE_BYTE_ARRAY) ||
+               g_type_is_a(gtype, G_TYPE_PTR_ARRAY)) {
+        gwkjs_throw(context,
+                  "Unable to introspect element-type of container in GValue");
+        return JS_FALSE;
+    } else if (g_type_is_a(gtype, G_TYPE_BOXED) ||
+               g_type_is_a(gtype, G_TYPE_VARIANT)) {
+        GwkjsBoxedCreationFlags boxed_flags;
+        GIBaseInfo *info;
+        void *gboxed;
+        JSObjectRef obj;
+
+        if (g_type_is_a(gtype, G_TYPE_BOXED))
+            gboxed = g_value_get_boxed(gvalue);
+        else
+            gboxed = g_value_get_variant(gvalue);
+        boxed_flags = GWKJS_BOXED_CREATION_NONE;
+
+        /* special case GError */
+        if (g_type_is_a(gtype, G_TYPE_ERROR)) {
+            obj = gwkjs_error_from_gerror(context, (GError*) gboxed, FALSE);
+            *value_p = obj;
+
+            return TRUE;
+        }
+
+        /* The only way to differentiate unions and structs is from
+         * their g-i info as both GBoxed */
+        info = g_irepository_find_by_gtype(g_irepository_get_default(),
+                                           gtype);
+        if (info == NULL) {
+            gwkjs_throw(context,
+                      "No introspection information found for %s",
+                      g_type_name(gtype));
+            return JS_FALSE;
+        }
+
+        if (g_base_info_get_type(info) == GI_INFO_TYPE_STRUCT &&
+            g_struct_info_is_foreign((GIStructInfo*)info)) {
+            JSBool ret;
+            GIArgument arg;
+            arg.v_pointer = gboxed;
+            ret = gwkjs_struct_foreign_convert_from_g_argument(context, value_p, info, &arg);
+            g_base_info_unref(info);
+            return ret;
+        }
+
+        switch (g_base_info_get_type(info)) {
+        case GI_INFO_TYPE_BOXED:
+        case GI_INFO_TYPE_STRUCT:
+            if (no_copy)
+                boxed_flags = (GwkjsBoxedCreationFlags) (boxed_flags | GWKJS_BOXED_CREATION_NO_COPY);
+            obj = gwkjs_boxed_from_c_struct(context, (GIStructInfo *)info, gboxed, boxed_flags);
+            break;
+        case GI_INFO_TYPE_UNION:
+            obj = gwkjs_union_from_c_union(context, (GIUnionInfo *)info, gboxed);
+            break;
+        default:
+            gwkjs_throw(context,
+                      "Unexpected introspection type %d for %s",
+                      g_base_info_get_type(info),
+                      g_type_name(gtype));
+            g_base_info_unref(info);
+            return JS_FALSE;
+        }
+
+        *value_p = obj;
+        g_base_info_unref(info);
+    } else if (g_type_is_a(gtype, G_TYPE_ENUM)) {
+        return convert_int_to_enum(context, value_p, gtype, g_value_get_enum(gvalue));
+    } else if (g_type_is_a(gtype, G_TYPE_PARAM)) {
+        GParamSpec *gparam;
+        JSObjectRef obj;
+
+        gparam = g_value_get_param(gvalue);
+
+        obj = gwkjs_param_from_g_param(context, gparam);
+        *value_p = obj;
+    } else if (signal_query && g_type_is_a(gtype, G_TYPE_POINTER)) {
+        JSBool res;
+        GArgument arg;
+        GIArgInfo *arg_info;
+        GIBaseInfo *obj;
+        GISignalInfo *signal_info;
+        GITypeInfo type_info;
+
+        obj = g_irepository_find_by_gtype(NULL, signal_query->itype);
+        if (!obj) {
+            gwkjs_throw(context, "Signal argument with GType %s isn't introspectable",
+                      g_type_name(signal_query->itype));
+            return JS_FALSE;
+        }
+
+        signal_info = g_object_info_find_signal((GIObjectInfo*)obj, signal_query->signal_name);
+
+        if (!signal_info) {
+            gwkjs_throw(context, "Unknown signal.");
+            g_base_info_unref((GIBaseInfo*)obj);
+            return JS_FALSE;
+        }
+        arg_info = g_callable_info_get_arg(signal_info, arg_n - 1);
+        g_arg_info_load_type(arg_info, &type_info);
+
+        g_assert(("Check gwkjs_value_from_array_and_length_values() before calling"
+                  " gwkjs_value_from_g_value_internal()",
+                  g_type_info_get_array_length(&type_info) == -1));
+
+        arg.v_pointer = g_value_get_pointer(gvalue);
+
+        res = gwkjs_value_from_g_argument(context, value_p, &type_info, &arg, TRUE);
+
+        g_base_info_unref((GIBaseInfo*)arg_info);
+        g_base_info_unref((GIBaseInfo*)signal_info);
+        g_base_info_unref((GIBaseInfo*)obj);
+        return res;
+    } else if (g_type_is_a(gtype, G_TYPE_POINTER)) {
+        gpointer pointer;
+
+        pointer = g_value_get_pointer(gvalue);
+
+        if (pointer == NULL) {
+            *value_p = JSValueMakeUndefined(context);
+        } else {
+            gwkjs_throw(context,
+                      "Can't convert non-null pointer to JS value");
+            return JS_FALSE;
+        }
+    } else if (g_value_type_transformable(gtype, G_TYPE_DOUBLE)) {
+        GValue double_value = { 0, };
+        double v;
+        g_value_init(&double_value, G_TYPE_DOUBLE);
+        g_value_transform(gvalue, &double_value);
+        v = g_value_get_double(&double_value);
+        return JS_NewNumberValue(context, v, value_p);
+    } else if (g_value_type_transformable(gtype, G_TYPE_INT)) {
+        GValue int_value = { 0, };
+        int v;
+        g_value_init(&int_value, G_TYPE_INT);
+        g_value_transform(gvalue, &int_value);
+        v = g_value_get_int(&int_value);
+        return JS_NewNumberValue(context, v, value_p);
+    } else if (G_TYPE_IS_INSTANTIATABLE(gtype)) {
+        /* The gtype is none of the above, it should be a custom
+           fundamental type. */
+        JSObjectRef obj;
+        obj = gwkjs_fundamental_from_g_value(context, (const GValue*)gvalue, gtype);
+        if (obj == NULL)
+            return JS_FALSE;
+        else
+            *value_p = obj;
+    } else {
+        gwkjs_throw(context,
+                  "Don't know how to convert GType %s to JavaScript object",
+                  g_type_name(gtype));
+        return JS_FALSE;
+    }
+
+    return JS_TRUE;
+}
+
+JSBool
+gwkjs_value_from_g_value(JSContextRef    context,
+                       jsval        *value_p,
+                       const GValue *gvalue)
+{
+    return gwkjs_value_from_g_value_internal(context, value_p, gvalue, FALSE, NULL, 0);
+}

@@ -1,62 +1,62 @@
-///* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-///*
-// * Copyright (c) 2008  litl, LLC
-// *
-// * Permission is hereby granted, free of charge, to any person obtaining a copy
-// * of this software and associated documentation files (the "Software"), to
-// * deal in the Software without restriction, including without limitation the
-// * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-// * sell copies of the Software, and to permit persons to whom the Software is
-// * furnished to do so, subject to the following conditions:
-// *
-// * The above copyright notice and this permission notice shall be included in
-// * all copies or substantial portions of the Software.
-// *
-// * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-// * IN THE SOFTWARE.
-// */
-//
-//#include <config.h>
-//
-//#include <string.h>
-//
-//#include "boxed.h"
-//#include "arg.h"
-//#include "object.h"
-//#include <gwkjs/gwkjs-module.h>
-//#include <gwkjs/compat.h>
-//#include "repo.h"
-//#include "proxyutils.h"
-//#include "function.h"
-//#include "gtype.h"
-//
-//#include <util/log.h>
-//
-//#include <girepository.h>
-//
-//typedef struct {
-//    /* prototype info */
-//    GIBoxedInfo *info;
-//    GType gtype;
-//    gint zero_args_constructor; /* -1 if none */
-//    jsid zero_args_constructor_name;
-//    gint default_constructor; /* -1 if none */
-//    jsid default_constructor_name;
-//
-//    /* instance info */
-//    void *gboxed; /* NULL if we are the prototype and not an instance */
-//
-//    guint can_allocate_directly : 1;
-//    guint allocated_directly : 1;
-//    guint not_owning_gboxed : 1; /* if set, the JS wrapper does not own
-//                                    the reference to the C gboxed */
-//} Boxed;
-//
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+/*
+ * Copyright (c) 2008  litl, LLC
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+#include <config.h>
+
+#include <string.h>
+
+#include "boxed.h"
+#include "arg.h"
+#include "object.h"
+#include <gwkjs/gwkjs-module.h>
+#include <gwkjs/compat.h>
+#include "repo.h"
+#include "proxyutils.h"
+#include "function.h"
+#include "gtype.h"
+
+#include <util/log.h>
+
+#include <girepository.h>
+
+typedef struct {
+    /* prototype info */
+    GIBoxedInfo *info;
+    GType gtype;
+    gint zero_args_constructor; /* -1 if none */
+    jsid zero_args_constructor_name;
+    gint default_constructor; /* -1 if none */
+    jsid default_constructor_name;
+
+    /* instance info */
+    void *gboxed; /* NULL if we are the prototype and not an instance */
+
+    guint can_allocate_directly : 1;
+    guint allocated_directly : 1;
+    guint not_owning_gboxed : 1; /* if set, the JS wrapper does not own
+                                    the reference to the C gboxed */
+} Boxed;
+
 //static gboolean struct_is_simple(GIStructInfo *info);
 //
 //static JSBool boxed_set_field_from_value(JSContextRef   context,
@@ -64,11 +64,11 @@
 //                                         GIFieldInfo *field_info,
 //                                         jsval        value);
 //
-//extern JSClassDefinition gwkjs_boxed_class;
-//static JSClassRef gwkjs_boxedclass_ref = NULL;
-//
-//GWKJS_DEFINE_PRIV_FROM_JS(Boxed, gwkjs_boxed_class)
-//
+extern JSClassDefinition gwkjs_boxed_class;
+static JSClassRef gwkjs_boxed_class_ref = NULL;
+
+GWKJS_DEFINE_PRIV_FROM_JS(Boxed, gwkjs_boxed_class)
+
 //static JSBool
 //gwkjs_define_static_methods(JSContextRef    context,
 //                          JSObjectRef     constructor,
@@ -1193,12 +1193,14 @@
 //                      NULL, NULL, JSPROP_PERMANENT);
 //}
 //
-//JSObject*
-//gwkjs_boxed_from_c_struct(JSContextRef             context,
-//                        GIStructInfo          *info,
-//                        void                  *gboxed,
-//                        GwkjsBoxedCreationFlags  flags)
-//{
+JSObjectRef
+gwkjs_boxed_from_c_struct(JSContextRef             context,
+                        GIStructInfo          *info,
+                        void                  *gboxed,
+                        GwkjsBoxedCreationFlags  flags)
+{
+    gwkjs_throw(context, "gwkjs_boxed_from_c_struct not implemented");
+// TODO: implement
 //    JSObjectRef obj;
 //    JSObjectRef proto;
 //    Boxed *priv;
@@ -1249,31 +1251,34 @@
 //    }
 //
 //    return obj;
-//}
-//
-//void*
-//gwkjs_c_struct_from_boxed(JSContextRef    context,
-//                        JSObjectRef     obj)
-//{
-//    Boxed *priv;
-//
-//    if (obj == NULL)
-//        return NULL;
-//
-//    priv = priv_from_js(context, obj);
-//    if (priv == NULL)
-//        return NULL;
-//
-//    return priv->gboxed;
-//}
-//
-//JSBool
-//gwkjs_typecheck_boxed(JSContextRef     context,
-//                    JSObjectRef      object,
-//                    GIStructInfo  *expected_info,
-//                    GType          expected_type,
-//                    JSBool         throw_error)
-//{
+}
+
+void*
+gwkjs_c_struct_from_boxed(JSContextRef    context,
+                        JSObjectRef     obj)
+{
+    Boxed *priv;
+
+    if (obj == NULL)
+        return NULL;
+
+    priv = priv_from_js(obj);
+    if (priv == NULL)
+        return NULL;
+
+    return priv->gboxed;
+}
+
+JSBool
+gwkjs_typecheck_boxed(JSContextRef     context,
+                    JSObjectRef      object,
+                    GIStructInfo  *expected_info,
+                    GType          expected_type,
+                    JSBool         throw_error)
+{
+gwkjs_throw(context, " gwkjs_typecheck_boxed  not implemented");
+return FALSE;
+//TODO: implement
 //    Boxed *priv;
 //    JSBool result;
 //
@@ -1318,4 +1323,4 @@
 //    }
 //
 //    return result;
-//}
+}

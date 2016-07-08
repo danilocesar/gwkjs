@@ -40,7 +40,7 @@ JSBool    gwkjs_lookup_object_constructor (JSContextRef context,
                                            GType          gtype,
                                            JSValueRef         *value_p);
 
-JSObjectRef* gwkjs_object_from_g_object      (JSContextRef     context,
+JSObjectRef gwkjs_object_from_g_object      (JSContextRef     context,
                                               GObject       *gobj);
 
 GObject*  gwkjs_g_object_from_object      (JSContextRef    context,

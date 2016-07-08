@@ -353,90 +353,96 @@ gwkjs_array_to_g_list(JSContextRef   context,
     return JS_TRUE;
 }
 
-//static JSBool
-//gwkjs_object_to_g_hash(JSContextRef   context,
-//                     jsval        hash_value,
-//                     GITypeInfo  *key_param_info,
-//                     GITypeInfo  *val_param_info,
-//                     GITransfer   transfer,
-//                     GHashTable **hash_p)
-//{
-//    GHashTable *result = NULL;
-//    JSObjectRef props;
-//    JSObjectRef iter;
-//    jsid prop_id;
-//
-//    g_assert(JSVAL_IS_OBJECT(hash_value));
-//    props = JSVAL_TO_OBJECT(hash_value);
-//
-//    if (transfer == GI_TRANSFER_CONTAINER) {
-//        if (type_needs_release (key_param_info, g_type_info_get_tag(key_param_info)) ||
-//            type_needs_release (val_param_info, g_type_info_get_tag(val_param_info))) {
-//            /* FIXME: to make this work, we'd have to keep a list of temporary
-//             * GArguments for the function call so we could free them after
-//             * the surrounding container had been freed by the callee.
-//             */
-//            gwkjs_throw(context,
-//                      "Container transfer for in parameters not supported");
-//            return JS_FALSE;
-//        }
-//
-//        transfer = GI_TRANSFER_NOTHING;
-//    }
-//
-//    iter = JS_NewPropertyIterator(context, props);
-//    if (iter == NULL)
-//        return JS_FALSE;
-//
-//    prop_id = JSID_VOID;
-//    if (!JS_NextProperty(context, iter, &prop_id))
-//        return JS_FALSE;
-//
-//    /* Don't use key/value destructor functions here, because we can't
-//     * construct correct ones in general if the value type is complex.
-//     * Rely on the type-aware g_argument_release functions. */
-//   result = g_hash_table_new(g_str_hash, g_str_equal);
-//
-//   while (!JSID_IS_VOID(prop_id)) {
-//        jsval key_js, val_js;
-//        GArgument key_arg = { 0 }, val_arg = { 0 };
-//
-//        if (!JS_IdToValue(context, prop_id, &key_js))
-//            goto free_hash_and_fail;
-//
-//        /* Type check key type. */
-//        if (!gwkjs_value_to_g_argument(context, key_js, key_param_info, NULL,
-//                                     GWKJS_ARGUMENT_HASH_ELEMENT,
-//                                     transfer,
-//                                     FALSE /* don't allow null */,
-//                                     &key_arg))
-//            goto free_hash_and_fail;
-//
-//        if (!JS_GetPropertyById(context, props, prop_id, &val_js))
-//            goto free_hash_and_fail;
-//
-//        /* Type check and convert value to a c type */
-//        if (!gwkjs_value_to_g_argument(context, val_js, val_param_info, NULL,
-//                                     GWKJS_ARGUMENT_HASH_ELEMENT,
-//                                     transfer,
-//                                     TRUE /* allow null */,
-//                                     &val_arg))
-//            goto free_hash_and_fail;
-//
-//        g_hash_table_insert(result, key_arg.v_pointer, val_arg.v_pointer);
-//
-//        prop_id = JSID_VOID;
-//        if (!JS_NextProperty(context, iter, &prop_id))
-//            goto free_hash_and_fail;
-//    }
-//
-//    *hash_p = result;
-//    return JS_TRUE;
-//
-// free_hash_and_fail:
-//    g_hash_table_destroy(result);
-//    return JS_FALSE;
-//}
+static JSBool
+gwkjs_object_to_g_hash(JSContextRef   context,
+                     jsval        hash_value,
+                     GITypeInfo  *key_param_info,
+                     GITypeInfo  *val_param_info,
+                     GITransfer   transfer,
+                     GHashTable **hash_p)
+{
+    GHashTable *result = NULL;
+    JSObjectRef props = NULL;
+    JSPropertyNameArrayRef jsprops = NULL;
+    JSStringRef jsprop_name = NULL;
+    gchar *prop_name = NULL;
+
+    g_assert(JSValueIsObject(context, hash_value));
+    props = JSValueToObject(context, hash_value, NULL);
+
+    if (transfer == GI_TRANSFER_CONTAINER) {
+        if (type_needs_release (key_param_info, g_type_info_get_tag(key_param_info)) ||
+            type_needs_release (val_param_info, g_type_info_get_tag(val_param_info))) {
+            /* FIXME: to make this work, we'd have to keep a list of temporary
+             * GArguments for the function call so we could free them after
+             * the surrounding container had been freed by the callee.
+             */
+            gwkjs_throw(context,
+                      "Container transfer for in parameters not supported");
+            return JS_FALSE;
+        }
+
+        transfer = GI_TRANSFER_NOTHING;
+    }
+
+    jsprops = JSObjectCopyPropertyNames(context, (JSObjectRef) props);
+    int nparams = JSPropertyNameArrayGetCount(jsprops);
+
+    /* Don't use key/value destructor functions here, because we can't
+     * construct correct ones in general if the value type is complex.
+     * Rely on the type-aware g_argument_release functions. */
+   result = g_hash_table_new(g_str_hash, g_str_equal);
+
+   int i = 0;
+   while (i < nparams) {
+        jsval key_js, val_js;
+        GArgument key_arg = { 0 }, val_arg = { 0 };
+        JSValueRef exception = NULL;
+
+        jsprop_name = JSPropertyNameArrayGetNameAtIndex(jsprops, i);
+        prop_name = gwkjs_jsstring_to_cstring(jsprop_name);
+
+        if (!prop_name)
+            goto free_hash_and_fail;
+
+        key_js = JSValueMakeString(context, jsprop_name);
+
+        /* Type check key type. */
+        if (!gwkjs_value_to_g_argument(context, key_js, key_param_info, NULL,
+                                     GWKJS_ARGUMENT_HASH_ELEMENT,
+                                     transfer,
+                                     FALSE /* don't allow null */,
+                                     &key_arg))
+            goto free_hash_and_fail;
+
+        val_js = gwkjs_object_get_property(context, props, prop_name, &exception);
+        if (exception)
+            goto free_hash_and_fail;
+
+        /* Type check and convert value to a c type */
+        if (!gwkjs_value_to_g_argument(context, val_js, val_param_info, NULL,
+                                     GWKJS_ARGUMENT_HASH_ELEMENT,
+                                     transfer,
+                                     TRUE /* allow null */,
+                                     &val_arg))
+            goto free_hash_and_fail;
+
+        g_hash_table_insert(result, key_arg.v_pointer, val_arg.v_pointer);
+
+        JSStringRelease(jsprop_name);
+        g_free(prop_name);
+        i++;
+    }
+
+    *hash_p = result;
+    JSPropertyNameArrayRelease(jsprops);
+    return JS_TRUE;
+
+ free_hash_and_fail:
+    g_free(prop_name);
+    g_hash_table_destroy(result);
+    return JS_FALSE;
+}
 
 JSBool
 gwkjs_array_from_strv(JSContextRef   context,
@@ -1169,851 +1175,853 @@ gwkjs_array_to_explicit_array_internal(JSContextRef       context,
 
     return ret;
 }
-//
-//JSBool
-//gwkjs_value_to_g_argument(JSContextRef      context,
-//                        jsval           value,
-//                        GITypeInfo     *type_info,
-//                        const char     *arg_name,
-//                        GwkjsArgumentType arg_type,
-//                        GITransfer      transfer,
-//                        gboolean        may_be_null,
-//                        GArgument      *arg)
-//{
-//    GITypeTag type_tag;
-//    gboolean wrong;
-//    gboolean out_of_range;
-//    gboolean report_type_mismatch;
-//    gboolean nullable_type;
-//
-//    type_tag = g_type_info_get_tag( (GITypeInfo*) type_info);
-//
-//    gwkjs_debug_marshal(GWKJS_DEBUG_GFUNCTION,
-//                      "Converting jsval to GArgument %s",
-//                      g_type_tag_to_string(type_tag));
-//
-//    nullable_type = FALSE;
-//    wrong = FALSE; /* return JS_FALSE */
-//    out_of_range = FALSE;
-//    report_type_mismatch = FALSE; /* wrong=TRUE, and still need to gwkjs_throw a type problem */
-//
-//    switch (type_tag) {
-//    case GI_TYPE_TAG_VOID:
-//        nullable_type = TRUE;
-//        arg->v_pointer = NULL; /* just so it isn't uninitialized */
-//        break;
-//
-//    case GI_TYPE_TAG_INT8: {
-//        gint32 i;
-//        if (!JS_ValueToInt32(context, value, &i))
-//            wrong = TRUE;
-//        if (i > G_MAXINT8 || i < G_MININT8)
-//            out_of_range = TRUE;
-//        arg->v_int8 = (gint8)i;
-//        break;
-//    }
-//    case GI_TYPE_TAG_UINT8: {
-//        guint32 i;
-//        if (!JS_ValueToECMAUint32(context, value, &i))
-//            wrong = TRUE;
-//        if (i > G_MAXUINT8)
-//            out_of_range = TRUE;
-//        arg->v_uint8 = (guint8)i;
-//        break;
-//    }
-//    case GI_TYPE_TAG_INT16: {
-//        gint32 i;
-//        if (!JS_ValueToInt32(context, value, &i))
-//            wrong = TRUE;
-//        if (i > G_MAXINT16 || i < G_MININT16)
-//            out_of_range = TRUE;
-//        arg->v_int16 = (gint16)i;
-//        break;
-//    }
-//
-//    case GI_TYPE_TAG_UINT16: {
-//        guint32 i;
-//        if (!JS_ValueToECMAUint32(context, value, &i))
-//            wrong = TRUE;
-//        if (i > G_MAXUINT16)
-//            out_of_range = TRUE;
-//        arg->v_uint16 = (guint16)i;
-//        break;
-//    }
-//
-//    case GI_TYPE_TAG_INT32:
-//        if (!JS_ValueToInt32(context, value, &arg->v_int))
-//            wrong = TRUE;
-//        break;
-//
-//    case GI_TYPE_TAG_UINT32: {
-//        gdouble i;
-//        if (!JS_ValueToNumber(context, value, &i))
-//            wrong = TRUE;
-//        if (i > G_MAXUINT32 || i < 0)
-//            out_of_range = TRUE;
-//        arg->v_uint32 = (guint32)i;
-//        break;
-//    }
-//
-//    case GI_TYPE_TAG_INT64: {
-//        double v;
-//        if (!JS_ValueToNumber(context, value, &v))
-//            wrong = TRUE;
-//        if (v > G_MAXINT64 || v < G_MININT64)
-//            out_of_range = TRUE;
-//        arg->v_int64 = v;
-//    }
-//        break;
-//
-//    case GI_TYPE_TAG_UINT64: {
-//        double v;
-//        if (!JS_ValueToNumber(context, value, &v))
-//            wrong = TRUE;
-//        if (v < 0)
-//            out_of_range = TRUE;
-//        /* XXX we fail with values close to G_MAXUINT64 */
-//        arg->v_uint64 = v;
-//    }
-//        break;
-//
-//    case GI_TYPE_TAG_BOOLEAN:
-//        if (!JS_ValueToBoolean(context, value, &arg->v_boolean))
-//            wrong = TRUE;
-//        break;
-//
-//    case GI_TYPE_TAG_FLOAT: {
-//        double v;
-//        if (!JS_ValueToNumber(context, value, &v))
-//            wrong = TRUE;
-//        if (v > G_MAXFLOAT || v < - G_MAXFLOAT)
-//            out_of_range = TRUE;
-//        arg->v_float = (gfloat)v;
-//    }
-//        break;
-//
-//    case GI_TYPE_TAG_DOUBLE:
-//        if (!JS_ValueToNumber(context, value, &arg->v_double))
-//            wrong = TRUE;
-//        break;
-//
-//    case GI_TYPE_TAG_UNICHAR:
-//        if (JSVAL_IS_STRING(value)) {
-//            if (!gwkjs_unichar_from_string(context, value, &arg->v_uint32))
-//                wrong = TRUE;
-//        } else {
-//            wrong = TRUE;
-//            report_type_mismatch = TRUE;
-//        }
-//        break;
-//
-//    case GI_TYPE_TAG_GTYPE:
-//        if (JSVAL_IS_OBJECT(value)) {
-//            GType gtype;
-//            gtype = gwkjs_gtype_get_actual_gtype(context, JSVAL_TO_OBJECT(value));
-//            if (gtype == G_TYPE_INVALID)
-//                wrong = TRUE;
-//            arg->v_ssize = gtype;
-//        } else {
-//            wrong = TRUE;
-//            report_type_mismatch = TRUE;
-//        }
-//        break;
-//
-//    case GI_TYPE_TAG_FILENAME:
-//        nullable_type = TRUE;
-//        if (JSVAL_IS_NULL(value)) {
-//            arg->v_pointer = NULL;
-//        } else if (JSVAL_IS_STRING(value)) {
-//            char *filename_str;
-//            if (gwkjs_string_to_filename(context, value, &filename_str))
-//                // doing this as a separate step to avoid type-punning
-//                arg->v_pointer = filename_str;
-//            else
-//                wrong = TRUE;
-//        } else {
-//            wrong = TRUE;
-//            report_type_mismatch = TRUE;
-//        }
-//        break;
-//    case GI_TYPE_TAG_UTF8:
-//        nullable_type = TRUE;
-//        if (JSVAL_IS_NULL(value)) {
-//            arg->v_pointer = NULL;
-//        } else if (JSVAL_IS_STRING(value)) {
-//            char *utf8_str;
-//            if (gwkjs_string_to_utf8(context, value, &utf8_str))
-//                // doing this as a separate step to avoid type-punning
-//                arg->v_pointer = utf8_str;
-//            else
-//                wrong = TRUE;
-//        } else {
-//            wrong = TRUE;
-//            report_type_mismatch = TRUE;
-//        }
-//        break;
-//
-//    case GI_TYPE_TAG_ERROR:
-//        nullable_type = TRUE;
-//        if (JSVAL_IS_NULL(value)) {
-//            arg->v_pointer = NULL;
-//        } else if (JSVAL_IS_OBJECT(value)) {
-//            if (gwkjs_typecheck_gerror(context, JSVAL_TO_OBJECT(value),
-//                                      JS_TRUE)) {
-//                arg->v_pointer = gwkjs_gerror_from_error(context,
-//                                                       JSVAL_TO_OBJECT(value));
-//
-//                if (transfer != GI_TRANSFER_NOTHING)
-//                    arg->v_pointer = g_error_copy ((const GError *) arg->v_pointer);
-//            } else {
-//                wrong = TRUE;
-//            }
-//        } else {
-//            wrong = TRUE;
-//            report_type_mismatch = TRUE;
-//        }
-//        break;
-//
-//    case GI_TYPE_TAG_INTERFACE:
-//        {
-//            GIBaseInfo* interface_info;
-//            GIInfoType interface_type;
-//            GType gtype;
-//            gboolean expect_object;
-//
-//            interface_info = g_type_info_get_interface(type_info);
-//            g_assert(interface_info != NULL);
-//
-//            interface_type = g_base_info_get_type(interface_info);
-//
-//            if (interface_type == GI_INFO_TYPE_ENUM ||
-//                interface_type == GI_INFO_TYPE_FLAGS) {
-//                nullable_type = FALSE;
-//                expect_object = FALSE;
-//            } else {
-//                nullable_type = TRUE;
-//                expect_object = TRUE;
-//            }
-//
-//            switch(interface_type) {
-//            case GI_INFO_TYPE_STRUCT:
-//                if (g_struct_info_is_foreign((GIStructInfo*)interface_info)) {
-//                    JSBool ret;
-//                    ret = gwkjs_struct_foreign_convert_to_g_argument(
-//                            context, value, interface_info, arg_name,
-//                            arg_type, transfer, may_be_null, arg);
-//                    g_base_info_unref(interface_info);
-//                    return ret;
-//                }
-//                /* fall through */
-//            case GI_INFO_TYPE_ENUM:
-//            case GI_INFO_TYPE_FLAGS:
-//            case GI_INFO_TYPE_OBJECT:
-//            case GI_INFO_TYPE_INTERFACE:
-//            case GI_INFO_TYPE_UNION:
-//            case GI_INFO_TYPE_BOXED:
-//                /* These are subtypes of GIRegisteredTypeInfo for which the
-//                 * cast is safe */
-//                gtype = g_registered_type_info_get_g_type
-//                    ((GIRegisteredTypeInfo*)interface_info);
-//                break;
-//            case GI_INFO_TYPE_VALUE:
-//                /* Special case for GValues */
-//                gtype = G_TYPE_VALUE;
-//                break;
-//
-//            default:
-//                /* Everything else */
-//                gtype = G_TYPE_NONE;
-//                break;
-//            }
-//
-//            if (gtype != G_TYPE_NONE)
-//                gwkjs_debug_marshal(GWKJS_DEBUG_GFUNCTION,
-//                                  "gtype of INTERFACE is %s", g_type_name(gtype));
-//
-//            if (gtype == G_TYPE_VALUE) {
-//                GValue gvalue = { 0, };
-//
-//                if (gwkjs_value_to_g_value(context, value, &gvalue)) {
-//                    arg->v_pointer = g_boxed_copy (G_TYPE_VALUE, &gvalue);
-//                    g_value_unset (&gvalue);
-//                } else {
-//                    arg->v_pointer = NULL;
-//                    wrong = TRUE;
-//                }
-//            } else if (expect_object != JSVAL_IS_OBJECT(value)) {
-//                /* JSVAL_IS_OBJECT handles null too */
-//                wrong = TRUE;
-//                report_type_mismatch = TRUE;
-//                break;
-//            } else if (JSVAL_IS_NULL(value)) {
-//                arg->v_pointer = NULL;
-//            } else if (JSVAL_IS_OBJECT(value)) {
-//                if (interface_type == GI_INFO_TYPE_STRUCT &&
-//                    g_struct_info_is_gtype_struct((GIStructInfo*)interface_info)) {
-//                    GType gtype;
-//                    gpointer klass;
-//
-//                    gtype = gwkjs_gtype_get_actual_gtype(context, JSVAL_TO_OBJECT(value));
-//
-//                    if (gtype == G_TYPE_NONE) {
-//                        wrong = TRUE;
-//                        report_type_mismatch = TRUE;
-//                        break;
-//                    }
-//
-//                    /* We use peek here to simplify reference counting (we just ignore
-//                       transfer annotation, as GType classes are never really freed)
-//                       We know that the GType class is referenced at least once when
-//                       the JS constructor is initialized.
-//                    */
-//
-//                    if (g_type_is_a(gtype, G_TYPE_INTERFACE))
-//                        klass = g_type_default_interface_peek(gtype);
-//                    else
-//                        klass = g_type_class_peek(gtype);
-//
-//                    arg->v_pointer = klass;
-//                } else if ((interface_type == GI_INFO_TYPE_STRUCT || interface_type == GI_INFO_TYPE_BOXED) &&
-//                    /* Handle Struct/Union first since we don't necessarily need a GType for them */
-//                    /* We special case Closures later, so skip them here */
-//                    !g_type_is_a(gtype, G_TYPE_CLOSURE)) {
-//                    JSObjectRef obj = JSVAL_TO_OBJECT(value);
-//
-//                    if (g_type_is_a(gtype, G_TYPE_BYTES)
-//                        && gwkjs_typecheck_bytearray(context, obj, FALSE)) {
-//                        arg->v_pointer = gwkjs_byte_array_get_bytes(context, obj);
-//                    } else if (g_type_is_a(gtype, G_TYPE_ERROR)) {
-//                        if (!gwkjs_typecheck_gerror(context, JSVAL_TO_OBJECT(value), JS_TRUE)) {
-//                            arg->v_pointer = NULL;
-//                            wrong = TRUE;
-//                        } else {
-//                            arg->v_pointer = gwkjs_gerror_from_error(context,
-//                                                                   JSVAL_TO_OBJECT(value));
-//                        }
-//                    } else {
-//                        if (!gwkjs_typecheck_boxed(context, JSVAL_TO_OBJECT(value),
-//                                                 interface_info, gtype,
-//                                                 JS_TRUE)) {
-//                            arg->v_pointer = NULL;
-//                            wrong = TRUE;
-//                        } else {
-//                            arg->v_pointer = gwkjs_c_struct_from_boxed(context,
-//                                                                     JSVAL_TO_OBJECT(value));
-//                        }
-//                    }
-//
-//                    if (!wrong && transfer != GI_TRANSFER_NOTHING) {
-//                        if (g_type_is_a(gtype, G_TYPE_BOXED))
-//                            arg->v_pointer = g_boxed_copy (gtype, arg->v_pointer);
-//                        else if (g_type_is_a(gtype, G_TYPE_VARIANT))
-//                            g_variant_ref ((GVariant *) arg->v_pointer);
-//                        else {
-//                            gwkjs_throw(context,
-//                                      "Can't transfer ownership of a structure type not registered as boxed");
-//                            arg->v_pointer = NULL;
-//                            wrong = TRUE;
-//                        }
-//                    }
-//
-//                } else if (interface_type == GI_INFO_TYPE_UNION) {
-//                    if (gwkjs_typecheck_union(context, JSVAL_TO_OBJECT(value),
-//                                            interface_info, gtype, JS_TRUE)) {
-//                        arg->v_pointer = gwkjs_c_union_from_union(context,
-//                                                                JSVAL_TO_OBJECT(value));
-//
-//                        if (transfer != GI_TRANSFER_NOTHING) {
-//                            if (g_type_is_a(gtype, G_TYPE_BOXED))
-//                                arg->v_pointer = g_boxed_copy (gtype, arg->v_pointer);
-//                            else {
-//                                gwkjs_throw(context,
-//                                          "Can't transfer ownership of a union type not registered as boxed");
-//
-//                                arg->v_pointer = NULL;
-//                                wrong = TRUE;
-//                            }
-//                        }
-//                    } else {
-//                        arg->v_pointer = NULL;
-//                        wrong = TRUE;
-//                    }
-//
-//                } else if (gtype != G_TYPE_NONE) {
-//                    if (g_type_is_a(gtype, G_TYPE_OBJECT)) {
-//                        if (gwkjs_typecheck_object(context, JSVAL_TO_OBJECT(value), gtype, JS_TRUE)) {
-//                            arg->v_pointer = gwkjs_g_object_from_object(context,
-//                                                                      JSVAL_TO_OBJECT(value));
-//
-//                            if (transfer != GI_TRANSFER_NOTHING)
-//                                g_object_ref(G_OBJECT(arg->v_pointer));
-//                        } else {
-//                            arg->v_pointer = NULL;
-//                            wrong = TRUE;
-//                        }
-//                    } else if (g_type_is_a(gtype, G_TYPE_PARAM)) {
-//                        if (gwkjs_typecheck_param(context, JSVAL_TO_OBJECT(value), gtype, JS_TRUE)) {
-//                            arg->v_pointer = gwkjs_g_param_from_param(context, JSVAL_TO_OBJECT(value));
-//                            if (transfer != GI_TRANSFER_NOTHING)
-//                                g_param_spec_ref(G_PARAM_SPEC(arg->v_pointer));
-//                        } else {
-//                            arg->v_pointer = NULL;
-//                            wrong = TRUE;
-//                        }
-//                    } else if (g_type_is_a(gtype, G_TYPE_BOXED)) {
-//                        if (g_type_is_a(gtype, G_TYPE_CLOSURE)) {
-//                            arg->v_pointer = gwkjs_closure_new_marshaled(context,
-//                                                                       JSVAL_TO_OBJECT(value),
-//                                                                       "boxed");
-//                            g_closure_ref((GClosure *) arg->v_pointer);
-//                            g_closure_sink((GClosure *) arg->v_pointer);
-//                        } else {
-//                            /* Should have been caught above as STRUCT/BOXED/UNION */
-//                            gwkjs_throw(context,
-//                                      "Boxed type %s registered for unexpected interface_type %d",
-//                                      g_type_name(gtype),
-//                                      interface_type);
-//                        }
-//                    } else if (G_TYPE_IS_INSTANTIATABLE(gtype)) {
-//                        if (gwkjs_typecheck_fundamental(context, JSVAL_TO_OBJECT(value), gtype, JS_TRUE)) {
-//                            arg->v_pointer = gwkjs_g_fundamental_from_object(context,
-//                                                                           JSVAL_TO_OBJECT(value));
-//
-//                            if (transfer != GI_TRANSFER_NOTHING)
-//                                gwkjs_fundamental_ref(context, arg->v_pointer);
-//                        } else {
-//                            arg->v_pointer = NULL;
-//                            wrong = TRUE;
-//                        }
-//                    } else if (G_TYPE_IS_INTERFACE(gtype)) {
-//                        /* Could be a GObject interface that's missing a prerequisite, or could
-//                           be a fundamental */
-//                        if (gwkjs_typecheck_object(context, JSVAL_TO_OBJECT(value), gtype, JS_FALSE)) {
-//                            arg->v_pointer = gwkjs_g_object_from_object(context, JSVAL_TO_OBJECT(value));
-//
-//                            if (transfer != GI_TRANSFER_NOTHING)
-//                                g_object_ref(arg->v_pointer);
-//                        } else if (gwkjs_typecheck_fundamental(context, JSVAL_TO_OBJECT(value), gtype, JS_FALSE)) {
-//                            arg->v_pointer = gwkjs_g_fundamental_from_object(context, JSVAL_TO_OBJECT(value));
-//
-//                            if (transfer != GI_TRANSFER_NOTHING)
-//                                gwkjs_fundamental_ref(context, arg->v_pointer);
-//                        } else {
-//                            /* Call again with throw=TRUE to set the exception */
-//                            gwkjs_typecheck_object(context, JSVAL_TO_OBJECT(value), gtype, JS_TRUE);
-//                            arg->v_pointer = NULL;
-//                            wrong = TRUE;
-//                        }
-//                    } else {
-//                        gwkjs_throw(context, "Unhandled GType %s unpacking GArgument from Object",
-//                                  g_type_name(gtype));
-//                        arg->v_pointer = NULL;
-//                        wrong = TRUE;
-//                    }
-//                } else {
-//                    gwkjs_throw(context, "Unexpected unregistered type unpacking GArgument from Object");
-//                }
-//
-//                if (arg->v_pointer == NULL) {
-//                    gwkjs_debug(GWKJS_DEBUG_GFUNCTION,
-//                              "conversion of JSObject %p type %s to type %s failed",
-//                              JSVAL_TO_OBJECT(value),
-//                              JS_GetTypeName(context,
-//                                             JS_TypeOfValue(context, value)),
-//                              g_base_info_get_name ((GIBaseInfo *)interface_info));
-//
-//                    /* gwkjs_throw should have been called already */
-//                    wrong = TRUE;
-//                }
-//
-//            } else if (JSVAL_IS_NUMBER(value)) {
-//                if (interface_type == GI_INFO_TYPE_ENUM) {
-//                    gint64 value_int64;
-//
-//                    if (!gwkjs_value_to_int64 (context, value, &value_int64))
-//                        wrong = TRUE;
-//                    else if (!_gwkjs_enum_value_is_valid(context, (GIEnumInfo *)interface_info, value_int64))
-//                        wrong = TRUE;
-//                    else
-//                        arg->v_int = _gwkjs_enum_to_int ((GIEnumInfo *)interface_info, value_int64);
-//
-//                } else if (interface_type == GI_INFO_TYPE_FLAGS) {
-//                    gint64 value_int64;
-//
-//                    if (!gwkjs_value_to_int64 (context, value, &value_int64))
-//                        wrong = TRUE;
-//                    else if (!_gwkjs_flags_value_is_valid(context, gtype, value_int64))
-//                        wrong = TRUE;
-//                    else
-//                        arg->v_int = _gwkjs_enum_to_int ((GIEnumInfo *)interface_info, value_int64);
-//
-//                } else if (gtype == G_TYPE_NONE) {
-//                    gwkjs_throw(context, "Unexpected unregistered type unpacking GArgument from Number");
-//                    wrong = TRUE;
-//                } else {
-//                    gwkjs_throw(context, "Unhandled GType %s unpacking GArgument from Number",
-//                              g_type_name(gtype));
-//                    wrong = TRUE;
-//                }
-//
-//            } else {
-//                gwkjs_debug(GWKJS_DEBUG_GFUNCTION,
-//                          "JSObject type '%s' is neither null nor an object",
-//                          JS_GetTypeName(context,
-//                                         JS_TypeOfValue(context, value)));
-//                wrong = TRUE;
-//                report_type_mismatch = TRUE;
-//            }
-//            g_base_info_unref( (GIBaseInfo*) interface_info);
-//        }
-//        break;
-//
-//    case GI_TYPE_TAG_GLIST:
-//    case GI_TYPE_TAG_GSLIST: {
-//        jsid length_name;
-//        JSBool found_length;
-//
-//        length_name = gwkjs_context_get_const_string(context, GWKJS_STRING_LENGTH);
-//
-//        /* nullable_type=FALSE; while a list can be NULL in C, that
-//         * means empty array in JavaScript, it doesn't mean null in
-//         * JavaScript.
-//         */
-//        if (!JSVAL_IS_NULL(value) &&
-//            JSVAL_IS_OBJECT(value) &&
-//            JS_HasPropertyById(context, JSVAL_TO_OBJECT(value), length_name, &found_length) &&
-//            found_length) {
-//            jsval length_value;
-//            guint32 length;
-//
-//            if (!gwkjs_object_require_property(context,
-//                                             JSVAL_TO_OBJECT(value), NULL,
-//                                             length_name,
-//                                             &length_value) ||
-//                !JS_ValueToECMAUint32(context, length_value, &length)) {
-//                wrong = TRUE;
-//            } else {
-//                GList *list;
-//                GSList *slist;
-//                GITypeInfo *param_info;
-//
-//                param_info = g_type_info_get_param_type(type_info, 0);
-//                g_assert(param_info != NULL);
-//
-//                list = NULL;
-//                slist = NULL;
-//
-//                if (!gwkjs_array_to_g_list(context,
-//                                         value,
-//                                         length,
-//                                         param_info,
-//                                         transfer,
-//                                         type_tag,
-//                                         &list, &slist)) {
-//                    wrong = TRUE;
-//                }
-//
-//                if (type_tag == GI_TYPE_TAG_GLIST) {
-//                    arg->v_pointer = list;
-//                } else {
-//                    arg->v_pointer = slist;
-//                }
-//
-//                g_base_info_unref((GIBaseInfo*) param_info);
-//            }
-//        } else {
-//            wrong = TRUE;
-//            report_type_mismatch = TRUE;
-//        }
-//        break;
-//    }
-//
-//    case GI_TYPE_TAG_GHASH:
-//        if (JSVAL_IS_NULL(value)) {
-//            arg->v_pointer = NULL;
-//            if (!may_be_null) {
-//                wrong = TRUE;
-//                report_type_mismatch = TRUE;
-//            }
-//        } else if (!JSVAL_IS_OBJECT(value)) {
-//            wrong = TRUE;
-//            report_type_mismatch = TRUE;
-//        } else {
-//            GITypeInfo *key_param_info, *val_param_info;
-//            GHashTable *ghash;
-//
-//            key_param_info = g_type_info_get_param_type(type_info, 0);
-//            g_assert(key_param_info != NULL);
-//            val_param_info = g_type_info_get_param_type(type_info, 1);
-//            g_assert(val_param_info != NULL);
-//
-//            if (!gwkjs_object_to_g_hash(context,
-//                                      value,
-//                                      key_param_info,
-//                                      val_param_info,
-//                                      transfer,
-//                                      &ghash)) {
-//                wrong = TRUE;
-//            } else {
-//                arg->v_pointer = ghash;
-//            }
-//
-//            g_base_info_unref((GIBaseInfo*) key_param_info);
-//            g_base_info_unref((GIBaseInfo*) val_param_info);
-//        }
-//        break;
-//
-//    case GI_TYPE_TAG_ARRAY: {
-//        gpointer data;
-//        gsize length;
-//        GIArrayType array_type = g_type_info_get_array_type(type_info);
-//        GITypeTag element_type;
-//        GITypeInfo *param_info;
-//
-//        param_info = g_type_info_get_param_type(type_info, 0);
-//        element_type = g_type_info_get_tag(param_info);
-//        g_base_info_unref(param_info);
-//
-//        /* First, let's handle the case where we're passed an instance
-//         * of our own byteArray class.
-//         */
-//        if (JSVAL_IS_OBJECT(value) &&
-//            gwkjs_typecheck_bytearray(context,
-//                                    JSVAL_TO_OBJECT(value),
-//                                    FALSE))
-//            {
-//                JSObjectRef bytearray_obj = JSVAL_TO_OBJECT(value);
-//                if (array_type == GI_ARRAY_TYPE_BYTE_ARRAY) {
-//                    arg->v_pointer = gwkjs_byte_array_get_byte_array(context, bytearray_obj);
-//                    break;
-//                } else {
-//                    /* Fall through, !handled */
-//                }
-//            }
-//
-//        if (!gwkjs_array_to_explicit_array_internal(context,
-//                                                  value,
-//                                                  type_info,
-//                                                  arg_name,
-//                                                  arg_type,
-//                                                  transfer,
-//                                                  may_be_null,
-//                                                  &data,
-//                                                  &length)) {
-//            wrong = TRUE;
-//            break;
-//        }
-//
-//        if (array_type == GI_ARRAY_TYPE_C) {
-//            arg->v_pointer = data;
-//        } else if (array_type == GI_ARRAY_TYPE_ARRAY) {
-//            GITypeInfo *param_info = g_type_info_get_param_type(type_info, 0);
-//            GArray *array = gwkjs_g_array_new_for_type(context, length, param_info);
-//
-//            if (!array)
-//                wrong = TRUE;
-//            else {
-//                g_array_append_vals(array, data, length);
-//                arg->v_pointer = array;
-//            }
-//
-//            g_free(data);
-//            g_base_info_unref((GIBaseInfo*) param_info);
-//        } else if (array_type == GI_ARRAY_TYPE_BYTE_ARRAY) {
-//            GByteArray *byte_array = g_byte_array_sized_new(length);
-//
-//            g_byte_array_append(byte_array, (const guint8 *) data, length);
-//            arg->v_pointer = byte_array;
-//
-//            g_free(data);
-//        } else if (array_type == GI_ARRAY_TYPE_PTR_ARRAY) {
-//            GPtrArray *array = g_ptr_array_sized_new(length);
-//
-//            g_ptr_array_set_size(array, length);
-//            memcpy(array->pdata, data, sizeof(gpointer) * length);
-//            arg->v_pointer = array;
-//
-//            g_free(data);
-//        }
-//        break;
-//    }
-//    default:
-//        g_warning("Unhandled type %s for JavaScript to GArgument conversion",
-//                  g_type_tag_to_string(type_tag));
-//        wrong = TRUE;
-//        report_type_mismatch = TRUE;
-//        break;
-//    }
-//
-//    if (G_UNLIKELY(wrong)) {
-//        if (report_type_mismatch) {
-//            throw_invalid_argument(context, value, type_info, arg_name, arg_type);
-//        }
-//        return JS_FALSE;
-//    } else if (G_UNLIKELY(out_of_range)) {
-//        gchar *display_name = get_argument_display_name (arg_name, arg_type);
-//        gwkjs_throw(context, "value is out of range for %s (type %s)",
-//                  display_name,
-//                  g_type_tag_to_string(type_tag));
-//        g_free (display_name);
-//        return JS_FALSE;
-//    } else if (nullable_type &&
-//               arg->v_pointer == NULL &&
-//               !may_be_null) {
-//        gchar *display_name = get_argument_display_name (arg_name, arg_type);
-//        gwkjs_throw(context,
-//                  "%s (type %s) may not be null",
-//                  display_name,
-//                  g_type_tag_to_string(type_tag));
-//        g_free (display_name);
-//        return JS_FALSE;
-//    } else {
-//        return JS_TRUE;
-//    }
-//}
-//
-///* If a callback function with a return value throws, we still have
-// * to return something to C. This function defines what that something
-// * is. It basically boils down to memset(arg, 0, sizeof(*arg)), but
-// * gives as a bit more future flexibility and also will work if
-// * libffi passes us a buffer that only has room for the appropriate
-// * branch of GArgument. (Currently it appears that the return buffer
-// * has a fixed size large enough for the union of all types.)
-// */
-//void
-//gwkjs_g_argument_init_default(JSContextRef      context,
-//                            GITypeInfo     *type_info,
-//                            GArgument      *arg)
-//{
-//    GITypeTag type_tag;
-//
-//    type_tag = g_type_info_get_tag( (GITypeInfo*) type_info);
-//
-//    switch (type_tag) {
-//    case GI_TYPE_TAG_VOID:
-//        arg->v_pointer = NULL; /* just so it isn't uninitialized */
-//        break;
-//
-//    case GI_TYPE_TAG_INT8:
-//        arg->v_int8 = 0;
-//        break;
-//
-//    case GI_TYPE_TAG_UINT8:
-//        arg->v_uint8 = 0;
-//        break;
-//
-//    case GI_TYPE_TAG_INT16:
-//        arg->v_int16 = 0;
-//        break;
-//
-//    case GI_TYPE_TAG_UINT16:
-//        arg->v_uint16 = 0;
-//        break;
-//
-//    case GI_TYPE_TAG_INT32:
-//        arg->v_int = 0;
-//        break;
-//
-//    case GI_TYPE_TAG_UINT32:
-//    case GI_TYPE_TAG_UNICHAR:
-//        arg->v_uint32 = 0;
-//        break;
-//
-//    case GI_TYPE_TAG_INT64:
-//        arg->v_int64 = 0;
-//        break;
-//
-//    case GI_TYPE_TAG_UINT64:
-//        arg->v_uint64 = 0;
-//
-//    case GI_TYPE_TAG_BOOLEAN:
-//        arg->v_boolean = FALSE;
-//        break;
-//
-//    case GI_TYPE_TAG_FLOAT:
-//        arg->v_float = 0.0f;
-//        break;
-//
-//    case GI_TYPE_TAG_DOUBLE:
-//        arg->v_double = 0.0;
-//        break;
-//
-//    case GI_TYPE_TAG_GTYPE:
-//        arg->v_ssize = 0;
-//        break;
-//
-//    case GI_TYPE_TAG_FILENAME:
-//    case GI_TYPE_TAG_UTF8:
-//    case GI_TYPE_TAG_GLIST:
-//    case GI_TYPE_TAG_GSLIST:
-//    case GI_TYPE_TAG_ERROR:
-//        arg->v_pointer = NULL;
-//        break;
-//
-//    case GI_TYPE_TAG_INTERFACE:
-//        {
-//            GIBaseInfo* interface_info;
-//            GIInfoType interface_type;
-//
-//            interface_info = g_type_info_get_interface(type_info);
-//            g_assert(interface_info != NULL);
-//
-//            interface_type = g_base_info_get_type(interface_info);
-//
-//            switch(interface_type) {
-//            case GI_INFO_TYPE_ENUM:
-//            case GI_INFO_TYPE_FLAGS:
-//                arg->v_int = 0;
-//                break;
-//            case GI_INFO_TYPE_VALUE:
-//                /* Better to use a non-NULL value holding NULL? */
-//                arg->v_pointer = NULL;
-//                break;
-//            default:
-//                arg->v_pointer = NULL;
-//                break;
-//            }
-//
-//            g_base_info_unref( (GIBaseInfo*) interface_info);
-//        }
-//        break;
-//
-//    case GI_TYPE_TAG_GHASH:
-//        /* Possibly better to return an empty hash table? */
-//        arg->v_pointer = NULL;
-//        break;
-//
-//    case GI_TYPE_TAG_ARRAY:
-//        arg->v_pointer = NULL;
-//        break;
-//
-//    default:
-//        g_warning("Unhandled type %s for default GArgument initialization",
-//                  g_type_tag_to_string(type_tag));
-//        break;
-//    }
-//}
-//
-//JSBool
-//gwkjs_value_to_arg(JSContextRef  context,
-//                 jsval       value,
-//                 GIArgInfo  *arg_info,
-//                 GArgument  *arg)
-//{
-//    GITypeInfo type_info;
-//
-//    g_arg_info_load_type(arg_info, &type_info);
-//
-//    return gwkjs_value_to_g_argument(context, value,
-//                                   &type_info,
-//                                   g_base_info_get_name( (GIBaseInfo*) arg_info),
-//                                   (g_arg_info_is_return_value(arg_info) ?
-//                                    GWKJS_ARGUMENT_RETURN_VALUE : GWKJS_ARGUMENT_ARGUMENT),
-//                                   g_arg_info_get_ownership_transfer(arg_info),
-//                                   g_arg_info_may_be_null(arg_info),
-//                                   arg);
-//}
-//
+
+JSBool
+gwkjs_value_to_g_argument(JSContextRef      context,
+                        jsval           value,
+                        GITypeInfo     *type_info,
+                        const char     *arg_name,
+                        GwkjsArgumentType arg_type,
+                        GITransfer      transfer,
+                        gboolean        may_be_null,
+                        GArgument      *arg)
+{
+    GITypeTag type_tag;
+    gboolean wrong;
+    gboolean out_of_range;
+    gboolean report_type_mismatch;
+    gboolean nullable_type;
+    JSValueRef exception = NULL;
+
+    type_tag = g_type_info_get_tag( (GITypeInfo*) type_info);
+
+    gwkjs_debug_marshal(GWKJS_DEBUG_GFUNCTION,
+                      "Converting jsval to GArgument %s",
+                      g_type_tag_to_string(type_tag));
+
+    nullable_type = FALSE;
+    wrong = FALSE; /* return JS_FALSE */
+    out_of_range = FALSE;
+    report_type_mismatch = FALSE; /* wrong=TRUE, and still need to gwkjs_throw a type problem */
+
+    switch (type_tag) {
+    case GI_TYPE_TAG_VOID:
+        nullable_type = TRUE;
+        arg->v_pointer = NULL; /* just so it isn't uninitialized */
+        break;
+
+    case GI_TYPE_TAG_INT8: {
+        gint32 i = gwkjs_jsvalue_to_int(context, value, &exception);
+        if (exception)
+            wrong = TRUE;
+        if (i > G_MAXINT8 || i < G_MININT8)
+            out_of_range = TRUE;
+        arg->v_int8 = (gint8)i;
+        break;
+    }
+    case GI_TYPE_TAG_UINT8: {
+        guint32 i = gwkjs_jsvalue_to_uint(context, value, &exception);
+        if (exception)
+            wrong = TRUE;
+        if (i > G_MAXUINT8)
+            out_of_range = TRUE;
+        arg->v_uint8 = (guint8)i;
+        break;
+    }
+    case GI_TYPE_TAG_INT16: {
+        gint32 i = gwkjs_jsvalue_to_int(context, value, &exception);
+        if (exception)
+            wrong = TRUE;
+        if (i > G_MAXINT16 || i < G_MININT16)
+            out_of_range = TRUE;
+        arg->v_int16 = (gint16)i;
+        break;
+    }
+
+    case GI_TYPE_TAG_UINT16: {
+        guint32 i = gwkjs_jsvalue_to_uint(context, value, &exception);
+        if (exception)
+            wrong = TRUE;
+        if (i > G_MAXUINT16)
+            out_of_range = TRUE;
+        arg->v_uint16 = (guint16)i;
+        break;
+    }
+
+    case GI_TYPE_TAG_INT32:
+        arg->v_int = gwkjs_jsvalue_to_int(context, value, &exception);
+        if (exception)
+            wrong = TRUE;
+        break;
+
+    case GI_TYPE_TAG_UINT32: {
+        gdouble i = JSValueToNumber(context, value, &exception);
+        if (exception)
+            wrong = TRUE;
+        if (i > G_MAXUINT32 || i < 0)
+            out_of_range = TRUE;
+        arg->v_uint32 = (guint32)i;
+        break;
+    }
+
+    case GI_TYPE_TAG_INT64: {
+        double v = JSValueToNumber(context, value, &exception);;
+        if (exception)
+            wrong = TRUE;
+        if (v > G_MAXINT64 || v < G_MININT64)
+            out_of_range = TRUE;
+        arg->v_int64 = v;
+    }
+        break;
+
+    case GI_TYPE_TAG_UINT64: {
+        double v = JSValueToNumber(context, value, &exception);
+        if (exception)
+            wrong = TRUE;
+        if (v < 0)
+            out_of_range = TRUE;
+        /* XXX we fail with values close to G_MAXUINT64 */
+        arg->v_uint64 = v;
+    }
+        break;
+
+    case GI_TYPE_TAG_BOOLEAN:
+        arg->v_boolean = JSValueToBoolean(context, value);
+        break;
+
+    case GI_TYPE_TAG_FLOAT: {
+        double v = JSValueToNumber(context, value, &exception);
+        if (exception)
+            wrong = TRUE;
+        if (v > G_MAXFLOAT || v < - G_MAXFLOAT)
+            out_of_range = TRUE;
+        arg->v_float = (gfloat)v;
+    }
+        break;
+
+    case GI_TYPE_TAG_DOUBLE:
+        arg->v_double = JSValueToNumber(context, value, &exception);
+        if (exception)
+            wrong = TRUE;
+        break;
+
+    case GI_TYPE_TAG_UNICHAR:
+        if (JSValueIsString(context, value)) {
+            if (!gwkjs_unichar_from_string(context, value, &arg->v_uint32))
+                wrong = TRUE;
+        } else {
+            wrong = TRUE;
+            report_type_mismatch = TRUE;
+        }
+        break;
+
+    case GI_TYPE_TAG_GTYPE:
+        if (JSValueIsObject(context, value)) {
+            GType gtype;
+            gtype = gwkjs_gtype_get_actual_gtype(context, JSValueToObject(context, value, &exception));
+            if (gtype == G_TYPE_INVALID)
+                wrong = TRUE;
+            arg->v_ssize = gtype;
+        } else {
+            wrong = TRUE;
+            report_type_mismatch = TRUE;
+        }
+        break;
+
+    case GI_TYPE_TAG_FILENAME:
+        nullable_type = TRUE;
+        if (JSVAL_IS_NULL(context, value)) {
+            arg->v_pointer = NULL;
+        } else if (JSValueIsString(context, value)) {
+            char *filename_str;
+            if (gwkjs_string_to_filename(context, value, &filename_str))
+                // doing this as a separate step to avoid type-punning
+                arg->v_pointer = filename_str;
+            else
+                wrong = TRUE;
+        } else {
+            wrong = TRUE;
+            report_type_mismatch = TRUE;
+        }
+        break;
+    case GI_TYPE_TAG_UTF8:
+        nullable_type = TRUE;
+        if (JSVAL_IS_NULL(context, value)) {
+            arg->v_pointer = NULL;
+        } else if (JSValueIsString(context, value)) {
+            char *utf8_str;
+            if (gwkjs_string_to_utf8(context, value, &utf8_str))
+                // doing this as a separate step to avoid type-punning
+                arg->v_pointer = utf8_str;
+            else
+                wrong = TRUE;
+        } else {
+            wrong = TRUE;
+            report_type_mismatch = TRUE;
+        }
+        break;
+
+    case GI_TYPE_TAG_ERROR:
+        nullable_type = TRUE;
+        if (JSVAL_IS_NULL(context, value)) {
+            arg->v_pointer = NULL;
+        } else if (JSValueIsObject(context, value)) {
+            if (gwkjs_typecheck_gerror(context, JSValueToObject(context, value, NULL),
+                                      JS_TRUE)) {
+                arg->v_pointer = gwkjs_gerror_from_error(context,
+                                                       JSValueToObject(context, value, NULL));
+
+                if (transfer != GI_TRANSFER_NOTHING)
+                    arg->v_pointer = g_error_copy ((const GError *) arg->v_pointer);
+            } else {
+                wrong = TRUE;
+            }
+        } else {
+            wrong = TRUE;
+            report_type_mismatch = TRUE;
+        }
+        break;
+
+    case GI_TYPE_TAG_INTERFACE:
+        {
+            GIBaseInfo* interface_info;
+            GIInfoType interface_type;
+            GType gtype;
+            gboolean expect_object;
+
+            interface_info = g_type_info_get_interface(type_info);
+            g_assert(interface_info != NULL);
+
+            interface_type = g_base_info_get_type(interface_info);
+
+            if (interface_type == GI_INFO_TYPE_ENUM ||
+                interface_type == GI_INFO_TYPE_FLAGS) {
+                nullable_type = FALSE;
+                expect_object = FALSE;
+            } else {
+                nullable_type = TRUE;
+                expect_object = TRUE;
+            }
+
+            switch(interface_type) {
+            case GI_INFO_TYPE_STRUCT:
+                if (g_struct_info_is_foreign((GIStructInfo*)interface_info)) {
+                    JSBool ret;
+                    ret = gwkjs_struct_foreign_convert_to_g_argument(
+                            context, value, interface_info, arg_name,
+                            arg_type, transfer, may_be_null, arg);
+                    g_base_info_unref(interface_info);
+                    return ret;
+                }
+                /* fall through */
+            case GI_INFO_TYPE_ENUM:
+            case GI_INFO_TYPE_FLAGS:
+            case GI_INFO_TYPE_OBJECT:
+            case GI_INFO_TYPE_INTERFACE:
+            case GI_INFO_TYPE_UNION:
+            case GI_INFO_TYPE_BOXED:
+                /* These are subtypes of GIRegisteredTypeInfo for which the
+                 * cast is safe */
+                gtype = g_registered_type_info_get_g_type
+                    ((GIRegisteredTypeInfo*)interface_info);
+                break;
+            case GI_INFO_TYPE_VALUE:
+                /* Special case for GValues */
+                gtype = G_TYPE_VALUE;
+                break;
+
+            default:
+                /* Everything else */
+                gtype = G_TYPE_NONE;
+                break;
+            }
+
+            if (gtype != G_TYPE_NONE)
+                gwkjs_debug_marshal(GWKJS_DEBUG_GFUNCTION,
+                                  "gtype of INTERFACE is %s", g_type_name(gtype));
+
+            if (gtype == G_TYPE_VALUE) {
+                GValue gvalue = { 0, };
+
+                if (gwkjs_value_to_g_value(context, value, &gvalue)) {
+                    arg->v_pointer = g_boxed_copy (G_TYPE_VALUE, &gvalue);
+                    g_value_unset (&gvalue);
+                } else {
+                    arg->v_pointer = NULL;
+                    wrong = TRUE;
+                }
+            } else if (expect_object != JSValueIsObject(context, value)) {
+                /* JSVAL_IS_OBJECT handles null too */
+                wrong = TRUE;
+                report_type_mismatch = TRUE;
+                break;
+            } else if (JSVAL_IS_NULL(context, value)) {
+                arg->v_pointer = NULL;
+            } else if (JSValueIsObject(context, value)) {
+                if (interface_type == GI_INFO_TYPE_STRUCT &&
+                    g_struct_info_is_gtype_struct((GIStructInfo*)interface_info)) {
+                    GType gtype;
+                    gpointer klass;
+
+                    gtype = gwkjs_gtype_get_actual_gtype(context, JSValueToObject(context, value, &exception));
+
+                    if (gtype == G_TYPE_NONE) {
+                        wrong = TRUE;
+                        report_type_mismatch = TRUE;
+                        break;
+                    }
+
+                    /* We use peek here to simplify reference counting (we just ignore
+                       transfer annotation, as GType classes are never really freed)
+                       We know that the GType class is referenced at least once when
+                       the JS constructor is initialized.
+                    */
+
+                    if (g_type_is_a(gtype, G_TYPE_INTERFACE))
+                        klass = g_type_default_interface_peek(gtype);
+                    else
+                        klass = g_type_class_peek(gtype);
+
+                    arg->v_pointer = klass;
+                } else if ((interface_type == GI_INFO_TYPE_STRUCT || interface_type == GI_INFO_TYPE_BOXED) &&
+                    /* Handle Struct/Union first since we don't necessarily need a GType for them */
+                    /* We special case Closures later, so skip them here */
+                    !g_type_is_a(gtype, G_TYPE_CLOSURE)) {
+                    JSObjectRef obj = JSValueToObject(context, value, &exception);
+
+                    if (g_type_is_a(gtype, G_TYPE_BYTES)
+                        && gwkjs_typecheck_bytearray(context, obj, FALSE)) {
+                        arg->v_pointer = gwkjs_byte_array_get_bytes(context, obj);
+                    } else if (g_type_is_a(gtype, G_TYPE_ERROR)) {
+                        if (!gwkjs_typecheck_gerror(context, JSValueToObject(context, value, &exception), JS_TRUE)) {
+                            arg->v_pointer = NULL;
+                            wrong = TRUE;
+                        } else {
+                            arg->v_pointer = gwkjs_gerror_from_error(context,
+                                                                   JSValueToObject(context, value, &exception));
+                        }
+                    } else {
+                        if (!gwkjs_typecheck_boxed(context, JSValueToObject(context, value, &exception),
+                                                 interface_info, gtype,
+                                                 JS_TRUE)) {
+                            arg->v_pointer = NULL;
+                            wrong = TRUE;
+                        } else {
+                            arg->v_pointer = gwkjs_c_struct_from_boxed(context,
+                                                                     JSValueToObject(context, value, &exception));
+                        }
+                    }
+
+                    if (!wrong && transfer != GI_TRANSFER_NOTHING) {
+                        if (g_type_is_a(gtype, G_TYPE_BOXED))
+                            arg->v_pointer = g_boxed_copy (gtype, arg->v_pointer);
+                        else if (g_type_is_a(gtype, G_TYPE_VARIANT))
+                            g_variant_ref ((GVariant *) arg->v_pointer);
+                        else {
+                            gwkjs_throw(context,
+                                      "Can't transfer ownership of a structure type not registered as boxed");
+                            arg->v_pointer = NULL;
+                            wrong = TRUE;
+                        }
+                    }
+
+                } else if (interface_type == GI_INFO_TYPE_UNION) {
+                    if (gwkjs_typecheck_union(context, JSValueToObject(context, value, &exception),
+                                            interface_info, gtype, JS_TRUE)) {
+                        arg->v_pointer = gwkjs_c_union_from_union(context,
+                                                                JSValueToObject(context, value, &exception));
+
+                        if (transfer != GI_TRANSFER_NOTHING) {
+                            if (g_type_is_a(gtype, G_TYPE_BOXED))
+                                arg->v_pointer = g_boxed_copy (gtype, arg->v_pointer);
+                            else {
+                                gwkjs_throw(context,
+                                          "Can't transfer ownership of a union type not registered as boxed");
+
+                                arg->v_pointer = NULL;
+                                wrong = TRUE;
+                            }
+                        }
+                    } else {
+                        arg->v_pointer = NULL;
+                        wrong = TRUE;
+                    }
+
+                } else if (gtype != G_TYPE_NONE) {
+                    if (g_type_is_a(gtype, G_TYPE_OBJECT)) {
+                        if (gwkjs_typecheck_object(context, JSValueToObject(context, value, &exception), gtype, JS_TRUE)) {
+                            arg->v_pointer = gwkjs_g_object_from_object(context,
+                                                                      JSValueToObject(context, value, &exception));
+
+                            if (transfer != GI_TRANSFER_NOTHING)
+                                g_object_ref(G_OBJECT(arg->v_pointer));
+                        } else {
+                            arg->v_pointer = NULL;
+                            wrong = TRUE;
+                        }
+                    } else if (g_type_is_a(gtype, G_TYPE_PARAM)) {
+                        if (gwkjs_typecheck_param(context, JSValueToObject(context, value, &exception), gtype, JS_TRUE)) {
+                            arg->v_pointer = gwkjs_g_param_from_param(context, JSValueToObject(context, value, &exception));
+                            if (transfer != GI_TRANSFER_NOTHING)
+                                g_param_spec_ref(G_PARAM_SPEC(arg->v_pointer));
+                        } else {
+                            arg->v_pointer = NULL;
+                            wrong = TRUE;
+                        }
+                    } else if (g_type_is_a(gtype, G_TYPE_BOXED)) {
+                        if (g_type_is_a(gtype, G_TYPE_CLOSURE)) {
+                            arg->v_pointer = gwkjs_closure_new_marshaled(context,
+                                                                       JSValueToObject(context, value, &exception),
+                                                                       "boxed");
+                            g_closure_ref((GClosure *) arg->v_pointer);
+                            g_closure_sink((GClosure *) arg->v_pointer);
+                        } else {
+                            /* Should have been caught above as STRUCT/BOXED/UNION */
+                            gwkjs_throw(context,
+                                      "Boxed type %s registered for unexpected interface_type %d",
+                                      g_type_name(gtype),
+                                      interface_type);
+                        }
+                    } else if (G_TYPE_IS_INSTANTIATABLE(gtype)) {
+                        if (gwkjs_typecheck_fundamental(context, JSValueToObject(context, value, &exception), gtype, JS_TRUE)) {
+                            arg->v_pointer = gwkjs_g_fundamental_from_object(context,
+                                                                           JSValueToObject(context, value, &exception));
+
+                            if (transfer != GI_TRANSFER_NOTHING)
+                                gwkjs_fundamental_ref(context, arg->v_pointer);
+                        } else {
+                            arg->v_pointer = NULL;
+                            wrong = TRUE;
+                        }
+                    } else if (G_TYPE_IS_INTERFACE(gtype)) {
+                        /* Could be a GObject interface that's missing a prerequisite, or could
+                           be a fundamental */
+                        if (gwkjs_typecheck_object(context, JSValueToObject(context, value, &exception), gtype, JS_FALSE)) {
+                            arg->v_pointer = gwkjs_g_object_from_object(context, JSValueToObject(context, value, &exception));
+
+                            if (transfer != GI_TRANSFER_NOTHING)
+                                g_object_ref(arg->v_pointer);
+                        } else if (gwkjs_typecheck_fundamental(context, JSValueToObject(context, value, &exception), gtype, JS_FALSE)) {
+                            arg->v_pointer = gwkjs_g_fundamental_from_object(context, JSValueToObject(context, value, &exception));
+
+                            if (transfer != GI_TRANSFER_NOTHING)
+                                gwkjs_fundamental_ref(context, arg->v_pointer);
+                        } else {
+                            /* Call again with throw=TRUE to set the exception */
+                            gwkjs_typecheck_object(context, JSValueToObject(context, value, &exception), gtype, JS_TRUE);
+                            arg->v_pointer = NULL;
+                            wrong = TRUE;
+                        }
+                    } else {
+                        gwkjs_throw(context, "Unhandled GType %s unpacking GArgument from Object",
+                                  g_type_name(gtype));
+                        arg->v_pointer = NULL;
+                        wrong = TRUE;
+                    }
+                } else {
+                    gwkjs_throw(context, "Unexpected unregistered type unpacking GArgument from Object");
+                }
+
+                if (arg->v_pointer == NULL) {
+                    gwkjs_debug(GWKJS_DEBUG_GFUNCTION,
+                              "conversion of JSObject %p type %s to type %s failed",
+                              JSValueToObject(context, value, &exception),
+                              gwkjs_get_type_name(context, value),
+                              g_base_info_get_name ((GIBaseInfo *)interface_info));
+
+                    /* gwkjs_throw should have been called already */
+                    wrong = TRUE;
+                }
+
+            } else if (JSValueIsNumber(context, value)) {
+                if (interface_type == GI_INFO_TYPE_ENUM) {
+                    gint64 value_int64;
+
+                    if (!gwkjs_value_to_int64 (context, value, &value_int64))
+                        wrong = TRUE;
+                    else if (!_gwkjs_enum_value_is_valid(context, (GIEnumInfo *)interface_info, value_int64))
+                        wrong = TRUE;
+                    else
+                        arg->v_int = _gwkjs_enum_to_int ((GIEnumInfo *)interface_info, value_int64);
+
+                } else if (interface_type == GI_INFO_TYPE_FLAGS) {
+                    gint64 value_int64;
+
+                    if (!gwkjs_value_to_int64 (context, value, &value_int64))
+                        wrong = TRUE;
+                    else if (!_gwkjs_flags_value_is_valid(context, gtype, value_int64))
+                        wrong = TRUE;
+                    else
+                        arg->v_int = _gwkjs_enum_to_int ((GIEnumInfo *)interface_info, value_int64);
+
+                } else if (gtype == G_TYPE_NONE) {
+                    gwkjs_throw(context, "Unexpected unregistered type unpacking GArgument from Number");
+                    wrong = TRUE;
+                } else {
+                    gwkjs_throw(context, "Unhandled GType %s unpacking GArgument from Number",
+                              g_type_name(gtype));
+                    wrong = TRUE;
+                }
+
+            } else {
+                gwkjs_debug(GWKJS_DEBUG_GFUNCTION,
+                          "JSObject type '%s' is neither null nor an object",
+                          gwkjs_get_type_name(context, value));
+                wrong = TRUE;
+                report_type_mismatch = TRUE;
+            }
+            g_base_info_unref( (GIBaseInfo*) interface_info);
+        }
+        break;
+
+    case GI_TYPE_TAG_GLIST:
+    case GI_TYPE_TAG_GSLIST: {
+        JSBool found_length;
+
+        const gchar *length_name = gwkjs_context_get_const_string(context, GWKJS_STRING_LENGTH);
+
+        /* nullable_type=FALSE; while a list can be NULL in C, that
+         * means empty array in JavaScript, it doesn't mean null in
+         * JavaScript.
+         */
+        if (!JSVAL_IS_NULL(context, value) &&
+            JSValueIsObject(context, value) &&
+            (found_length = gwkjs_object_has_property(context,
+                                      JSValueToObject(context, value, &exception),
+                                      length_name)) &&
+            found_length) {
+            jsval length_value;
+            guint32 length;
+
+            exception = NULL;
+            gboolean found = gwkjs_object_require_property(context,
+                                         JSValueToObject(context, value, &exception),
+                                         NULL, length_name, &length_value);
+            length = gwkjs_jsvalue_to_int(context, length_value, &exception);
+            if (!found || exception ) {
+                wrong = TRUE;
+            } else {
+                GList *list;
+                GSList *slist;
+                GITypeInfo *param_info;
+
+                param_info = g_type_info_get_param_type(type_info, 0);
+                g_assert(param_info != NULL);
+
+                list = NULL;
+                slist = NULL;
+
+                if (!gwkjs_array_to_g_list(context,
+                                         value,
+                                         length,
+                                         param_info,
+                                         transfer,
+                                         type_tag,
+                                         &list, &slist)) {
+                    wrong = TRUE;
+                }
+
+                if (type_tag == GI_TYPE_TAG_GLIST) {
+                    arg->v_pointer = list;
+                } else {
+                    arg->v_pointer = slist;
+                }
+
+                g_base_info_unref((GIBaseInfo*) param_info);
+            }
+        } else {
+            wrong = TRUE;
+            report_type_mismatch = TRUE;
+        }
+        break;
+    }
+
+    case GI_TYPE_TAG_GHASH:
+        if (JSVAL_IS_NULL(context, value)) {
+            arg->v_pointer = NULL;
+            if (!may_be_null) {
+                wrong = TRUE;
+                report_type_mismatch = TRUE;
+            }
+        } else if (!JSValueIsObject(context, value)) {
+            wrong = TRUE;
+            report_type_mismatch = TRUE;
+        } else {
+            GITypeInfo *key_param_info, *val_param_info;
+            GHashTable *ghash;
+
+            key_param_info = g_type_info_get_param_type(type_info, 0);
+            g_assert(key_param_info != NULL);
+            val_param_info = g_type_info_get_param_type(type_info, 1);
+            g_assert(val_param_info != NULL);
+
+            if (!gwkjs_object_to_g_hash(context,
+                                      value,
+                                      key_param_info,
+                                      val_param_info,
+                                      transfer,
+                                      &ghash)) {
+                wrong = TRUE;
+            } else {
+                arg->v_pointer = ghash;
+            }
+
+            g_base_info_unref((GIBaseInfo*) key_param_info);
+            g_base_info_unref((GIBaseInfo*) val_param_info);
+        }
+        break;
+
+    case GI_TYPE_TAG_ARRAY: {
+        gpointer data;
+        gsize length;
+        GIArrayType array_type = g_type_info_get_array_type(type_info);
+        GITypeTag element_type;
+        GITypeInfo *param_info;
+
+        param_info = g_type_info_get_param_type(type_info, 0);
+        element_type = g_type_info_get_tag(param_info);
+        g_base_info_unref(param_info);
+
+        /* First, let's handle the case where we're passed an instance
+         * of our own byteArray class.
+         */
+        if (JSValueIsObject(context, value) &&
+            gwkjs_typecheck_bytearray(context,
+                                    JSValueToObject(context, value, &exception),
+                                    FALSE))
+            {
+                JSObjectRef bytearray_obj = JSValueToObject(context, value, &exception);
+                if (array_type == GI_ARRAY_TYPE_BYTE_ARRAY) {
+                    arg->v_pointer = gwkjs_byte_array_get_byte_array(context, bytearray_obj);
+                    break;
+                } else {
+                    /* Fall through, !handled */
+                }
+            }
+
+        if (!gwkjs_array_to_explicit_array_internal(context,
+                                                  value,
+                                                  type_info,
+                                                  arg_name,
+                                                  arg_type,
+                                                  transfer,
+                                                  may_be_null,
+                                                  &data,
+                                                  &length)) {
+            wrong = TRUE;
+            break;
+        }
+
+        if (array_type == GI_ARRAY_TYPE_C) {
+            arg->v_pointer = data;
+        } else if (array_type == GI_ARRAY_TYPE_ARRAY) {
+            GITypeInfo *param_info = g_type_info_get_param_type(type_info, 0);
+            GArray *array = gwkjs_g_array_new_for_type(context, length, param_info);
+
+            if (!array)
+                wrong = TRUE;
+            else {
+                g_array_append_vals(array, data, length);
+                arg->v_pointer = array;
+            }
+
+            g_free(data);
+            g_base_info_unref((GIBaseInfo*) param_info);
+        } else if (array_type == GI_ARRAY_TYPE_BYTE_ARRAY) {
+            GByteArray *byte_array = g_byte_array_sized_new(length);
+
+            g_byte_array_append(byte_array, (const guint8 *) data, length);
+            arg->v_pointer = byte_array;
+
+            g_free(data);
+        } else if (array_type == GI_ARRAY_TYPE_PTR_ARRAY) {
+            GPtrArray *array = g_ptr_array_sized_new(length);
+
+            g_ptr_array_set_size(array, length);
+            memcpy(array->pdata, data, sizeof(gpointer) * length);
+            arg->v_pointer = array;
+
+            g_free(data);
+        }
+        break;
+    }
+    default:
+        g_warning("Unhandled type %s for JavaScript to GArgument conversion",
+                  g_type_tag_to_string(type_tag));
+        wrong = TRUE;
+        report_type_mismatch = TRUE;
+        break;
+    }
+
+    if (G_UNLIKELY(wrong)) {
+        if (report_type_mismatch) {
+            throw_invalid_argument(context, value, type_info, arg_name, arg_type);
+        }
+        return JS_FALSE;
+    } else if (G_UNLIKELY(out_of_range)) {
+        gchar *display_name = get_argument_display_name (arg_name, arg_type);
+        gwkjs_throw(context, "value is out of range for %s (type %s)",
+                  display_name,
+                  g_type_tag_to_string(type_tag));
+        g_free (display_name);
+        return JS_FALSE;
+    } else if (nullable_type &&
+               arg->v_pointer == NULL &&
+               !may_be_null) {
+        gchar *display_name = get_argument_display_name (arg_name, arg_type);
+        gwkjs_throw(context,
+                  "%s (type %s) may not be null",
+                  display_name,
+                  g_type_tag_to_string(type_tag));
+        g_free (display_name);
+        return JS_FALSE;
+    } else {
+        return JS_TRUE;
+    }
+}
+
+/* If a callback function with a return value throws, we still have
+ * to return something to C. This function defines what that something
+ * is. It basically boils down to memset(arg, 0, sizeof(*arg)), but
+ * gives as a bit more future flexibility and also will work if
+ * libffi passes us a buffer that only has room for the appropriate
+ * branch of GArgument. (Currently it appears that the return buffer
+ * has a fixed size large enough for the union of all types.)
+ */
+void
+gwkjs_g_argument_init_default(JSContextRef      context,
+                            GITypeInfo     *type_info,
+                            GArgument      *arg)
+{
+    GITypeTag type_tag;
+
+    type_tag = g_type_info_get_tag( (GITypeInfo*) type_info);
+
+    switch (type_tag) {
+    case GI_TYPE_TAG_VOID:
+        arg->v_pointer = NULL; /* just so it isn't uninitialized */
+        break;
+
+    case GI_TYPE_TAG_INT8:
+        arg->v_int8 = 0;
+        break;
+
+    case GI_TYPE_TAG_UINT8:
+        arg->v_uint8 = 0;
+        break;
+
+    case GI_TYPE_TAG_INT16:
+        arg->v_int16 = 0;
+        break;
+
+    case GI_TYPE_TAG_UINT16:
+        arg->v_uint16 = 0;
+        break;
+
+    case GI_TYPE_TAG_INT32:
+        arg->v_int = 0;
+        break;
+
+    case GI_TYPE_TAG_UINT32:
+    case GI_TYPE_TAG_UNICHAR:
+        arg->v_uint32 = 0;
+        break;
+
+    case GI_TYPE_TAG_INT64:
+        arg->v_int64 = 0;
+        break;
+
+    case GI_TYPE_TAG_UINT64:
+        arg->v_uint64 = 0;
+
+    case GI_TYPE_TAG_BOOLEAN:
+        arg->v_boolean = FALSE;
+        break;
+
+    case GI_TYPE_TAG_FLOAT:
+        arg->v_float = 0.0f;
+        break;
+
+    case GI_TYPE_TAG_DOUBLE:
+        arg->v_double = 0.0;
+        break;
+
+    case GI_TYPE_TAG_GTYPE:
+        arg->v_ssize = 0;
+        break;
+
+    case GI_TYPE_TAG_FILENAME:
+    case GI_TYPE_TAG_UTF8:
+    case GI_TYPE_TAG_GLIST:
+    case GI_TYPE_TAG_GSLIST:
+    case GI_TYPE_TAG_ERROR:
+        arg->v_pointer = NULL;
+        break;
+
+    case GI_TYPE_TAG_INTERFACE:
+        {
+            GIBaseInfo* interface_info;
+            GIInfoType interface_type;
+
+            interface_info = g_type_info_get_interface(type_info);
+            g_assert(interface_info != NULL);
+
+            interface_type = g_base_info_get_type(interface_info);
+
+            switch(interface_type) {
+            case GI_INFO_TYPE_ENUM:
+            case GI_INFO_TYPE_FLAGS:
+                arg->v_int = 0;
+                break;
+            case GI_INFO_TYPE_VALUE:
+                /* Better to use a non-NULL value holding NULL? */
+                arg->v_pointer = NULL;
+                break;
+            default:
+                arg->v_pointer = NULL;
+                break;
+            }
+
+            g_base_info_unref( (GIBaseInfo*) interface_info);
+        }
+        break;
+
+    case GI_TYPE_TAG_GHASH:
+        /* Possibly better to return an empty hash table? */
+        arg->v_pointer = NULL;
+        break;
+
+    case GI_TYPE_TAG_ARRAY:
+        arg->v_pointer = NULL;
+        break;
+
+    default:
+        g_warning("Unhandled type %s for default GArgument initialization",
+                  g_type_tag_to_string(type_tag));
+        break;
+    }
+}
+
+JSBool
+gwkjs_value_to_arg(JSContextRef  context,
+                 jsval       value,
+                 GIArgInfo  *arg_info,
+                 GArgument  *arg)
+{
+    GITypeInfo type_info;
+
+    g_arg_info_load_type(arg_info, &type_info);
+
+    return gwkjs_value_to_g_argument(context, value,
+                                   &type_info,
+                                   g_base_info_get_name( (GIBaseInfo*) arg_info),
+                                   (g_arg_info_is_return_value(arg_info) ?
+                                    GWKJS_ARGUMENT_RETURN_VALUE : GWKJS_ARGUMENT_ARGUMENT),
+                                   g_arg_info_get_ownership_transfer(arg_info),
+                                   g_arg_info_may_be_null(arg_info),
+                                   arg);
+}
+
 JSBool
 gwkjs_value_to_explicit_array (JSContextRef  context,
                              jsval       value,
@@ -2036,74 +2044,72 @@ gwkjs_value_to_explicit_array (JSContextRef  context,
                                                 length_p);
 }
 
-//static JSBool
-//gwkjs_array_from_g_list (JSContextRef  context,
-//                       jsval      *value_p,
-//                       GITypeTag   list_tag,
-//                       GITypeInfo *param_info,
-//                       GList      *list,
-//                       GSList     *slist)
-//{
-//    JSObjectRef obj;
-//    unsigned int i;
-//    jsval elem;
-//    GArgument arg;
-//    JSBool result;
-//
-//    obj = JS_NewArrayObject(context, 0, NULL);
-//    if (obj == NULL)
-//        return JS_FALSE;
-//
-//    *value_p = OBJECT_TO_JSVAL(obj);
-//
-//    elem = JSVAL_VOID;
-//    JS_AddValueRoot(context, &elem);
-//
-//    result = JS_FALSE;
-//
-//    i = 0;
-//    if (list_tag == GI_TYPE_TAG_GLIST) {
-//        for ( ; list != NULL; list = list->next) {
-//            arg.v_pointer = list->data;
-//
-//            if (!gwkjs_value_from_g_argument(context, &elem,
-//                                           param_info, &arg,
-//                                           TRUE))
-//                goto out;
-//
-//            if (!JS_DefineElement(context, obj,
-//                                  i, elem,
-//                                  NULL, NULL, JSPROP_ENUMERATE)) {
-//                goto out;
-//            }
-//            ++i;
-//        }
-//    } else {
-//        for ( ; slist != NULL; slist = slist->next) {
-//            arg.v_pointer = slist->data;
-//
-//            if (!gwkjs_value_from_g_argument(context, &elem,
-//                                           param_info, &arg,
-//                                           TRUE))
-//                goto out;
-//
-//            if (!JS_DefineElement(context, obj,
-//                                  i, elem,
-//                                  NULL, NULL, JSPROP_ENUMERATE)) {
-//                goto out;
-//            }
-//            ++i;
-//        }
-//    }
-//
-//    result = JS_TRUE;
-//
-// out:
-//    JS_RemoveValueRoot(context, &elem);
-//
-//    return result;
-//}
-//
+static JSBool
+gwkjs_array_from_g_list (JSContextRef  context,
+                       jsval      *value_p,
+                       GITypeTag   list_tag,
+                       GITypeInfo *param_info,
+                       GList      *list,
+                       GSList     *slist)
+{
+    JSObjectRef obj;
+    unsigned int i;
+    jsval elem;
+    GArgument arg;
+    JSBool result;
+
+    obj = JSObjectMakeArray(context, 0, NULL, NULL);
+    if (obj == NULL)
+        return JS_FALSE;
+
+    *value_p = obj;
+
+    elem = NULL;
+
+    result = JS_FALSE;
+
+    i = 0;
+    if (list_tag == GI_TYPE_TAG_GLIST) {
+        for ( ; list != NULL; list = list->next) {
+			JSValueRef exception = NULL;
+            arg.v_pointer = list->data;
+
+            if (!gwkjs_value_from_g_argument(context, &elem,
+                                           param_info, &arg,
+                                           TRUE))
+                goto out;
+
+			JSObjectSetPropertyAtIndex(context, obj, i, elem, &exception);
+            if (exception) {
+                goto out;
+            }
+            ++i;
+        }
+    } else {
+        for ( ; slist != NULL; slist = slist->next) {
+            arg.v_pointer = slist->data;
+			JSValueRef exception = NULL;
+
+            if (!gwkjs_value_from_g_argument(context, &elem,
+                                           param_info, &arg,
+                                           TRUE))
+                goto out;
+
+			JSObjectSetPropertyAtIndex(context, obj, i, elem, &exception);
+            if (exception) {
+                goto out;
+            }
+            ++i;
+        }
+    }
+
+    result = JS_TRUE;
+
+ out:
+
+    return result;
+}
+
 static JSBool
 gwkjs_array_from_carray_internal (JSContextRef  context,
                                 jsval      *value_p,
@@ -2111,7 +2117,7 @@ gwkjs_array_from_carray_internal (JSContextRef  context,
                                 guint       length,
                                 gpointer    array)
 {
-    JSObjectRef obj;
+    JSObjectRef obj = NULL;
     jsval elem;
     GArgument arg;
     JSBool result;
@@ -2132,7 +2138,9 @@ gwkjs_array_from_carray_internal (JSContextRef  context,
         gbytearray.data = (guint8 *) array;
         gbytearray.len = length;
 
-        obj = gwkjs_byte_array_from_byte_array (context, &gbytearray);
+//TODO: implement - no bytearray support yet.
+//        obj = gwkjs_byte_array_from_byte_array (context, &gbytearray);
+
         if (obj == NULL)
             return JS_FALSE;
         *value_p = obj;
@@ -2326,595 +2334,588 @@ gwkjs_array_from_boxed_array (JSContextRef   context,
     return gwkjs_array_from_carray_internal(context, value_p, param_info, length, data);
 }
 
-//static JSBool
-//gwkjs_array_from_zero_terminated_c_array (JSContextRef  context,
-//                                        jsval      *value_p,
-//                                        GITypeInfo *param_info,
-//                                        gpointer    c_array)
-//{
-//    JSObjectRef obj;
-//    jsval elem;
-//    GArgument arg;
-//    JSBool result;
-//    GITypeTag element_type;
-//    guint i;
-//
-//    result = JS_FALSE;
-//
-//    element_type = g_type_info_get_tag(param_info);
-//
-//    /* Special case array(guint8) */
-//    if (element_type == GI_TYPE_TAG_UINT8) {
-//        GByteArray gbytearray;
-//
-//        gbytearray.data = (guint8 *) c_array;
-//        gbytearray.len = strlen((const char *) c_array);
-//
-//        obj = gwkjs_byte_array_from_byte_array (context, &gbytearray);
-//        if (obj == NULL)
-//            return JS_FALSE;
-//        *value_p = OBJECT_TO_JSVAL(obj);
-//        return JS_TRUE;
-//    } 
-//
-//    obj = JS_NewArrayObject(context, 0, NULL);
-//    if (obj == NULL)
-//      return JS_FALSE;
-//
-//    *value_p = OBJECT_TO_JSVAL(obj);
-//
-//    elem = JSVAL_VOID;
-//    JS_AddValueRoot(context, &elem);
-//
-//#define ITERATE(type) \
-//    do { \
-//        g##type *array = (g##type *) c_array; \
-//        for (i = 0; array[i]; i++) { \
-//            arg.v_##type = array[i]; \
-//            if (!gwkjs_value_from_g_argument(context, &elem, param_info, &arg, TRUE)) \
-//                goto finally; \
-//            if (!JS_DefineElement(context, obj, i, elem, NULL, NULL, \
-//                                  JSPROP_ENUMERATE)) \
-//                goto finally; \
-//        } \
-//    } while(0);
-//
-//    switch (element_type) {
-//        /* We handle GI_TYPE_TAG_UINT8 above. */
-//        case GI_TYPE_TAG_INT8:
-//          ITERATE(int8);
-//          break;
-//        case GI_TYPE_TAG_UINT16:
-//          ITERATE(uint16);
-//          break;
-//        case GI_TYPE_TAG_INT16:
-//          ITERATE(int16);
-//          break;
-//        case GI_TYPE_TAG_UINT32:
-//          ITERATE(uint32);
-//          break;
-//        case GI_TYPE_TAG_INT32:
-//          ITERATE(int32);
-//          break;
-//        case GI_TYPE_TAG_UINT64:
-//          ITERATE(uint64);
-//          break;
-//        case GI_TYPE_TAG_INT64:
-//          ITERATE(int64);
-//          break;
-//        case GI_TYPE_TAG_FLOAT:
-//          ITERATE(float);
-//          break;
-//        case GI_TYPE_TAG_DOUBLE:
-//          ITERATE(double);
-//          break;
-//        case GI_TYPE_TAG_GTYPE:
-//        case GI_TYPE_TAG_UTF8:
-//        case GI_TYPE_TAG_FILENAME:
-//        case GI_TYPE_TAG_ARRAY:
-//        case GI_TYPE_TAG_INTERFACE:
-//        case GI_TYPE_TAG_GLIST:
-//        case GI_TYPE_TAG_GSLIST:
-//        case GI_TYPE_TAG_GHASH:
-//        case GI_TYPE_TAG_ERROR:
-//          ITERATE(pointer);
-//          break;
-//        default:
-//          gwkjs_throw(context, "Unknown element-type %d", element_type);
-//          goto finally;
-//    }
-//
-//#undef ITERATE
-//
-//    result = JS_TRUE;
-//
-//finally:
-//    JS_RemoveValueRoot(context, &elem);
-//
-//    return result;
-//}
-//
-//
-//static JSBool
-//gwkjs_object_from_g_hash (JSContextRef  context,
-//                        jsval      *value_p,
-//                        GITypeInfo *key_param_info,
-//                        GITypeInfo *val_param_info,
-//                        GHashTable *hash)
-//{
-//    GHashTableIter iter;
-//    JSObjectRef obj;
-//    JSString *keystr;
-//    char     *keyutf8 = NULL;
-//    jsval     keyjs,  valjs;
-//    GArgument keyarg, valarg;
-//    JSBool result;
-//
-//    // a NULL hash table becomes a null JS value
-//    if (hash==NULL) {
-//        *value_p = JSVAL_NULL;
-//        return JS_TRUE;
-//    }
-//
-//    obj = JS_NewObject(context, NULL, NULL, NULL);
-//    if (obj == NULL)
-//        return JS_FALSE;
-//
-//    *value_p = OBJECT_TO_JSVAL(obj);
-//    JS_AddObjectRoot(context, &obj);
-//
-//    keyjs = JSVAL_VOID;
-//    JS_AddValueRoot(context, &keyjs);
-//
-//    valjs = JSVAL_VOID;
-//    JS_AddValueRoot(context, &valjs);
-//
-//    keystr = NULL;
-//    JS_AddStringRoot(context, &keystr);
-//
-//    result = JS_FALSE;
-//
-//    g_hash_table_iter_init(&iter, hash);
-//    while (g_hash_table_iter_next
-//           (&iter, &keyarg.v_pointer, &valarg.v_pointer)) {
-//        if (!gwkjs_value_from_g_argument(context, &keyjs,
-//                                       key_param_info, &keyarg,
-//                                       TRUE))
-//            goto out;
-//
-//        keystr = JS_ValueToString(context, keyjs);
-//        if (!keystr)
-//            goto out;
-//
-//        if (!gwkjs_string_to_utf8(context, STRING_TO_JSVAL(keystr), &keyutf8))
-//            goto out;
-//
-//        if (!gwkjs_value_from_g_argument(context, &valjs,
-//                                       val_param_info, &valarg,
-//                                       TRUE))
-//            goto out;
-//
-//        if (!JS_DefineProperty(context, obj, keyutf8, valjs,
-//                               NULL, NULL, JSPROP_ENUMERATE))
-//            goto out;
-//
-//        g_free(keyutf8);
-//        keyutf8 = NULL;
-//    }
-//
-//    result = JS_TRUE;
-//
-// out:
-//    if (keyutf8) g_free(keyutf8);
-//    JS_RemoveObjectRoot(context, &obj);
-//    JS_RemoveValueRoot(context, &keyjs);
-//    JS_RemoveValueRoot(context, &valjs);
-//    JS_RemoveStringRoot(context, &keystr);
-//
-//    return result;
-//}
-//
-//JSBool
-//gwkjs_value_from_g_argument (JSContextRef  context,
-//                           jsval      *value_p,
-//                           GITypeInfo *type_info,
-//                           GArgument  *arg,
-//                           gboolean    copy_structs)
-//{
-//    GITypeTag type_tag;
-//
-//    type_tag = g_type_info_get_tag( (GITypeInfo*) type_info);
-//
-//    gwkjs_debug_marshal(GWKJS_DEBUG_GFUNCTION,
-//                      "Converting GArgument %s to jsval",
-//                      g_type_tag_to_string(type_tag));
-//
-//    *value_p = JSVAL_NULL;
-//
-//    switch (type_tag) {
-//    case GI_TYPE_TAG_VOID:
-//        *value_p = JSVAL_VOID; /* or JSVAL_NULL ? */
-//        break;
-//
-//    case GI_TYPE_TAG_BOOLEAN:
-//        *value_p = BOOLEAN_TO_JSVAL(!!arg->v_int);
-//        break;
-//
-//    case GI_TYPE_TAG_INT32:
-//        return JS_NewNumberValue(context, arg->v_int, value_p);
-//
-//    case GI_TYPE_TAG_UINT32:
-//        return JS_NewNumberValue(context, arg->v_uint, value_p);
-//
-//    case GI_TYPE_TAG_INT64:
-//        return JS_NewNumberValue(context, arg->v_int64, value_p);
-//
-//    case GI_TYPE_TAG_UINT64:
-//        return JS_NewNumberValue(context, arg->v_uint64, value_p);
-//
-//    case GI_TYPE_TAG_UINT16:
-//        return JS_NewNumberValue(context, arg->v_uint16, value_p);
-//
-//    case GI_TYPE_TAG_INT16:
-//        return JS_NewNumberValue(context, arg->v_int16, value_p);
-//
-//    case GI_TYPE_TAG_UINT8:
-//        return JS_NewNumberValue(context, arg->v_uint8, value_p);
-//
-//    case GI_TYPE_TAG_INT8:
-//        return JS_NewNumberValue(context, arg->v_int8, value_p);
-//
-//    case GI_TYPE_TAG_FLOAT:
-//        return JS_NewNumberValue(context, arg->v_float, value_p);
-//
-//    case GI_TYPE_TAG_DOUBLE:
-//        return JS_NewNumberValue(context, arg->v_double, value_p);
-//
-//    case GI_TYPE_TAG_GTYPE:
-//        {
-//            JSObjectRef obj;
-//            obj = gwkjs_gtype_create_gtype_wrapper(context, arg->v_ssize);
-//            *value_p = OBJECT_TO_JSVAL(obj);
-//        }
-//        break;
-//
-//    case GI_TYPE_TAG_UNICHAR:
-//        {
-//            char utf8[7];
-//            gint bytes;
-//
-//            /* Preserve the bidirectional mapping between 0 and "" */
-//            if (arg->v_uint32 == 0) {
-//                return gwkjs_string_from_utf8 (context, "", 0, value_p);
-//            } else if (!g_unichar_validate (arg->v_uint32)) {
-//                gwkjs_throw(context,
-//                          "Invalid unicode codepoint %" G_GUINT32_FORMAT,
-//                          arg->v_uint32);
-//                return JS_FALSE;
-//            } else {
-//                bytes = g_unichar_to_utf8 (arg->v_uint32, utf8);
-//                return gwkjs_string_from_utf8 (context, (char*)utf8, bytes, value_p);
-//            }
-//        }
-//
-//    case GI_TYPE_TAG_FILENAME:
-//        if (arg->v_pointer)
-//            return gwkjs_string_from_filename(context, (const char *) arg->v_pointer, -1, value_p);
-//        else {
-//            /* For NULL we'll return JSVAL_NULL, which is already set
-//             * in *value_p
-//             */
-//            return JS_TRUE;
-//        }
-//    case GI_TYPE_TAG_UTF8:
-//        if (arg->v_pointer)
-//            return gwkjs_string_from_utf8(context, (const char *) arg->v_pointer, -1, value_p);
-//        else {
-//            /* For NULL we'll return JSVAL_NULL, which is already set
-//             * in *value_p
-//             */
-//            return JS_TRUE;
-//        }
-//
-//    case GI_TYPE_TAG_ERROR:
-//        {
-//            if (arg->v_pointer) {
-//                JSObjectRef obj = gwkjs_error_from_gerror(context, (GError *) arg->v_pointer, FALSE);
-//                if (obj) {
-//                    *value_p = OBJECT_TO_JSVAL(obj);
-//                    return JS_TRUE;
-//                }
-//
-//                return JS_FALSE;
-//            }
-//            return JS_TRUE;
-//        }
-//
-//    case GI_TYPE_TAG_INTERFACE:
-//        {
-//            jsval value;
-//            GIBaseInfo* interface_info;
-//            GIInfoType interface_type;
-//            GType gtype;
-//
-//            interface_info = g_type_info_get_interface(type_info);
-//            g_assert(interface_info != NULL);
-//
-//            value = JSVAL_VOID;
-//
-//            interface_type = g_base_info_get_type(interface_info);
-//
-//            if (interface_type == GI_INFO_TYPE_UNRESOLVED) {
-//                gwkjs_throw(context,
-//                          "Unable to resolve arg type '%s'",
-//                          g_base_info_get_name(interface_info));
-//                goto out;
-//            }
-//
-//            /* Enum/Flags are aren't pointer types, unlike the other interface subtypes */
-//            if (interface_type == GI_INFO_TYPE_ENUM) {
-//                gint64 value_int64 = _gwkjs_enum_from_int ((GIEnumInfo *)interface_info, arg->v_int);
-//
-//                if (_gwkjs_enum_value_is_valid(context, (GIEnumInfo *)interface_info, value_int64)) {
-//                    jsval tmp;
-//                    if (JS_NewNumberValue(context, value_int64, &tmp))
-//                        value = tmp;
-//                }
-//
-//                goto out;
-//            } else if (interface_type == GI_INFO_TYPE_FLAGS) {
-//                gint64 value_int64 = _gwkjs_enum_from_int ((GIEnumInfo *)interface_info, arg->v_int);
-//
-//                gtype = g_registered_type_info_get_g_type((GIRegisteredTypeInfo*)interface_info);
-//                if (_gwkjs_flags_value_is_valid(context, gtype, value_int64)) {
-//                    jsval tmp;
-//                    if (JS_NewNumberValue(context, value_int64, &tmp))
-//                        value = tmp;
-//                }
-//
-//                goto out;
-//            } else if (interface_type == GI_INFO_TYPE_STRUCT &&
-//                       g_struct_info_is_foreign((GIStructInfo*)interface_info)) {
-//                JSBool ret;
-//                ret = gwkjs_struct_foreign_convert_from_g_argument(context, value_p, interface_info, arg);
-//                g_base_info_unref(interface_info);
-//                return ret;
-//            }
-//
-//            /* Everything else is a pointer type, NULL is the easy case */
-//            if (arg->v_pointer == NULL) {
-//                value = JSVAL_NULL;
-//                goto out;
-//            }
-//
-//            if (interface_type == GI_INFO_TYPE_STRUCT &&
-//                g_struct_info_is_gtype_struct((GIStructInfo*)interface_info)) {
-//                JSBool ret;
-//
-//                /* XXX: here we make the implicit assumption that GTypeClass is the same
-//                   as GTypeInterface. This is true for the GType field, which is what we
-//                   use, but not for the rest of the structure!
-//                */
-//                gtype = G_TYPE_FROM_CLASS(arg->v_pointer);
-//
-//                if (g_type_is_a(gtype, G_TYPE_INTERFACE))
-//                    ret = gwkjs_lookup_interface_constructor(context, gtype, value_p);
-//                else
-//                    ret = gwkjs_lookup_object_constructor(context, gtype, value_p);
-//
-//                g_base_info_unref(interface_info);
-//                return ret;
-//            }
-//
-//            gtype = g_registered_type_info_get_g_type((GIRegisteredTypeInfo*)interface_info);
-//            if (G_TYPE_IS_INSTANTIATABLE(gtype) ||
-//                G_TYPE_IS_INTERFACE(gtype))
-//                gtype = G_TYPE_FROM_INSTANCE(arg->v_pointer);
-//
-//            gwkjs_debug_marshal(GWKJS_DEBUG_GFUNCTION,
-//                              "gtype of INTERFACE is %s", g_type_name(gtype));
-//
-//
-//            /* Test GValue and GError before Struct, or it will be handled as the latter */
-//            if (g_type_is_a(gtype, G_TYPE_VALUE)) {
-//                if (!gwkjs_value_from_g_value(context, &value, (const GValue *) arg->v_pointer))
-//                    value = JSVAL_VOID; /* Make sure error is flagged */
-//
-//                goto out;
-//            }
-//            if (g_type_is_a(gtype, G_TYPE_ERROR)) {
-//                JSObjectRef obj;
-//
-//                obj = gwkjs_error_from_gerror(context, (GError *) arg->v_pointer, FALSE);
-//                if (obj)
-//                    value = OBJECT_TO_JSVAL(obj);
-//                else
-//                    value = JSVAL_VOID;
-//
-//                goto out;
-//            }
-//
-//            if (interface_type == GI_INFO_TYPE_STRUCT || interface_type == GI_INFO_TYPE_BOXED) {
-//                JSObjectRef obj;
-//                GwkjsBoxedCreationFlags flags;
-//
-//                if (copy_structs)
-//                    flags = GWKJS_BOXED_CREATION_NONE;
-//                else if (g_type_is_a(gtype, G_TYPE_VARIANT))
-//                    flags = GWKJS_BOXED_CREATION_NONE;
-//                else
-//                    flags = GWKJS_BOXED_CREATION_NO_COPY;
-//
-//                obj = gwkjs_boxed_from_c_struct(context,
-//                                              (GIStructInfo *)interface_info,
-//                                              arg->v_pointer,
-//                                              flags);
-//
-//                if (obj)
-//                    value = OBJECT_TO_JSVAL(obj);
-//
-//                goto out;
-//            } else if (interface_type == GI_INFO_TYPE_UNION) {
-//                JSObjectRef obj;
-//                obj = gwkjs_union_from_c_union(context, (GIUnionInfo *)interface_info, arg->v_pointer);
-//                if (obj)
-//                        value = OBJECT_TO_JSVAL(obj);
-//
-//                goto out;
-//            }
-//
-//            if (g_type_is_a(gtype, G_TYPE_OBJECT)) {
-//                JSObjectRef obj;
-//                obj = gwkjs_object_from_g_object(context, G_OBJECT(arg->v_pointer));
-//                if (obj)
-//                    value = OBJECT_TO_JSVAL(obj);
-//            } else if (g_type_is_a(gtype, G_TYPE_BOXED) ||
-//                       g_type_is_a(gtype, G_TYPE_ENUM) ||
-//                       g_type_is_a(gtype, G_TYPE_FLAGS)) {
-//                /* Should have been handled above */
-//                gwkjs_throw(context,
-//                          "Type %s registered for unexpected interface_type %d",
-//                          g_type_name(gtype),
-//                          interface_type);
-//                return JS_FALSE;
-//            } else if (g_type_is_a(gtype, G_TYPE_PARAM)) {
-//                JSObjectRef obj;
-//                obj = gwkjs_param_from_g_param(context, G_PARAM_SPEC(arg->v_pointer));
-//                if (obj)
-//                    value = OBJECT_TO_JSVAL(obj);
-//            } else if (gtype == G_TYPE_NONE) {
-//                gwkjs_throw(context, "Unexpected unregistered type packing GArgument into jsval");
-//            } else if (G_TYPE_IS_INSTANTIATABLE(gtype) || G_TYPE_IS_INTERFACE(gtype)) {
-//                JSObjectRef obj;
-//                obj = gwkjs_object_from_g_fundamental(context, (GIObjectInfo *)interface_info, arg->v_pointer);
-//                if (obj)
-//                    value = OBJECT_TO_JSVAL(obj);
-//            } else {
-//                gwkjs_throw(context, "Unhandled GType %s packing GArgument into jsval",
-//                          g_type_name(gtype));
-//            }
-//
-//         out:
-//            g_base_info_unref( (GIBaseInfo*) interface_info);
-//
-//            if (JSVAL_IS_VOID(value))
-//                return JS_FALSE;
-//
-//            *value_p = value;
-//        }
-//        break;
-//
-//    case GI_TYPE_TAG_ARRAY:
-//        if (arg->v_pointer == NULL) {
-//            /* OK, but no conversion to do */
-//        } else if (g_type_info_get_array_type(type_info) == GI_ARRAY_TYPE_C) {
-//
-//            if (g_type_info_is_zero_terminated(type_info)) {
-//                GITypeInfo *param_info;
-//                JSBool result;
-//
-//                param_info = g_type_info_get_param_type(type_info, 0);
-//                g_assert(param_info != NULL);
-//
-//                result = gwkjs_array_from_zero_terminated_c_array(context,
-//                                                                value_p,
-//                                                                param_info,
-//                                                                arg->v_pointer);
-//
-//                g_base_info_unref((GIBaseInfo*) param_info);
-//
-//                return result;
-//            } else {
-//                /* arrays with length are handled outside of this function */
-//                g_assert(("Use gwkjs_value_from_explicit_array() for arrays with length param",
-//                          g_type_info_get_array_length(type_info) == -1));
-//                return gwkjs_array_from_fixed_size_array(context, value_p, type_info, arg->v_pointer);
-//            }
-//        } else if (g_type_info_get_array_type(type_info) == GI_ARRAY_TYPE_BYTE_ARRAY) {
-//            JSObjectRef array = gwkjs_byte_array_from_byte_array(context,
-//                                                             (GByteArray*)arg->v_pointer);
-//            if (!array) {
-//                gwkjs_throw(context, "Couldn't convert GByteArray to a ByteArray");
-//                return JS_FALSE;
-//            }
-//            *value_p = OBJECT_TO_JSVAL(array);
-//        } else {
-//            /* this assumes the array type is one of GArray, GPtrArray or
-//             * GByteArray */
-//            GITypeInfo *param_info;
-//            gboolean result;
-//
-//            param_info = g_type_info_get_param_type(type_info, 0);
-//            g_assert(param_info != NULL);
-//
-//            result = gwkjs_array_from_boxed_array(context,
-//                                                value_p,
-//                                                g_type_info_get_array_type(type_info),
-//                                                param_info,
-//                                                arg);
-//
-//            g_base_info_unref((GIBaseInfo*) param_info);
-//
-//            return result;
-//        }
-//        break;
-//
-//    case GI_TYPE_TAG_GLIST:
-//    case GI_TYPE_TAG_GSLIST:
-//        {
-//            GITypeInfo *param_info;
-//            gboolean result;
-//
-//            param_info = g_type_info_get_param_type(type_info, 0);
-//            g_assert(param_info != NULL);
-//
-//            result = gwkjs_array_from_g_list(context,
-//                                           value_p,
-//                                           type_tag,
-//                                           param_info,
-//                                           type_tag == GI_TYPE_TAG_GLIST ?
-//                                           (GList *) arg->v_pointer : NULL,
-//                                           type_tag == GI_TYPE_TAG_GSLIST ?
-//                                           (GSList *) arg->v_pointer : NULL);
-//
-//            g_base_info_unref((GIBaseInfo*) param_info);
-//
-//            return result;
-//        }
-//        break;
-//
-//    case GI_TYPE_TAG_GHASH:
-//        {
-//            GITypeInfo *key_param_info, *val_param_info;
-//            gboolean result;
-//
-//            key_param_info = g_type_info_get_param_type(type_info, 0);
-//            g_assert(key_param_info != NULL);
-//            val_param_info = g_type_info_get_param_type(type_info, 1);
-//            g_assert(val_param_info != NULL);
-//
-//            result = gwkjs_object_from_g_hash(context,
-//                                            value_p,
-//                                            key_param_info,
-//                                            val_param_info,
-//                                            (GHashTable *) arg->v_pointer);
-//
-//            g_base_info_unref((GIBaseInfo*) key_param_info);
-//            g_base_info_unref((GIBaseInfo*) val_param_info);
-//
-//            return result;
-//        }
-//        break;
-//
-//    default:
-//        g_warning("Unhandled type %s converting GArgument to JavaScript",
-//                  g_type_tag_to_string(type_tag));
-//        return JS_FALSE;
-//    }
-//
-//    return JS_TRUE;
-//}
-//
+static JSBool
+gwkjs_array_from_zero_terminated_c_array (JSContextRef  context,
+                                        jsval      *value_p,
+                                        GITypeInfo *param_info,
+                                        gpointer    c_array)
+{
+    JSObjectRef obj;
+    jsval elem;
+    GArgument arg;
+    JSBool result;
+    GITypeTag element_type;
+    guint i;
+
+    result = JS_FALSE;
+
+    element_type = g_type_info_get_tag(param_info);
+
+    /* Special case array(guint8) */
+    if (element_type == GI_TYPE_TAG_UINT8) {
+        GByteArray gbytearray;
+
+        gbytearray.data = (guint8 *) c_array;
+        gbytearray.len = strlen((const char *) c_array);
+
+        obj = gwkjs_byte_array_from_byte_array (context, &gbytearray);
+        if (obj == NULL)
+            return JS_FALSE;
+        *value_p = obj;
+        return JS_TRUE;
+    }
+
+    obj = JSObjectMakeArray(context, 0, NULL, NULL);
+    if (obj == NULL)
+      return JS_FALSE;
+
+    *value_p = obj;
+
+    elem = NULL;
+
+#define ITERATE(type) \
+    do { \
+        g##type *array = (g##type *) c_array; \
+        for (i = 0; array[i]; i++) { \
+			JSValueRef exception = NULL; \
+            arg.v_##type = array[i]; \
+            if (!gwkjs_value_from_g_argument(context, &elem, param_info, &arg, TRUE)) \
+                goto finally; \
+			JSObjectSetPropertyAtIndex(context, obj, i, elem, &exception); \
+            if (exception) \
+                goto finally; \
+        } \
+    } while(0);
+
+    switch (element_type) {
+        /* We handle GI_TYPE_TAG_UINT8 above. */
+        case GI_TYPE_TAG_INT8:
+          ITERATE(int8);
+          break;
+        case GI_TYPE_TAG_UINT16:
+          ITERATE(uint16);
+          break;
+        case GI_TYPE_TAG_INT16:
+          ITERATE(int16);
+          break;
+        case GI_TYPE_TAG_UINT32:
+          ITERATE(uint32);
+          break;
+        case GI_TYPE_TAG_INT32:
+          ITERATE(int32);
+          break;
+        case GI_TYPE_TAG_UINT64:
+          ITERATE(uint64);
+          break;
+        case GI_TYPE_TAG_INT64:
+          ITERATE(int64);
+          break;
+        case GI_TYPE_TAG_FLOAT:
+          ITERATE(float);
+          break;
+        case GI_TYPE_TAG_DOUBLE:
+          ITERATE(double);
+          break;
+        case GI_TYPE_TAG_GTYPE:
+        case GI_TYPE_TAG_UTF8:
+        case GI_TYPE_TAG_FILENAME:
+        case GI_TYPE_TAG_ARRAY:
+        case GI_TYPE_TAG_INTERFACE:
+        case GI_TYPE_TAG_GLIST:
+        case GI_TYPE_TAG_GSLIST:
+        case GI_TYPE_TAG_GHASH:
+        case GI_TYPE_TAG_ERROR:
+          ITERATE(pointer);
+          break;
+        default:
+          gwkjs_throw(context, "Unknown element-type %d", element_type);
+          goto finally;
+    }
+
+#undef ITERATE
+
+    result = JS_TRUE;
+
+finally:
+
+    return result;
+}
+
+
+static JSBool
+gwkjs_object_from_g_hash (JSContextRef  context,
+                        jsval      *value_p,
+                        GITypeInfo *key_param_info,
+                        GITypeInfo *val_param_info,
+                        GHashTable *hash)
+{
+    GHashTableIter iter;
+    JSObjectRef obj = NULL;
+    JSStringRef keystr;
+    char     *keyutf8 = NULL;
+    jsval     keyjs = NULL;
+	JSValueRef  valjs = NULL;
+    GArgument keyarg, valarg;
+    JSBool result;
+
+    // a NULL hash table becomes a null JS value
+    if (hash==NULL) {
+        *value_p = JSValueMakeNull(context);
+        return JS_TRUE;
+    }
+
+    obj = gwkjs_new_object(context, NULL, NULL, NULL);
+    if (obj == NULL)
+        return JS_FALSE;
+
+    *value_p = obj;
+
+    keyjs = JSValueMakeUndefined(context);
+
+    valjs = JSValueMakeUndefined(context);
+
+    keystr = NULL;
+
+    result = JS_FALSE;
+
+    g_hash_table_iter_init(&iter, hash);
+    while (g_hash_table_iter_next
+           (&iter, &keyarg.v_pointer, &valarg.v_pointer)) {
+        if (!gwkjs_value_from_g_argument(context, &keyjs,
+                                       key_param_info, &keyarg,
+                                       TRUE))
+            goto out;
+
+        keystr = JSValueToStringCopy(context, keyjs, NULL);
+        if (!keystr)
+            goto out;
+
+        if (!gwkjs_string_to_utf8(context, JSValueMakeString(context, keystr), &keyutf8))
+            goto out;
+
+        if (!gwkjs_value_from_g_argument(context, &valjs,
+                                       val_param_info, &valarg,
+                                       TRUE))
+            goto out;
+
+        if (!gwkjs_object_set_property(context, obj, keyutf8, valjs,
+                               		   0, NULL))
+            goto out;
+
+        g_free(keyutf8);
+        keyutf8 = NULL;
+    }
+
+    result = JS_TRUE;
+
+ out:
+    if (keyutf8) g_free(keyutf8);
+    JSStringRelease(keystr);
+
+    return result;
+}
+
+JSBool
+gwkjs_value_from_g_argument (JSContextRef  context,
+                           jsval      *value_p,
+                           GITypeInfo *type_info,
+                           GArgument  *arg,
+                           gboolean    copy_structs)
+{
+    GITypeTag type_tag;
+
+    type_tag = g_type_info_get_tag( (GITypeInfo*) type_info);
+
+    gwkjs_debug_marshal(GWKJS_DEBUG_GFUNCTION,
+                      "Converting GArgument %s to jsval",
+                      g_type_tag_to_string(type_tag));
+
+    *value_p = JSValueMakeUndefined(context);
+
+    switch (type_tag) {
+    case GI_TYPE_TAG_VOID:
+        *value_p = JSValueMakeUndefined(context); /* or JSVAL_NULL ? */
+        break;
+
+    case GI_TYPE_TAG_BOOLEAN:
+        *value_p = JSValueMakeBoolean(context, !!arg->v_int);
+        break;
+
+    case GI_TYPE_TAG_INT32:
+        return JS_NewNumberValue(context, arg->v_int, value_p);
+
+    case GI_TYPE_TAG_UINT32:
+        return JS_NewNumberValue(context, arg->v_uint, value_p);
+
+    case GI_TYPE_TAG_INT64:
+        return JS_NewNumberValue(context, arg->v_int64, value_p);
+
+    case GI_TYPE_TAG_UINT64:
+        return JS_NewNumberValue(context, arg->v_uint64, value_p);
+
+    case GI_TYPE_TAG_UINT16:
+        return JS_NewNumberValue(context, arg->v_uint16, value_p);
+
+    case GI_TYPE_TAG_INT16:
+        return JS_NewNumberValue(context, arg->v_int16, value_p);
+
+    case GI_TYPE_TAG_UINT8:
+        return JS_NewNumberValue(context, arg->v_uint8, value_p);
+
+    case GI_TYPE_TAG_INT8:
+        return JS_NewNumberValue(context, arg->v_int8, value_p);
+
+    case GI_TYPE_TAG_FLOAT:
+        return JS_NewNumberValue(context, arg->v_float, value_p);
+
+    case GI_TYPE_TAG_DOUBLE:
+        return JS_NewNumberValue(context, arg->v_double, value_p);
+
+    case GI_TYPE_TAG_GTYPE:
+        {
+            JSObjectRef obj;
+            obj = gwkjs_gtype_create_gtype_wrapper(context, arg->v_ssize);
+            *value_p = obj;
+        }
+        break;
+
+    case GI_TYPE_TAG_UNICHAR:
+        {
+            char utf8[7];
+            gint bytes;
+
+            /* Preserve the bidirectional mapping between 0 and "" */
+            if (arg->v_uint32 == 0) {
+                return gwkjs_string_from_utf8 (context, "", 0, value_p);
+            } else if (!g_unichar_validate (arg->v_uint32)) {
+                gwkjs_throw(context,
+                          "Invalid unicode codepoint %" G_GUINT32_FORMAT,
+                          arg->v_uint32);
+                return JS_FALSE;
+            } else {
+                bytes = g_unichar_to_utf8 (arg->v_uint32, utf8);
+                return gwkjs_string_from_utf8 (context, (char*)utf8, bytes, value_p);
+            }
+        }
+
+    case GI_TYPE_TAG_FILENAME:
+        if (arg->v_pointer)
+            return gwkjs_string_from_filename(context, (const char *) arg->v_pointer, -1, value_p);
+        else {
+            /* For NULL we'll return JSVAL_NULL, which is already set
+             * in *value_p
+             */
+            return JS_TRUE;
+        }
+    case GI_TYPE_TAG_UTF8:
+        if (arg->v_pointer)
+            return gwkjs_string_from_utf8(context, (const char *) arg->v_pointer, -1, value_p);
+        else {
+            /* For NULL we'll return JSVAL_NULL, which is already set
+             * in *value_p
+             */
+            return JS_TRUE;
+        }
+
+    case GI_TYPE_TAG_ERROR:
+        {
+            if (arg->v_pointer) {
+                JSObjectRef obj = gwkjs_error_from_gerror(context, (GError *) arg->v_pointer, FALSE);
+                if (obj) {
+                    *value_p = obj;
+                    return JS_TRUE;
+                }
+
+                return JS_FALSE;
+            }
+            return JS_TRUE;
+        }
+
+    case GI_TYPE_TAG_INTERFACE:
+        {
+            jsval value;
+            GIBaseInfo* interface_info;
+            GIInfoType interface_type;
+            GType gtype;
+
+            interface_info = g_type_info_get_interface(type_info);
+            g_assert(interface_info != NULL);
+
+            value = JSValueMakeUndefined(context);
+
+            interface_type = g_base_info_get_type(interface_info);
+
+            if (interface_type == GI_INFO_TYPE_UNRESOLVED) {
+                gwkjs_throw(context,
+                          "Unable to resolve arg type '%s'",
+                          g_base_info_get_name(interface_info));
+                goto out;
+            }
+
+            /* Enum/Flags are aren't pointer types, unlike the other interface subtypes */
+            if (interface_type == GI_INFO_TYPE_ENUM) {
+                gint64 value_int64 = _gwkjs_enum_from_int ((GIEnumInfo *)interface_info, arg->v_int);
+
+                if (_gwkjs_enum_value_is_valid(context, (GIEnumInfo *)interface_info, value_int64)) {
+                    jsval tmp;
+                    if (JS_NewNumberValue(context, value_int64, &tmp))
+                        value = tmp;
+                }
+
+                goto out;
+            } else if (interface_type == GI_INFO_TYPE_FLAGS) {
+                gint64 value_int64 = _gwkjs_enum_from_int ((GIEnumInfo *)interface_info, arg->v_int);
+
+                gtype = g_registered_type_info_get_g_type((GIRegisteredTypeInfo*)interface_info);
+                if (_gwkjs_flags_value_is_valid(context, gtype, value_int64)) {
+                    jsval tmp;
+                    if (JS_NewNumberValue(context, value_int64, &tmp))
+                        value = tmp;
+                }
+
+                goto out;
+            } else if (interface_type == GI_INFO_TYPE_STRUCT &&
+                       g_struct_info_is_foreign((GIStructInfo*)interface_info)) {
+                JSBool ret;
+                ret = gwkjs_struct_foreign_convert_from_g_argument(context, value_p, interface_info, arg);
+                g_base_info_unref(interface_info);
+                return ret;
+            }
+
+            /* Everything else is a pointer type, NULL is the easy case */
+            if (arg->v_pointer == NULL) {
+                value = JSValueMakeNull(context);
+                goto out;
+            }
+
+            if (interface_type == GI_INFO_TYPE_STRUCT &&
+                g_struct_info_is_gtype_struct((GIStructInfo*)interface_info)) {
+                JSBool ret;
+
+                /* XXX: here we make the implicit assumption that GTypeClass is the same
+                   as GTypeInterface. This is true for the GType field, which is what we
+                   use, but not for the rest of the structure!
+                */
+                gtype = G_TYPE_FROM_CLASS(arg->v_pointer);
+
+                if (g_type_is_a(gtype, G_TYPE_INTERFACE))
+                    ret = gwkjs_lookup_interface_constructor(context, gtype, value_p);
+                else
+                    ret = gwkjs_lookup_object_constructor(context, gtype, value_p);
+
+                g_base_info_unref(interface_info);
+                return ret;
+            }
+
+            gtype = g_registered_type_info_get_g_type((GIRegisteredTypeInfo*)interface_info);
+            if (G_TYPE_IS_INSTANTIATABLE(gtype) ||
+                G_TYPE_IS_INTERFACE(gtype))
+                gtype = G_TYPE_FROM_INSTANCE(arg->v_pointer);
+
+            gwkjs_debug_marshal(GWKJS_DEBUG_GFUNCTION,
+                              "gtype of INTERFACE is %s", g_type_name(gtype));
+
+
+            /* Test GValue and GError before Struct, or it will be handled as the latter */
+            if (g_type_is_a(gtype, G_TYPE_VALUE)) {
+                if (!gwkjs_value_from_g_value(context, &value, (const GValue *) arg->v_pointer))
+                    value = JSValueMakeUndefined(context); /* Make sure error is flagged */
+
+                goto out;
+            }
+            if (g_type_is_a(gtype, G_TYPE_ERROR)) {
+                JSObjectRef obj;
+
+                obj = gwkjs_error_from_gerror(context, (GError *) arg->v_pointer, FALSE);
+                if (obj)
+                    value = obj;
+                else
+                    value = JSValueMakeUndefined(context);
+
+                goto out;
+            }
+
+            if (interface_type == GI_INFO_TYPE_STRUCT || interface_type == GI_INFO_TYPE_BOXED) {
+                JSObjectRef obj;
+                GwkjsBoxedCreationFlags flags;
+
+                if (copy_structs)
+                    flags = GWKJS_BOXED_CREATION_NONE;
+                else if (g_type_is_a(gtype, G_TYPE_VARIANT))
+                    flags = GWKJS_BOXED_CREATION_NONE;
+                else
+                    flags = GWKJS_BOXED_CREATION_NO_COPY;
+
+                obj = gwkjs_boxed_from_c_struct(context,
+                                              (GIStructInfo *)interface_info,
+                                              arg->v_pointer,
+                                              flags);
+
+                if (obj)
+                    value = obj;
+
+                goto out;
+            } else if (interface_type == GI_INFO_TYPE_UNION) {
+                JSObjectRef obj;
+                obj = gwkjs_union_from_c_union(context, (GIUnionInfo *)interface_info, arg->v_pointer);
+                if (obj)
+                        value = obj;
+
+                goto out;
+            }
+
+            if (g_type_is_a(gtype, G_TYPE_OBJECT)) {
+                JSObjectRef obj;
+                obj = gwkjs_object_from_g_object(context, G_OBJECT(arg->v_pointer));
+                if (obj)
+                    value = obj;
+            } else if (g_type_is_a(gtype, G_TYPE_BOXED) ||
+                       g_type_is_a(gtype, G_TYPE_ENUM) ||
+                       g_type_is_a(gtype, G_TYPE_FLAGS)) {
+                /* Should have been handled above */
+                gwkjs_throw(context,
+                          "Type %s registered for unexpected interface_type %d",
+                          g_type_name(gtype),
+                          interface_type);
+                return JS_FALSE;
+            } else if (g_type_is_a(gtype, G_TYPE_PARAM)) {
+                JSObjectRef obj;
+                obj = gwkjs_param_from_g_param(context, G_PARAM_SPEC(arg->v_pointer));
+                if (obj)
+                    value = obj;
+            } else if (gtype == G_TYPE_NONE) {
+                gwkjs_throw(context, "Unexpected unregistered type packing GArgument into jsval");
+            } else if (G_TYPE_IS_INSTANTIATABLE(gtype) || G_TYPE_IS_INTERFACE(gtype)) {
+                JSObjectRef obj;
+                obj = gwkjs_object_from_g_fundamental(context, (GIObjectInfo *)interface_info, arg->v_pointer);
+                if (obj)
+                    value = obj;
+            } else {
+                gwkjs_throw(context, "Unhandled GType %s packing GArgument into jsval",
+                          g_type_name(gtype));
+            }
+
+         out:
+            g_base_info_unref( (GIBaseInfo*) interface_info);
+
+            if (JSVAL_IS_VOID(context, value))
+                return JS_FALSE;
+
+            *value_p = value;
+        }
+        break;
+
+    case GI_TYPE_TAG_ARRAY:
+        if (arg->v_pointer == NULL) {
+            /* OK, but no conversion to do */
+        } else if (g_type_info_get_array_type(type_info) == GI_ARRAY_TYPE_C) {
+
+            if (g_type_info_is_zero_terminated(type_info)) {
+                GITypeInfo *param_info;
+                JSBool result;
+
+                param_info = g_type_info_get_param_type(type_info, 0);
+                g_assert(param_info != NULL);
+
+                result = gwkjs_array_from_zero_terminated_c_array(context,
+                                                                value_p,
+                                                                param_info,
+                                                                arg->v_pointer);
+
+                g_base_info_unref((GIBaseInfo*) param_info);
+
+                return result;
+            } else {
+                /* arrays with length are handled outside of this function */
+                g_assert(("Use gwkjs_value_from_explicit_array() for arrays with length param",
+                          g_type_info_get_array_length(type_info) == -1));
+                return gwkjs_array_from_fixed_size_array(context, value_p, type_info, arg->v_pointer);
+            }
+        } else if (g_type_info_get_array_type(type_info) == GI_ARRAY_TYPE_BYTE_ARRAY) {
+            JSObjectRef array = gwkjs_byte_array_from_byte_array(context,
+                                                             (GByteArray*)arg->v_pointer);
+            if (!array) {
+                gwkjs_throw(context, "Couldn't convert GByteArray to a ByteArray");
+                return JS_FALSE;
+            }
+            *value_p = array;
+        } else {
+            /* this assumes the array type is one of GArray, GPtrArray or
+             * GByteArray */
+            GITypeInfo *param_info;
+            gboolean result;
+
+            param_info = g_type_info_get_param_type(type_info, 0);
+            g_assert(param_info != NULL);
+
+            result = gwkjs_array_from_boxed_array(context,
+                                                value_p,
+                                                g_type_info_get_array_type(type_info),
+                                                param_info,
+                                                arg);
+
+            g_base_info_unref((GIBaseInfo*) param_info);
+
+            return result;
+        }
+        break;
+
+    case GI_TYPE_TAG_GLIST:
+    case GI_TYPE_TAG_GSLIST:
+        {
+            GITypeInfo *param_info;
+            gboolean result;
+
+            param_info = g_type_info_get_param_type(type_info, 0);
+            g_assert(param_info != NULL);
+
+            result = gwkjs_array_from_g_list(context,
+                                           value_p,
+                                           type_tag,
+                                           param_info,
+                                           type_tag == GI_TYPE_TAG_GLIST ?
+                                           (GList *) arg->v_pointer : NULL,
+                                           type_tag == GI_TYPE_TAG_GSLIST ?
+                                           (GSList *) arg->v_pointer : NULL);
+
+            g_base_info_unref((GIBaseInfo*) param_info);
+
+            return result;
+        }
+        break;
+
+    case GI_TYPE_TAG_GHASH:
+        {
+            GITypeInfo *key_param_info, *val_param_info;
+            gboolean result;
+
+            key_param_info = g_type_info_get_param_type(type_info, 0);
+            g_assert(key_param_info != NULL);
+            val_param_info = g_type_info_get_param_type(type_info, 1);
+            g_assert(val_param_info != NULL);
+
+            result = gwkjs_object_from_g_hash(context,
+                                            value_p,
+                                            key_param_info,
+                                            val_param_info,
+                                            (GHashTable *) arg->v_pointer);
+
+            g_base_info_unref((GIBaseInfo*) key_param_info);
+            g_base_info_unref((GIBaseInfo*) val_param_info);
+
+            return result;
+        }
+        break;
+
+    default:
+        g_warning("Unhandled type %s converting GArgument to JavaScript",
+                  g_type_tag_to_string(type_tag));
+        return JS_FALSE;
+    }
+
+    return JS_TRUE;
+}
+
 static JSBool gwkjs_g_arg_release_internal(JSContextRef  context,
                                          GITransfer  transfer,
                                          GITypeInfo *type_info,

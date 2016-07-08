@@ -1,51 +1,51 @@
-///* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-///*
-// * Copyright (c) 2008  litl, LLC
-// * Copyright (c) 2012  Red Hat, Inc.
-// *
-// * Permission is hereby granted, free of charge, to any person obtaining a copy
-// * of this software and associated documentation files (the "Software"), to
-// * deal in the Software without restriction, including without limitation the
-// * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-// * sell copies of the Software, and to permit persons to whom the Software is
-// * furnished to do so, subject to the following conditions:
-// *
-// * The above copyright notice and this permission notice shall be included in
-// * all copies or substantial portions of the Software.
-// *
-// * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-// * IN THE SOFTWARE.
-// */
-//
-//#include <config.h>
-//
-//#include "function.h"
-//#include "gtype.h"
-//#include "interface.h"
-//#include "repo.h"
-//
-//#include <gwkjs/gwkjs-module.h>
-//#include <gwkjs/compat.h>
-//#include <util/log.h>
-//
-//#include <girepository.h>
-//
-//typedef struct {
-//    GIInterfaceInfo *info;
-//    GType gtype;
-//    /* the GTypeInterface vtable wrapped by this JS Object (only used for
-//       prototypes) */
-//    GTypeInterface *vtable;
-//} Interface;
-//
-//extern JSClassDefinition gwkjs_interface_class;
-//static JSClassRef gwkjs_interfaceclass_ref = NULL;
-//
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+/*
+ * Copyright (c) 2008  litl, LLC
+ * Copyright (c) 2012  Red Hat, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+#include <config.h>
+
+#include "function.h"
+#include "gtype.h"
+#include "interface.h"
+#include "repo.h"
+
+#include <gwkjs/gwkjs-module.h>
+#include <gwkjs/compat.h>
+#include <util/log.h>
+
+#include <girepository.h>
+
+typedef struct {
+    GIInterfaceInfo *info;
+    GType gtype;
+    /* the GTypeInterface vtable wrapped by this JS Object (only used for
+       prototypes) */
+    GTypeInterface *vtable;
+} Interface;
+
+extern JSClassDefinition gwkjs_interface_class;
+static JSClassRef gwkjs_interface_class_ref = NULL;
+
 //GWKJS_DEFINE_PRIV_FROM_JS(Interface, gwkjs_interface_class)
 //
 //GWKJS_NATIVE_CONSTRUCTOR_DEFINE_ABSTRACT(interface)
@@ -241,11 +241,14 @@
 //    return JS_TRUE;
 //}
 //
-//JSBool
-//gwkjs_lookup_interface_constructor(JSContextRef context,
-//                                 GType      gtype,
-//                                 jsval     *value_p)
-//{
+JSBool
+gwkjs_lookup_interface_constructor(JSContextRef context,
+                                 GType      gtype,
+                                 jsval     *value_p)
+{
+gwkjs_throw(context, " gwkjs_lookup_interface_constructor not implemented");
+return FALSE;
+//TODO: implement
 //    JSObjectRef constructor;
 //    GIBaseInfo *interface_info;
 //
@@ -268,4 +271,4 @@
 //
 //    *value_p = OBJECT_TO_JSVAL(constructor);
 //    return JS_TRUE;
-//}
+}

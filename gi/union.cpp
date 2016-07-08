@@ -400,12 +400,14 @@ gwkjs_define_union_class(JSContextRef    context,
     return constructor;
 }
 
+JSObjectRef
+gwkjs_union_from_c_union(JSContextRef    context,
+                       GIUnionInfo  *info,
+                       void         *gboxed)
+{
+    gwkjs_throw(context, " gwkjs_union_from_c_union  not implemented");
+    return NULL;
 // TODO: implement
-//JSObject*
-//gwkjs_union_from_c_union(JSContextRef    context,
-//                       GIUnionInfo  *info,
-//                       void         *gboxed)
-//{
 //    JSObjectRef obj;
 //    JSObjectRef proto;
 //    Union *priv;
@@ -442,7 +444,7 @@ gwkjs_define_union_class(JSContextRef    context,
 //    priv->gboxed = g_boxed_copy(gtype, gboxed);
 //
 //    return obj;
-//}
+}
 
 void*
 gwkjs_c_union_from_union(JSContextRef    context,

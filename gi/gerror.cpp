@@ -470,11 +470,14 @@ GWKJS_DEFINE_PRIV_FROM_JS(Error, gwkjs_error_class)
 //                          NULL, NULL, JSPROP_ENUMERATE);
 //}
 //
-//JSObject*
-//gwkjs_error_from_gerror(JSContextRef             context,
-//                      GError                *gerror,
-//                      gboolean               add_stack)
-//{
+JSObjectRef
+gwkjs_error_from_gerror(JSContextRef             context,
+                      GError                *gerror,
+                      gboolean               add_stack)
+{
+    gwkjs_throw(context, "gwkjs_error_from_gerror  not implemented");
+    return NULL;
+//TODO: implement
 //    JSObjectRef obj;
 //    JSObjectRef proto;
 //    Error *priv;
@@ -522,8 +525,8 @@ GWKJS_DEFINE_PRIV_FROM_JS(Error, gwkjs_error_class)
 //        define_error_properties(context, obj);
 //
 //    return obj;
-//}
-//
+}
+
 GError*
 gwkjs_gerror_from_error(JSContextRef    context,
                       JSObjectRef     obj)
@@ -555,13 +558,16 @@ gwkjs_gerror_from_error(JSContextRef    context,
     return priv->gerror;
 }
 
-//JSBool
-//gwkjs_typecheck_gerror (JSContextRef context,
-//                      JSObjectRef  obj,
-//                      JSBool     throw_error)
-//{
+JSBool
+gwkjs_typecheck_gerror (JSContextRef context,
+                      JSObjectRef  obj,
+                      JSBool     throw_error)
+{
+    gwkjs_throw(context, "  not implemented");
+    return FALSE;
+//TODO: implement
 //    if (gwkjs_typecheck_boxed (context, obj, NULL, G_TYPE_ERROR, JS_FALSE))
 //        return TRUE;
 //
 //    return do_base_typecheck(context, obj, throw_error);
-//}
+}

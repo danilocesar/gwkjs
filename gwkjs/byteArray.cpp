@@ -1,45 +1,46 @@
-///* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-///*
-// * Copyright (c) 2010  litl, LLC
-// *
-// * Permission is hereby granted, free of charge, to any person obtaining a copy
-// * of this software and associated documentation files (the "Software"), to
-// * deal in the Software without restriction, including without limitation the
-// * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-// * sell copies of the Software, and to permit persons to whom the Software is
-// * furnished to do so, subject to the following conditions:
-// *
-// * The above copyright notice and this permission notice shall be included in
-// * all copies or substantial portions of the Software.
-// *
-// * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-// * IN THE SOFTWARE.
-// */
-//
-//#include <config.h>
-//#include <string.h>
-//#include <glib.h>
-//#include <errno.h>
-//#include "byteArray.h"
-//#include "../gi/boxed.h"
-//#include <gwkjs/gwkjs-module.h>
-//#include <gwkjs/compat.h>
-//#include <girepository.h>
-//#include <util/log.h>
-//
-//typedef struct {
-//    GByteArray *array;
-//    GBytes     *bytes;
-//} ByteArrayInstance;
-//
-//extern JSClassDefinition gwkjs_byte_array_class;
-//GWKJS_DEFINE_PRIV_FROM_JS(ByteArrayInstance, gwkjs_byte_array_class)
-//
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+/*
+ * Copyright (c) 2010  litl, LLC
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+#include <config.h>
+#include <string.h>
+#include <glib.h>
+#include <errno.h>
+#include "byteArray.h"
+#include "../gi/boxed.h"
+#include <gwkjs/gwkjs-module.h>
+#include <gwkjs/compat.h>
+#include <girepository.h>
+#include <util/log.h>
+
+typedef struct {
+    GByteArray *array;
+    GBytes     *bytes;
+} ByteArrayInstance;
+
+extern JSClassDefinition gwkjs_byte_array_class;
+static JSClassRef gwkjs_byte_array_class_ref = NULL;
+GWKJS_DEFINE_PRIV_FROM_JS(ByteArrayInstance, gwkjs_byte_array_class)
+
 //static JSValueRef byte_array_get_prop      (JSContextRef ctx,
 //											JSObjectRef object,
 //											JSStringRef propertyName,
@@ -76,14 +77,17 @@
 //    NULL                          /* Convert To Type */
 //};
 //
-//JSBool
-//gwkjs_typecheck_bytearray(JSContextRef context,
-//                          JSObjectRef      object,
-//                          JSBool         throw_error)
-//{
+JSBool
+gwkjs_typecheck_bytearray(JSContextRef context,
+                          JSObjectRef      object,
+                          JSBool         throw_error)
+{
+    gwkjs_throw(context, " gwkjs_typecheck_bytearray  not implemented");
+    return FALSE;
+//TODO: implement
 //    return do_base_typecheck(context, object, throw_error);
-//}
-//
+}
+
 ///* Seems to be unecessary and not doable, as JSC doesn't provide a INT_MAX
 //static JSBool
 //gwkjs_value_from_gsize(JSContextRef context,
@@ -778,33 +782,35 @@
 //    return ret;
 //}
 //
-//JSObjectRef 
-//gwkjs_byte_array_from_byte_array (JSContextRef context,
-//                                GByteArray *array)
-//{
+JSObjectRef
+gwkjs_byte_array_from_byte_array (JSContextRef context,
+                                GByteArray *array)
+{
+    gwkjs_throw(context, "gwkjs_byte_array_from_byte_array not implemented");
+// TODO: implement
 //    JSObjectRef object;
 //    ByteArrayInstance *priv;
 //
 //    g_return_val_if_fail(context != NULL, NULL);
 //    g_return_val_if_fail(array != NULL, NULL);
 //
-//    object = JS_NewObject(context, &gwkjs_byte_array_class,
-//                          byte_array_get_prototype(context), NULL);
+//    object = gwkjs_new_object(context, gwkjs_byte_array_class_ref,
+//                              byte_array_get_prototype(context), NULL);
 //    if (!object) {
 //        gwkjs_throw(context, "failed to create byte array");
 //        return NULL;
 //    }
 //
 //    priv = g_slice_new0(ByteArrayInstance);
-//    g_assert(priv_from_js(context, object) == NULL);
-//    JS_SetPrivate(object, priv);
+//    g_assert(priv_from_js(object) == NULL);
+//    JSObjectSetPrivate(object, priv);
 //    priv->array = g_byte_array_new();
 //    priv->array->data = (guint8*) g_memdup(array->data, array->len);
 //    priv->array->len = array->len;
 //
 //    return object;
-//}
-//
+}
+
 //JSObjectRef 
 //gwkjs_byte_array_from_bytes (JSContextRef context,
 //                           GBytes    *bytes)
@@ -830,10 +836,13 @@
 //    return object;
 //}
 //
-//GBytes *
-//gwkjs_byte_array_get_bytes (JSContextRef  context,
-//                          JSObjectRef   object)
-//{
+GBytes *
+gwkjs_byte_array_get_bytes (JSContextRef  context,
+                          JSObjectRef   object)
+{
+gwkjs_throw(context, " gwkjs_byte_array_get_bytes  not implemented");
+return NULL;
+//TODO: implement
 //    ByteArrayInstance *priv;
 //    priv = priv_from_js(context, object);
 //    g_assert(priv != NULL);
@@ -841,12 +850,15 @@
 //    byte_array_ensure_gbytes(priv);
 //
 //    return g_bytes_ref (priv->bytes);
-//}
-//
-//GByteArray *
-//gwkjs_byte_array_get_byte_array (JSContextRef   context,
-//                               JSObjectRef    obj)
-//{
+}
+
+GByteArray *
+gwkjs_byte_array_get_byte_array (JSContextRef   context,
+                               JSObjectRef    obj)
+{
+gwkjs_throw(context, " gwkjs_byte_array_get_byte_array  not implemented");
+return NULL;
+//TODO: implement
 //    ByteArrayInstance *priv;
 //    priv = priv_from_js(context, obj);
 //    g_assert(priv != NULL);
@@ -854,8 +866,8 @@
 //    byte_array_ensure_array(priv);
 //
 //    return g_byte_array_ref (priv->array);
-//}
-//
+}
+
 //void
 //gwkjs_byte_array_peek_data (JSContextRef  context,
 //                          JSObjectRef   obj,

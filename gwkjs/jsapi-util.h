@@ -393,13 +393,13 @@ JSBool      gwkjs_string_from_utf8             (JSContextRef    context,
                                                 const char      *utf8_string,
                                                 gssize           n_bytes,
                                                 JSValueRef       *value_p);
-//JSBool      gwkjs_string_to_filename           (JSContextRef       context,
-//                                              const jsval      string_val,
-//                                              char           **filename_string_p);
-//JSBool      gwkjs_string_from_filename         (JSContextRef       context,
-//                                              const char      *filename_string,
-//                                              gssize           n_bytes,
-//                                              jsval           *value_p);
+gboolean    gwkjs_string_to_filename           (JSContextRef       context,
+                                              const jsval      string_val,
+                                              char           **filename_string_p);
+JSBool      gwkjs_string_from_filename         (JSContextRef       context,
+                                              const char      *filename_string,
+                                              gssize           n_bytes,
+                                              jsval           *value_p);
 JSBool      gwkjs_string_get_uint16_data       (JSContextRef       context,
                                               jsval            value,
                                               guint16        **data_p,
@@ -411,17 +411,17 @@ JSBool      gwkjs_string_get_uint16_data       (JSContextRef       context,
 //jsid        gwkjs_intern_string_to_id          (JSContextRef       context,
 //                                              const char      *string);
 //
-//gboolean    gwkjs_unichar_from_string          (JSContextRef       context,
-//                                              jsval            string,
-//                                              gunichar        *result);
+gboolean    gwkjs_unichar_from_string          (JSContextRef       context,
+                                              jsval            string,
+                                              gunichar        *result);
 
 const char* gwkjs_get_type_name                (JSContextRef context,
                                                 JSValueRef   value);
 
-//JSBool      gwkjs_value_to_int64               (JSContextRef       context,
-//                                              const jsval      val,
-//                                              gint64          *result);
-//
+JSBool      gwkjs_value_to_int64               (JSContextRef       context,
+                                                const jsval      val,
+                                                gint64          *result);
+
 //JSBool      gwkjs_parse_args                   (JSContextRef  context,
 //                                              const char *function_name,
 //                                              const char *format,

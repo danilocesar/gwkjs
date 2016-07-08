@@ -1,64 +1,64 @@
-///* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-///*
-// * Copyright (c) 2013       Intel Corporation
-// * Copyright (c) 2008-2010  litl, LLC
-// *
-// * Permission is hereby granted, free of charge, to any person obtaining a copy
-// * of this software and associated documentation files (the "Software"), to
-// * deal in the Software without restriction, including without limitation the
-// * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-// * sell copies of the Software, and to permit persons to whom the Software is
-// * furnished to do so, subject to the following conditions:
-// *
-// * The above copyright notice and this permission notice shall be included in
-// * all copies or substantial portions of the Software.
-// *
-// * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-// * IN THE SOFTWARE.
-// */
-//
-//#include <config.h>
-//
-//#include "fundamental.h"
-//
-//#include "arg.h"
-//#include "object.h"
-//#include "boxed.h"
-//#include "function.h"
-//#include "gtype.h"
-//#include "proxyutils.h"
-//#include "repo.h"
-//
-//#include <gwkjs/gwkjs-module.h>
-//#include <gwkjs/compat.h>
-//#include <util/log.h>
-//#include <girepository.h>
-//
-///*
-// * Structure allocated for prototypes.
-// */
-//typedef struct _Fundamental {
-//    /* instance info */
-//    void                         *gfundamental;
-//    struct _Fundamental          *prototype;    /* NULL if prototype */
-//
-//    /* prototype info */
-//    GIObjectInfo                 *info;
-//    GType                         gtype;
-//    GIObjectInfoRefFunction       ref_function;
-//    GIObjectInfoUnrefFunction     unref_function;
-//    GIObjectInfoGetValueFunction  get_value_function;
-//    GIObjectInfoSetValueFunction  set_value_function;
-//
-//    jsid                          constructor_name;
-//    GICallableInfo               *constructor_info;
-//} Fundamental;
-//
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+/*
+ * Copyright (c) 2013       Intel Corporation
+ * Copyright (c) 2008-2010  litl, LLC
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+#include <config.h>
+
+#include "fundamental.h"
+
+#include "arg.h"
+#include "object.h"
+#include "boxed.h"
+#include "function.h"
+#include "gtype.h"
+#include "proxyutils.h"
+#include "repo.h"
+
+#include <gwkjs/gwkjs-module.h>
+#include <gwkjs/compat.h>
+#include <util/log.h>
+#include <girepository.h>
+
+/*
+ * Structure allocated for prototypes.
+ */
+typedef struct _Fundamental {
+    /* instance info */
+    void                         *gfundamental;
+    struct _Fundamental          *prototype;    /* NULL if prototype */
+
+    /* prototype info */
+    GIObjectInfo                 *info;
+    GType                         gtype;
+    GIObjectInfoRefFunction       ref_function;
+    GIObjectInfoUnrefFunction     unref_function;
+    GIObjectInfoGetValueFunction  get_value_function;
+    GIObjectInfoSetValueFunction  set_value_function;
+
+    jsid                          constructor_name;
+    GICallableInfo               *constructor_info;
+} Fundamental;
+
 ///*
 // * Structure allocated for instances.
 // */
@@ -748,11 +748,14 @@
 //    return JS_TRUE;
 //}
 //
-//JSObject*
-//gwkjs_object_from_g_fundamental(JSContextRef    context,
-//                              GIObjectInfo *info,
-//                              void         *gfundamental)
-//{
+JSObjectRef
+gwkjs_object_from_g_fundamental(JSContextRef    context,
+                              GIObjectInfo *info,
+                              void         *gfundamental)
+{
+gwkjs_throw(context, "gwkjs_object_from_g_fundamental not implemented");
+return NULL;
+//TODO: implement
 //    JSObjectRef proto;
 //    JSObjectRef object;
 //
@@ -785,13 +788,16 @@
 //
 // out:
 //    return object;
-//}
-//
-//JSObjectRef 
-//gwkjs_fundamental_from_g_value(JSContextRef    context,
-//                             const GValue *value,
-//                             GType         gtype)
-//{
+}
+
+JSObjectRef 
+gwkjs_fundamental_from_g_value(JSContextRef    context,
+                             const GValue *value,
+                             GType         gtype)
+{
+    gwkjs_throw(context, "gwkjs_fundamental_from_g_value  not implemented");
+    return NULL;
+//TODO: implement
 //    JSObjectRef proto;
 //    Fundamental *proto_priv;
 //    void *fobj;
@@ -810,12 +816,15 @@
 //    }
 //
 //    return gwkjs_object_from_g_fundamental(context, proto_priv->info, fobj);
-//}
-//
-//void*
-//gwkjs_g_fundamental_from_object(JSContextRef context,
-//                              JSObjectRef  obj)
-//{
+}
+
+void*
+gwkjs_g_fundamental_from_object(JSContextRef context,
+                              JSObjectRef  obj)
+{
+gwkjs_throw(context, "gwkjs_g_fundamental_from_object  not implemented");
+return NULL;
+//TODO: implement
 //    FundamentalInstance *priv;
 //
 //    if (obj == NULL)
@@ -838,7 +847,7 @@
 //    }
 //
 //    return priv->gfundamental;
-//}
+}
 //
 //JSBool
 //gwkjs_typecheck_is_fundamental(JSContextRef     context,
@@ -848,12 +857,16 @@
 //    return do_base_typecheck(context, object, throw_error);
 //}
 //
-//JSBool
-//gwkjs_typecheck_fundamental(JSContextRef context,
-//                          JSObjectRef  object,
-//                          GType      expected_gtype,
-//                          JSBool     throw_error)
-//{
+JSBool
+gwkjs_typecheck_fundamental(JSContextRef context,
+                          JSObjectRef  object,
+                          GType      expected_gtype,
+                          JSBool     throw_error)
+{
+    gwkjs_throw(context, " gwkjs_typecheck_fundamental  not implemented");
+    return FALSE;
+
+//TODO: implement
 //    FundamentalInstance *priv;
 //    JSBool result;
 //
@@ -896,12 +909,15 @@
 //    }
 //
 //    return result;
-//}
-//
-//void *
-//gwkjs_fundamental_ref(JSContextRef     context,
-//                    void          *gfundamental)
-//{
+}
+
+void *
+gwkjs_fundamental_ref(JSContextRef     context,
+                    void          *gfundamental)
+{
+gwkjs_throw(context, "gwkjs_fundamental_ref  not implemented");
+return NULL;
+//TODO: implement
 //    JSObjectRef proto;
 //    Fundamental *proto_priv;
 //
@@ -911,12 +927,14 @@
 //    proto_priv = (Fundamental *) priv_from_js(context, proto);
 //
 //    return proto_priv->ref_function(gfundamental);
-//}
-//
-//void
-//gwkjs_fundamental_unref(JSContextRef    context,
-//                      void         *gfundamental)
-//{
+}
+
+void
+gwkjs_fundamental_unref(JSContextRef    context,
+                      void         *gfundamental)
+{
+    gwkjs_throw(context, "gwkjs_fundamental_unref  not implemented");
+//TODO: implement
 //    JSObjectRef proto;
 //    Fundamental *proto_priv;
 //
@@ -926,4 +944,4 @@
 //    proto_priv = (Fundamental *) priv_from_js(context, proto);
 //
 //    proto_priv->unref_function(gfundamental);
-//}
+}

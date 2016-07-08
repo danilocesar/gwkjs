@@ -128,17 +128,17 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //
 //    return val;
 //}
-//
-//static GQuark
-//gwkjs_object_priv_quark (void)
-//{
-//    static GQuark val = 0;
-//    if (G_UNLIKELY (!val))
-//        val = g_quark_from_static_string ("gwkjs::private");
-//
-//    return val;
-//}
-//
+
+static GQuark
+gwkjs_object_priv_quark (void)
+{
+    static GQuark val = 0;
+    if (G_UNLIKELY (!val))
+        val = g_quark_from_static_string ("gwkjs::private");
+
+    return val;
+}
+
 //static GQuark
 //gwkjs_toggle_down_quark (void)
 //{
@@ -248,6 +248,15 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //    return priv_from_js(context, proto);
 //}
 //
+static JSValueRef
+object_instance_get_prop(JSContextRef ctx,
+                      JSObjectRef object,
+                      JSStringRef property_name,
+                      JSValueRef* exception)
+{
+//TODO: implement
+    return NULL;
+}
 ///* a hook on getting a property; set value_p to override property's value.
 // * Return value is JS_FALSE on OOM/exception.
 // */
@@ -317,10 +326,16 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //    g_free(name);
 //    return ret;
 //}
-//
+
 ///* a hook on setting a property; set value_p to override property value to
 // * be set. Return value is JS_FALSE on OOM/exception.
 // */
+static bool 
+object_instance_set_prop(JSContextRef ctx, JSObjectRef object, JSStringRef propertyName, JSValueRef value, JSValueRef* exception)
+{
+// TODO: implement
+    return true;
+}
 //static JSBool
 //object_instance_set_prop(JSContextRef              context,
 //                         JS::HandleObject        obj,
@@ -1394,10 +1409,11 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //    }
 //}
 //
-//static void
-//object_instance_finalize(JSFreeOp  *fop,
-//                         JSObjectRef  obj)
-//{
+static void
+object_instance_finalize(JSObjectRef  obj)
+{
+    gwkjs_throw(NULL, " object_instance_finalize  not implemented");
+//TODO: implement
 //    ObjectInstance *priv;
 //
 //    priv = (ObjectInstance *) JS_GetPrivate(obj);
@@ -1466,87 +1482,89 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //
 //    GWKJS_DEC_COUNTER(object);
 //    g_slice_free(ObjectInstance, priv);
-//}
-//
-//static JSObjectRef 
-//gwkjs_lookup_object_constructor_from_info(JSContextRef    context,
-//                                        GIObjectInfo *info,
-//                                        GType         gtype)
-//{
-//    JSObjectRef in_object;
-//    JSObjectRef constructor;
-//    const char *constructor_name;
-//    jsval value;
-//
-//    if (info) {
-//        in_object = gwkjs_lookup_namespace_object(context, (GIBaseInfo*) info);
-//        constructor_name = g_base_info_get_name((GIBaseInfo*) info);
-//    } else {
-//        in_object = gwkjs_lookup_private_namespace(context);
-//        constructor_name = g_type_name(gtype);
-//    }
-//
-//    if (G_UNLIKELY (!in_object))
-//        return NULL;
-//
-//    if (!JS_GetProperty(context, in_object, constructor_name, &value))
-//        return NULL;
-//
-//    if (JSVAL_IS_VOID(value)) {
-//        /* In case we're looking for a private type, and we don't find it,
-//           we need to define it first.
-//        */
-//        gwkjs_define_object_class(context, in_object, NULL, gtype, &constructor);
-//    } else {
-//        if (G_UNLIKELY (!JSVAL_IS_OBJECT(value) || JSVAL_IS_NULL(value)))
-//            return NULL;
-//
-//        constructor = JSVAL_TO_OBJECT(value);
-//    }
-//
-//    g_assert(constructor != NULL);
-//
-//    return constructor;
-//}
-//
-//static JSObjectRef 
-//gwkjs_lookup_object_prototype_from_info(JSContextRef    context,
-//                                      GIObjectInfo *info,
-//                                      GType         gtype)
-//{
-//    JSObjectRef constructor;
-//    jsval value;
-//
-//    constructor = gwkjs_lookup_object_constructor_from_info(context, info, gtype);
-//
-//    if (G_UNLIKELY (constructor == NULL))
-//        return NULL;
-//
-//    if (!gwkjs_object_get_property_const(context, constructor,
-//                                       GWKJS_STRING_PROTOTYPE, &value))
-//        return NULL;
-//
-//    if (G_UNLIKELY (!JSVAL_IS_OBJECT(value)))
-//        return NULL;
-//
-//    return JSVAL_TO_OBJECT(value);
-//}
-//
-//static JSObjectRef 
-//gwkjs_lookup_object_prototype(JSContextRef context,
-//                            GType      gtype)
-//{
-//    GIObjectInfo *info;
-//    JSObjectRef proto;
-//
-//    info = (GIObjectInfo*)g_irepository_find_by_gtype(g_irepository_get_default(), gtype);
-//    proto = gwkjs_lookup_object_prototype_from_info(context, info, gtype);
-//    if (info)
-//        g_base_info_unref((GIBaseInfo*)info);
-//
-//    return proto;
-//}
-//
+}
+
+static JSObjectRef
+gwkjs_lookup_object_constructor_from_info(JSContextRef    context,
+                                        GIObjectInfo *info,
+                                        GType         gtype)
+{
+    JSObjectRef in_object;
+    JSObjectRef constructor;
+    const char *constructor_name;
+    JSValueRef value = NULL;
+    JSValueRef exception = NULL;
+
+    if (info) {
+        in_object = gwkjs_lookup_namespace_object(context, (GIBaseInfo*) info);
+        constructor_name = g_base_info_get_name((GIBaseInfo*) info);
+    } else {
+        in_object = gwkjs_lookup_private_namespace(context);
+        constructor_name = g_type_name(gtype);
+    }
+
+    if (G_UNLIKELY (!in_object))
+        return NULL;
+
+    value = gwkjs_object_get_property(context, in_object, constructor_name, &exception);
+    if (exception)
+        return NULL;
+
+    if (JSVAL_IS_VOID(context, value)) {
+        /* In case we're looking for a private type, and we don't find it,
+           we need to define it first.
+        */
+        gwkjs_define_object_class(context, in_object, NULL, gtype, &constructor);
+    } else {
+        if (G_UNLIKELY (!JSValueIsObject(context, value) || JSVAL_IS_NULL(context, value)))
+            return NULL;
+
+        constructor = JSValueToObject(context, value, NULL);
+    }
+
+    g_assert(constructor != NULL);
+
+    return constructor;
+}
+
+static JSObjectRef 
+gwkjs_lookup_object_prototype_from_info(JSContextRef    context,
+                                      GIObjectInfo *info,
+                                      GType         gtype)
+{
+    JSObjectRef constructor;
+    jsval value;
+
+    constructor = gwkjs_lookup_object_constructor_from_info(context, info, gtype);
+
+    if (G_UNLIKELY (constructor == NULL))
+        return NULL;
+
+    if (!gwkjs_object_get_property_const(context, constructor,
+                                       GWKJS_STRING_PROTOTYPE, &value))
+        return NULL;
+
+    if (G_UNLIKELY (!JSValueIsObject(context, value)))
+        return NULL;
+
+    return JSValueToObject(context, value, NULL);
+}
+
+static JSObjectRef 
+gwkjs_lookup_object_prototype(JSContextRef context,
+                            GType      gtype)
+{
+    GIObjectInfo *info;
+    JSObjectRef proto;
+
+    info = (GIObjectInfo*)g_irepository_find_by_gtype(g_irepository_get_default(), gtype);
+    proto = gwkjs_lookup_object_prototype_from_info(context, info, gtype);
+    if (info)
+        g_base_info_unref((GIBaseInfo*)info);
+
+    return proto;
+}
+
 //static void
 //signal_connection_invalidated (gpointer  user_data,
 //                               GClosure *closure)
@@ -1824,7 +1842,28 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 // out:
 //    return ret;
 //}
-//
+JSClassDefinition gwkjs_object_instance_class = {
+    0,                         //     Version
+    kJSPropertyAttributeNone,  //     JSClassAttributes
+    "GObject_Object",          //     const char* className;
+    NULL,                      //     JSClassRef parentClass;
+    NULL,                      //     const JSStaticValue*                staticValues;
+    NULL,                      //     const JSStaticFunction*             staticFunctions;
+    NULL,                      //     JSObjectInitializeCallback          initialize;
+    object_instance_finalize,  //     JSObjectFinalizeCallback            finalize;
+    NULL,                      //     JSObjectHasPropertyCallback         hasProperty;
+
+    object_instance_get_prop,  //TODO: is this really resolve?
+                               //     JSObjectGetPropertyCallback         getProperty;
+
+    object_instance_set_prop,  //     JSObjectSetPropertyCallback         setProperty;
+    NULL,                      //     JSObjectDeletePropertyCallback      deleteProperty;
+    NULL,                      //     JSObjectGetPropertyNamesCallback    getPropertyNames;
+    NULL,                      //     JSObjectCallAsFunctionCallback      callAsFunction;
+    NULL,                      //     JSObjectCallAsConstructorCallback   callAsConstructor;
+    NULL,                      //     JSObjectHasInstanceCallback         hasInstance;
+    NULL,                      //     JSObjectConvertToTypeCallback       convertToType;
+};
 //struct JSClass gwkjs_object_instance_class = {
 //    "GObject_Object",
 //    JSCLASS_HAS_PRIVATE |
@@ -1934,14 +1973,15 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //    g_base_info_unref((GIBaseInfo*) gtype_struct);
 //    return JS_TRUE;
 //}
-//
-//void
-//gwkjs_define_object_class(JSContextRef      context,
-//                        JSObjectRef       in_object,
-//                        GIObjectInfo   *info,
-//                        GType           gtype,
-//                        JSObjectRef      *constructor_p)
-//{
+
+JSObjectRef
+gwkjs_define_object_class(JSContextRef      context,
+                        JSObjectRef       in_object,
+                        GIObjectInfo   *info,
+                        GType           gtype,
+                        JSObjectRef      *constructor_p)
+{
+// TODO: implement
 //    const char *constructor_name;
 //    JSObjectRef prototype;
 //    JSObjectRef constructor;
@@ -2043,75 +2083,79 @@ GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
 //
 //    if (constructor_p)
 //        *constructor_p = constructor;
-//}
-//
-//static JSObject*
-//peek_js_obj(GObject *gobj)
-//{
-//    JSObjectRef object = (JSObject*) g_object_get_qdata(gobj, gwkjs_object_priv_quark());
-//
-//    if (G_UNLIKELY (object == (JSObject*)(-1))) {
-//        g_critical ("Object %p (a %s) resurfaced after the JS wrapper was finalized. "
-//                    "This is some library doing dubious memory management inside dispose()",
-//                    gobj, g_type_name(G_TYPE_FROM_INSTANCE(object)));
-//        return NULL; /* return null to associate again with a new wrapper */
-//    }
-//
-//    return object;
-//}
-//
+}
+
+static JSObjectRef
+peek_js_obj(GObject *gobj)
+{
+    JSObjectRef object = (JSObjectRef) g_object_get_qdata(gobj, gwkjs_object_priv_quark());
+
+    if (G_UNLIKELY (object == (JSObjectRef)(-1))) {
+        g_critical ("Object %p (a %s) resurfaced after the JS wrapper was finalized. "
+                    "This is some library doing dubious memory management inside dispose()",
+                    gobj, g_type_name(G_TYPE_FROM_INSTANCE(object)));
+        return NULL; /* return null to associate again with a new wrapper */
+    }
+
+    return object;
+}
+
 //static void
 //set_js_obj(GObject  *gobj,
 //           JSObjectRef obj)
 //{
 //    g_object_set_qdata(gobj, gwkjs_object_priv_quark(), obj);
 //}
-//
-//JSObject*
-//gwkjs_object_from_g_object(JSContextRef    context,
-//                         GObject      *gobj)
-//{
-//    JSObjectRef obj;
-//    JSObjectRef global;
-//
-//    if (gobj == NULL)
-//        return NULL;
-//
-//    obj = peek_js_obj(gobj);
-//
-//    if (obj == NULL) {
-//        /* We have to create a wrapper */
-//        JSObjectRef proto;
-//        GType gtype;
-//
-//        gwkjs_debug_marshal(GWKJS_DEBUG_GOBJECT,
-//                          "Wrapping %s with JSObject",
-//                          g_type_name_from_instance((GTypeInstance*) gobj));
-//
-//        gtype = G_TYPE_FROM_INSTANCE(gobj);
-//        proto = gwkjs_lookup_object_prototype(context, gtype);
-//
+
+JSObjectRef
+gwkjs_object_from_g_object(JSContextRef    context,
+                         GObject      *gobj)
+{
+    JSObjectRef obj;
+    JSObjectRef global;
+
+    if (gobj == NULL)
+        return NULL;
+
+    obj = peek_js_obj(gobj);
+
+    if (obj == NULL) {
+        /* We have to create a wrapper */
+        JSObjectRef proto;
+        GType gtype;
+
+        gwkjs_debug_marshal(GWKJS_DEBUG_GOBJECT,
+                          "Wrapping %s with JSObject",
+                          g_type_name_from_instance((GTypeInstance*) gobj));
+
+        gtype = G_TYPE_FROM_INSTANCE(gobj);
+        proto = gwkjs_lookup_object_prototype(context, gtype);
+
+        obj = gwkjs_new_object(context, NULL, proto, gwkjs_get_import_global (context));
+// TODO: implement the following
 //        obj = JS_NewObjectWithGivenProto(context,
 //                                         JS_GetClass(proto), proto,
 //                                         gwkjs_get_import_global (context));
 //
-//        if (obj == NULL)
-//            goto out;
-//
+
+        if (obj == NULL)
+            goto out;
+
+// TODO: implement the following
 //        init_object_private(context, obj);
 //
-//        g_object_ref_sink(gobj);
+        g_object_ref_sink(gobj);
 //        associate_js_gobject(context, obj, gobj);
-//
-//        /* see the comment in init_object_instance() for this */
-//        g_object_unref(gobj);
-//
-//        g_assert(peek_js_obj(gobj) == obj);
-//    }
-//
-// out:
-//    return obj;
-//}
+
+        /* see the comment in init_object_instance() for this */
+        g_object_unref(gobj);
+
+        g_assert(peek_js_obj(gobj) == obj);
+    }
+
+ out:
+    return obj;
+}
 
 GObject*
 gwkjs_g_object_from_object(JSContextRef    context,
@@ -3089,11 +3133,14 @@ gwkjs_typecheck_object(JSContextRef context,
 //    return JS_TRUE;
 //}
 //
-//JSBool
-//gwkjs_lookup_object_constructor(JSContextRef context,
-//                              GType      gtype,
-//                              jsval     *value_p)
-//{
+JSBool
+gwkjs_lookup_object_constructor(JSContextRef context,
+                              GType      gtype,
+                              jsval     *value_p)
+{
+    gwkjs_throw(context, "gwkjs_lookup_object_constructor  not implemented");
+    return FALSE;
+//TODO: implement
 //    JSObjectRef constructor;
 //    GIObjectInfo *object_info;
 //
@@ -3113,4 +3160,4 @@ gwkjs_typecheck_object(JSContextRef context,
 //
 //    *value_p = OBJECT_TO_JSVAL(constructor);
 //    return JS_TRUE;
-//}
+}
