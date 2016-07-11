@@ -263,11 +263,11 @@ gwkjs_array_get_element(JSContextRef context,
 
 JSObjectRef gwkjs_get_import_global              (JSContextRef    context);
 
-jsval       gwkjs_get_global_slot              (JSContextRef       context,
+JSValueRef  gwkjs_get_global_slot              (JSContextRef       context,
                                                 GwkjsGlobalSlot    slot);
 void        gwkjs_set_global_slot              (JSContextRef       context,
                                                 GwkjsGlobalSlot    slot,
-                                                jsval            value);
+                                                JSValueRef         value);
 
 gboolean    gwkjs_object_require_property      (JSContextRef     context,
                                                 JSObjectRef      obj,

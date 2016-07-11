@@ -221,34 +221,8 @@ repo_finalize(JSObjectRef obj)
     GWKJS_DEC_COUNTER(repo);
     g_slice_free(Repo, priv);
 }
-//
-///* The bizarre thing about this vtable is that it applies to both
-// * instances of the object, and to the prototype that instances of the
-// * class have.
-// */
-//struct JSClass gwkjs_repo_class = {
-//    "GIRepository", /* means "new GIRepository()" works */
-//    JSCLASS_HAS_PRIVATE |
-//    JSCLASS_NEW_RESOLVE,
-//    JS_PropertyStub,
-//    JS_DeletePropertyStub,
-//    JS_PropertyStub,
-//    JS_StrictPropertyStub,
-//    JS_EnumerateStub,
-//    (JSResolveOp) repo_new_resolve, /* needs cast since it's the new resolve signature */
-//    JS_ConvertStub,
-//    repo_finalize,
-//    JSCLASS_NO_OPTIONAL_MEMBERS
-//};
-//
-//JSPropertySpec gwkjs_repo_proto_props[] = {
-//    { NULL }
-//};
-//
-//JSFunctionSpec gwkjs_repo_proto_funcs[] = {
-//    { NULL }
-//};
-//
+
+
 JSClassDefinition gwkjs_repo_class = {
     0,                         //     Version
     kJSPropertyAttributeNone,  //     JSClassAttributes
@@ -602,18 +576,13 @@ gwkjs_define_info(JSContextRef context,
 
     return ret;
 }
-//
+
 ///* Get the "unknown namespace", which should be used for unnamespaced types */
 JSObjectRef
 gwkjs_lookup_private_namespace(JSContextRef context)
 {
-    gwkjs_throw(context, " gwkjs_lookup_private_namespace  not implemented");
-    return NULL;
-//TODO: implement
-//    jsid ns_name;
-//
-//    ns_name = gwkjs_context_get_const_string(context, GWKJS_STRING_PRIVATE_NS_MARKER);
-//    return gwkjs_lookup_namespace_object_by_name(context, ns_name);
+    const gchar *ns_name = gwkjs_context_get_const_string(context, GWKJS_STRING_PRIVATE_NS_MARKER);
+    return gwkjs_lookup_namespace_object_by_name(context, ns_name);
 }
 
 /* Get the namespace object that the GIBaseInfo should be inside */
@@ -621,23 +590,18 @@ JSObjectRef
 gwkjs_lookup_namespace_object(JSContextRef  context,
                             GIBaseInfo *info)
 {
-    gwkjs_throw(context, " gwkjs_lookup_namespace_object not implemented");
-    return NULL;
-    //TODO: implement
-//    const char *ns;
-//    jsid ns_name;
-//
-//    ns = g_base_info_get_namespace(info);
-//    if (ns == NULL) {
-//        gwkjs_throw(context, "%s '%s' does not have a namespace",
-//                     gwkjs_info_type_name(g_base_info_get_type(info)),
-//                     g_base_info_get_name(info));
-//
-//        return NULL;
-//    }
-//
-//    ns_name = gwkjs_intern_string_to_id(context, ns);
-//    return gwkjs_lookup_namespace_object_by_name(context, ns_name);
+    const char *ns;
+
+    ns = g_base_info_get_namespace(info);
+    if (ns == NULL) {
+        gwkjs_throw(context, "%s '%s' does not have a namespace",
+                     gwkjs_info_type_name(g_base_info_get_type(info)),
+                     g_base_info_get_name(info));
+
+        return NULL;
+    }
+
+    return gwkjs_lookup_namespace_object_by_name(context, ns);
 }
 
 static JSObjectRef
@@ -678,55 +642,46 @@ lookup_override_function(JSContextRef  context,
  fail:
     return NULL;
 }
-//
-//JSObject*
-//gwkjs_lookup_namespace_object_by_name(JSContextRef      context,
-//                                    jsid            ns_name)
-//{
-//    JSObjectRef repo_obj;
-//    jsval importer;
-//    jsval girepository;
-//    jsval ns_obj;
-//    jsid gi_name;
-//
-//    JS_BeginRequest(context);
-//
-//    importer = gwkjs_get_global_slot(context, GWKJS_GLOBAL_SLOT_IMPORTS);
-//    g_assert(JSVAL_IS_OBJECT(importer));
-//
-//    girepository = JSVAL_VOID;
-//    gi_name = gwkjs_context_get_const_string(context, GWKJS_STRING_GI_MODULE);
-//    if (!gwkjs_object_require_property(context, JSVAL_TO_OBJECT(importer), "importer",
-//                                     gi_name, &girepository) ||
-//        !JSVAL_IS_OBJECT(girepository)) {
-//        gwkjs_log_exception(context);
-//        gwkjs_throw(context, "No gi property in importer");
-//        goto fail;
-//    }
-//
-//    repo_obj = JSVAL_TO_OBJECT(girepository);
-//
-//    if (!gwkjs_object_require_property(context, repo_obj, "GI repository object", ns_name, &ns_obj)) {
-//        goto fail;
-//    }
-//
-//    if (!JSVAL_IS_OBJECT(ns_obj)) {
-//        char *name;
-//
-//        gwkjs_get_string_id(context, ns_name, &name);
-//        gwkjs_throw(context, "Namespace '%s' is not an object?", name);
-//
-//        g_free(name);
-//        goto fail;
-//    }
-//
-//    JS_EndRequest(context);
-//    return JSVAL_TO_OBJECT(ns_obj);
-//
-// fail:
-//    JS_EndRequest(context);
-//    return NULL;
-//}
+
+JSObjectRef
+gwkjs_lookup_namespace_object_by_name(JSContextRef      context,
+                                      const gchar*      ns_name)
+{
+    JSObjectRef repo_obj;
+    jsval importer = NULL;
+    jsval girepository = NULL;
+    jsval ns_obj = NULL;
+    const gchar *gi_name;
+
+
+    importer = gwkjs_get_global_slot(context, GWKJS_GLOBAL_SLOT_IMPORTS);
+    g_assert(JSValueIsObject(context, importer));
+
+    girepository = NULL;
+    gi_name = gwkjs_context_get_const_string(context, GWKJS_STRING_GI_MODULE);
+    if (!gwkjs_object_require_property(context, JSValueToObject(context, importer, NULL),
+                                       "importer", gi_name, &girepository) ||
+        !JSValueIsObject(context, girepository)) {
+        gwkjs_throw(context, "No gi property in importer");
+        goto fail;
+    }
+
+    repo_obj = JSValueToObject(context, girepository, NULL);
+
+    if (!gwkjs_object_require_property(context, repo_obj, "GI repository object", ns_name, &ns_obj)) {
+        goto fail;
+    }
+
+    if (!JSValueIsObject(context, ns_obj)) {
+        gwkjs_throw(context, "Namespace '%s' is not an object?", ns_name);
+        goto fail;
+    }
+
+    return JSValueToObject(context, ns_obj, NULL);
+
+ fail:
+    return NULL;
+}
 
 const char*
 gwkjs_info_type_name(GIInfoType type)

@@ -42,7 +42,7 @@ JSObjectRef gwkjs_lookup_namespace_object         (JSContextRef  context,
                                                    GIBaseInfo     *info);
 
 JSObjectRef gwkjs_lookup_namespace_object_by_name (JSContextRef  context,
-                                                   jsid            name);
+                                                   const gchar  *name);
 
 JSObjectRef gwkjs_lookup_function_object          (JSContextRef context,
                                                    GIFunctionInfo *info);
