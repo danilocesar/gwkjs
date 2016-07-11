@@ -1571,6 +1571,7 @@ gwkjs_eval_with_scope(JSContextRef context,
 {
     int start_line_number = 1;
     JSValueRef retval = NULL;
+    JSValueRef locException = NULL;
 
     if (script_len < 0)
         script_len = strlen(script);
@@ -1594,8 +1595,11 @@ gwkjs_eval_with_scope(JSContextRef context,
     if (filename)
         jsfilename = gwkjs_cstring_to_jsstring(filename);
 
-    retval = JSEvaluateScript(context, jsscript, object, jsfilename, start_line_number, exception);
-	if (JSValueIsObject(context, *exception)) {
+    retval = JSEvaluateScript(context, jsscript, object, jsfilename, start_line_number, &locException);
+	if (JSValueIsObject(context, locException)) {
+	    if (exception)
+	        *exception = locException;
+
 		// There was a problem during script execution,
 		// We will return an exception instead
 		return FALSE;

@@ -333,7 +333,7 @@ repo_new(JSContextRef context)
      * gobject-introspection does not yet search a path properly.
      */
     {
-        //JSValueRef val = gwkjs_object_get_property(context, repo, "GLib", NULL);
+        JSValueRef val = gwkjs_object_get_property(context, repo, "GLib", NULL);
     }
 
     return repo;
