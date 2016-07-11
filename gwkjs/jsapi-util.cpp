@@ -42,6 +42,8 @@
 static GMutex gc_lock;
 static JSClassRef empty_class_ref = NULL;
 
+static JSValueRef* global_slots = NULL;
+
 JSObjectRef gwkjs_new_object(JSContextRef context,
                              JSClassRef clas,
                              JSObjectRef proto,
@@ -288,25 +290,43 @@ gwkjs_make_function(JSContextRef ctx, const gchar *name, JSObjectCallAsFunctionC
 //
 //    return TRUE;
 //}
-//
-//void
-//gwkjs_set_global_slot (JSContextRef     context,
-//                     GwkjsGlobalSlot  slot,
-//                     jsval          value)
-//{
-//    JSObjectRef global;
-//    global = JS_GetGlobalObject(context);
-//    JS_SetReservedSlot(global, JSCLASS_GLOBAL_SLOT_COUNT + slot, value);
-//}
-//
-//jsval
-//gwkjs_get_global_slot (JSContextRef     context,
-//                     GwkjsGlobalSlot  slot)
-//{
-//    JSObjectRef global;
-//    global = JS_GetGlobalObject(context);
-//    return JS_GetReservedSlot(global, JSCLASS_GLOBAL_SLOT_COUNT + slot);
-//}
+
+void
+inline init_global_slots()
+{
+    if (!global_slots) {
+        global_slots = g_new0(JSValueRef, GWKJS_GLOBAL_SLOT_LAST);
+        int i;
+        for (i = 0; i< GWKJS_GLOBAL_SLOT_LAST; i++) {
+            global_slots[i] = NULL;
+        }
+    }
+}
+
+void
+gwkjs_set_global_slot (JSContextRef     context,
+                     GwkjsGlobalSlot  slot,
+                     JSValueRef          value)
+{
+    init_global_slots();
+    if (global_slots[slot] != NULL) {
+        JSValueUnprotect(context, global_slots[slot]);
+    }
+
+    global_slots[slot] = value;
+    JSValueProtect(context, value);
+}
+
+jsval
+gwkjs_get_global_slot (JSContextRef     context,
+                     GwkjsGlobalSlot  slot)
+{
+    init_global_slots();
+    if (global_slots[slot] != NULL) {
+        return global_slots[slot];
+    }
+    return JSValueMakeUndefined(context);
+}
 
 /* Returns whether the object had the property; if the object did
  * not have the property, always sets an exception. Treats
@@ -323,9 +343,8 @@ gwkjs_object_require_property(JSContextRef  context,
                               const char   *property_name,
                               JSValueRef   *value_p)
 {
-    JSValueRef value;
+    JSValueRef value = NULL;
 
-    value = NULL;
     if (value_p)
         *value_p = value;
 

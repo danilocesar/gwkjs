@@ -644,44 +644,39 @@ static JSObjectRef
 lookup_override_function(JSContextRef  context,
                          const gchar   *ns_name)
 {
+    jsval overridespkg;
+    jsval module;
+    jsval function;
+    JSObjectRef importer = NULL;
+    jsval importer_val = NULL;
+    const gchar * overrides_name = NULL;
+    const gchar * object_init_name = NULL;
+
+
+    importer_val = gwkjs_get_global_slot(context, GWKJS_GLOBAL_SLOT_IMPORTS);
+    g_assert(JSValueIsObject(context, importer_val));
+    importer = JSValueToObject(context, importer_val, NULL);
+
+    overrides_name = gwkjs_context_get_const_string(context, GWKJS_STRING_GI_OVERRIDES);
+    if (!gwkjs_object_require_property(context, importer, "importer",
+                                       overrides_name, &overridespkg) ||
+        !JSValueIsObject(context, overridespkg))
+        goto fail;
+
+    if (!gwkjs_object_require_property(context, JSValueToObject(context, overridespkg, NULL), "GI repository object", ns_name, &module)
+        || !JSValueIsObject(context, module))
+        goto fail;
+
+    object_init_name = gwkjs_context_get_const_string(context, GWKJS_STRING_GOBJECT_INIT);
+    if (!gwkjs_object_require_property(context, JSValueToObject(context, module, NULL), "override module",
+                                     object_init_name, &function) ||
+        !JSValueIsObject(context, function))
+        goto fail;
+
+    return JSValueToObject(context, function, NULL);
+
+ fail:
     return NULL;
-//TODO: IMPLEMENT
-//    jsval importer;
-//    jsval overridespkg;
-//    jsval module;
-//    jsval function;
-//    jsid overrides_name, object_init_name;
-//
-//    JS_BeginRequest(context);
-//
-//    importer = gwkjs_get_global_slot(context, GWKJS_GLOBAL_SLOT_IMPORTS);
-//    g_assert(JSVAL_IS_OBJECT(importer));
-//
-//    overridespkg = JSVAL_VOID;
-//    overrides_name = gwkjs_context_get_const_string(context, GWKJS_STRING_GI_OVERRIDES);
-//    if (!gwkjs_object_require_property(context, JSVAL_TO_OBJECT(importer), "importer",
-//                                     overrides_name, &overridespkg) ||
-//        !JSVAL_IS_OBJECT(overridespkg))
-//        goto fail;
-//
-//    module = JSVAL_VOID;
-//    if (!gwkjs_object_require_property(context, JSVAL_TO_OBJECT(overridespkg), "GI repository object", ns_name, &module)
-//        || !JSVAL_IS_OBJECT(module))
-//        goto fail;
-//
-//    object_init_name = gwkjs_context_get_const_string(context, GWKJS_STRING_GOBJECT_INIT);
-//    if (!gwkjs_object_require_property(context, JSVAL_TO_OBJECT(module), "override module",
-//                                     object_init_name, &function) ||
-//        !JSVAL_IS_OBJECT(function))
-//        goto fail;
-//
-//    JS_EndRequest(context);
-//    return JSVAL_TO_OBJECT(function);
-//
-// fail:
-//    JS_ClearPendingException(context);
-//    JS_EndRequest(context);
-//    return NULL;
 }
 //
 //JSObject*

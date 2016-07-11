@@ -1307,6 +1307,9 @@ gwkjs_create_root_importer(GwkjsContext   *c,
                                      initial_search_path,
                                      add_standard_search_path,
                                      TRUE, NULL);
+
+    gwkjs_set_global_slot(context, GWKJS_GLOBAL_SLOT_IMPORTS, importer);
+
     return importer;
 }
 

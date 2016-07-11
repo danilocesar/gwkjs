@@ -44,14 +44,14 @@ G_BEGIN_DECLS
 //  GWKJS_UTIL_ERROR_ARGUMENT_OVERFLOW,
 //  GWKJS_UTIL_ERROR_ARGUMENT_TYPE_MISMATCH
 //};
-//
-//typedef enum {
-//    GWKJS_GLOBAL_SLOT_IMPORTS,
-//    GWKJS_GLOBAL_SLOT_KEEP_ALIVE,
-//    GWKJS_GLOBAL_SLOT_BYTE_ARRAY_PROTOTYPE,
-//    GWKJS_GLOBAL_SLOT_LAST,
-//} GwkjsGlobalSlot;
-//
+
+typedef enum {
+    GWKJS_GLOBAL_SLOT_IMPORTS,
+    GWKJS_GLOBAL_SLOT_KEEP_ALIVE,
+    GWKJS_GLOBAL_SLOT_BYTE_ARRAY_PROTOTYPE,
+    GWKJS_GLOBAL_SLOT_LAST,
+} GwkjsGlobalSlot;
+
 //typedef struct GwkjsRootedArray GwkjsRootedArray;
 //
 ///* Flags that should be set on properties exported from native code modules.
@@ -263,11 +263,11 @@ gwkjs_array_get_element(JSContextRef context,
 
 JSObjectRef gwkjs_get_import_global              (JSContextRef    context);
 
-//jsval       gwkjs_get_global_slot              (JSContextRef       context,
-//                                                GwkjsGlobalSlot    slot);
-//void        gwkjs_set_global_slot              (JSContextRef       context,
-//                                                GwkjsGlobalSlot    slot,
-//                                                jsval            value);
+jsval       gwkjs_get_global_slot              (JSContextRef       context,
+                                                GwkjsGlobalSlot    slot);
+void        gwkjs_set_global_slot              (JSContextRef       context,
+                                                GwkjsGlobalSlot    slot,
+                                                jsval            value);
 
 gboolean    gwkjs_object_require_property      (JSContextRef     context,
                                                 JSObjectRef      obj,

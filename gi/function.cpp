@@ -1744,7 +1744,7 @@ function_new(JSContextRef      context,
         return NULL;
     }
     JSObjectSetPrototype(context, function, prototype);
-    
+
     priv = g_slice_new0(Function);
 
     GWKJS_INC_COUNTER(function);
