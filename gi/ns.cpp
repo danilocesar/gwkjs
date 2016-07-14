@@ -45,7 +45,7 @@ static JSClassRef gwkjs_ns_class_ref = NULL;
 
 GWKJS_DEFINE_PRIV_FROM_JS(Ns, gwkjs_ns_class)
 
-static JSValueRef 
+static JSValueRef
 ns_get_property(JSContextRef context,
                 JSObjectRef obj,
                 JSStringRef property_name,

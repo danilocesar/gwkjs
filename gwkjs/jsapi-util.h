@@ -357,12 +357,13 @@ JSBool      gwkjs_log_exception_full           (JSContextRef       context,
 //                                              jsval            value);
 //void        gwkjs_explain_scope                (JSContextRef       context,
 //                                              const char      *title);
-//JSBool      gwkjs_call_function_value          (JSContextRef       context,
-//                                              JSObjectRef        obj,
-//                                              jsval            fval,
-//                                              unsigned         argc,
-//                                              jsval           *argv,
-//                                              jsval           *rval);
+
+JSBool      gwkjs_call_function_value          (JSContextRef       context,
+                                              JSObjectRef        obj,
+                                              jsval            fval,
+                                              unsigned         argc,
+                                              const JSValueRef argv[],
+                                              jsval           *rval);
 ///* TODO: removed error reporter
 //void        gwkjs_error_reporter               (JSContextRef       context,
 //                                              const char      *message,

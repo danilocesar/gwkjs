@@ -1,117 +1,116 @@
-///* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-///*
-// * Copyright (c) 2008  litl, LLC
-// *
-// * Permission is hereby granted, free of charge, to any person obtaining a copy
-// * of this software and associated documentation files (the "Software"), to
-// * deal in the Software without restriction, including without limitation the
-// * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-// * sell copies of the Software, and to permit persons to whom the Software is
-// * furnished to do so, subject to the following conditions:
-// *
-// * The above copyright notice and this permission notice shall be included in
-// * all copies or substantial portions of the Software.
-// *
-// * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-// * IN THE SOFTWARE.
-// */
-//
-//#include <config.h>
-//
-//#include "keep-alive.h"
-//
-//#include <gwkjs/gwkjs-module.h>
-//#include <gwkjs/compat.h>
-//
-//#include <util/log.h>
-//#include <util/glib.h>
-//
-//typedef struct {
-//    GwkjsUnrootedFunc notify;
-//    JSObjectRef child;
-//    void *data;
-//} Child;
-//
-//typedef struct {
-//    GHashTable *children;
-//    unsigned int inside_finalize : 1;
-//    unsigned int inside_trace : 1;
-//} KeepAlive;
-//
-//extern JSClassDefinition gwkjs_keep_alive_class;
-//static JSClassRef gwkjs_keep_aliveclass_ref = NULL;
-//
-//GWKJS_DEFINE_PRIV_FROM_JS(KeepAlive, gwkjs_keep_alive_class)
-//
-//static guint
-//child_hash(gconstpointer  v)
-//{
-//    const Child *child = (const Child *) v;
-//
-//    return
-//        GPOINTER_TO_UINT(child->notify) ^
-//        GPOINTER_TO_UINT(child->child) ^
-//        GPOINTER_TO_UINT(child->data);
-//}
-//
-//static gboolean
-//child_equal (gconstpointer  v1,
-//             gconstpointer  v2)
-//{
-//    const Child *child1 = (const Child *) v1;
-//    const Child *child2 = (const Child *) v2;
-//
-//    /* notify is most likely to be equal, so check it last */
-//    return child1->data == child2->data &&
-//        child1->child == child2->child &&
-//        child1->notify == child2->notify;
-//}
-//
-//static void
-//child_free(void *data)
-//{
-//    Child *child = (Child *) data;
-//    g_slice_free(Child, child);
-//}
-//
-//GWKJS_NATIVE_CONSTRUCTOR_DEFINE_ABSTRACT(keep_alive)
-//
-//static void
-//keep_alive_finalize(JSFreeOp *fop,
-//                    JSObjectRef obj)
-//{
-//    KeepAlive *priv;
-//    void *key;
-//    void *value;
-//
-//    priv = (KeepAlive *) JS_GetPrivate(obj);
-//
-//    gwkjs_debug_lifecycle(GWKJS_DEBUG_KEEP_ALIVE,
-//                        "keep_alive finalizing, obj %p priv %p", obj, priv);
-//
-//    if (priv == NULL)
-//        return; /* we are the prototype, not a real instance */
-//
-//    priv->inside_finalize = TRUE;
-//
-//    while (gwkjs_g_hash_table_steal_one(priv->children,
-//                                      &key, &value)) {
-//        Child *child = (Child *) value;
-//        if (child->notify)
-//            (* child->notify) (child->child, child->data);
-//
-//        child_free(child);
-//    }
-//
-//    g_hash_table_destroy(priv->children);
-//    g_slice_free(KeepAlive, priv);
-//}
-//
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+/*
+ * Copyright (c) 2008  litl, LLC
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+#include <config.h>
+
+#include "keep-alive.h"
+
+#include <gwkjs/gwkjs-module.h>
+#include <gwkjs/compat.h>
+
+#include <util/log.h>
+#include <util/glib.h>
+
+typedef struct {
+    GwkjsUnrootedFunc notify;
+    JSObjectRef child;
+    void *data;
+} Child;
+
+typedef struct {
+    GHashTable *children;
+    unsigned int inside_finalize : 1;
+    unsigned int inside_trace : 1;
+} KeepAlive;
+
+extern JSClassDefinition gwkjs_keep_alive_class;
+static JSClassRef gwkjs_keep_alive_class_ref = NULL;
+
+GWKJS_DEFINE_PRIV_FROM_JS(KeepAlive, gwkjs_keep_alive_class)
+
+static guint
+child_hash(gconstpointer  v)
+{
+    const Child *child = (const Child *) v;
+
+    return
+        GPOINTER_TO_UINT(child->notify) ^
+        GPOINTER_TO_UINT(child->child) ^
+        GPOINTER_TO_UINT(child->data);
+}
+
+static gboolean
+child_equal (gconstpointer  v1,
+             gconstpointer  v2)
+{
+    const Child *child1 = (const Child *) v1;
+    const Child *child2 = (const Child *) v2;
+
+    /* notify is most likely to be equal, so check it last */
+    return child1->data == child2->data &&
+        child1->child == child2->child &&
+        child1->notify == child2->notify;
+}
+
+static void
+child_free(void *data)
+{
+    Child *child = (Child *) data;
+    g_slice_free(Child, child);
+}
+
+GWKJS_NATIVE_CONSTRUCTOR_DEFINE_ABSTRACT(keep_alive)
+
+static void
+keep_alive_finalize(JSObjectRef obj)
+{
+    KeepAlive *priv;
+    void *key;
+    void *value;
+
+    priv = (KeepAlive *) JSObjectGetPrivate(obj);
+
+    gwkjs_debug_lifecycle(GWKJS_DEBUG_KEEP_ALIVE,
+                        "keep_alive finalizing, obj %p priv %p", obj, priv);
+
+    if (priv == NULL)
+        return; /* we are the prototype, not a real instance */
+
+    priv->inside_finalize = TRUE;
+
+    while (gwkjs_g_hash_table_steal_one(priv->children,
+                                      &key, &value)) {
+        Child *child = (Child *) value;
+        if (child->notify)
+            (* child->notify) (child->child, child->data);
+
+        child_free(child);
+    }
+
+    g_hash_table_destroy(priv->children);
+    g_slice_free(KeepAlive, priv);
+}
+
 //static void
 //trace_foreach(void *key,
 //              void *value,
@@ -167,232 +166,230 @@
 //    NULL,
 //    keep_alive_trace,
 //};
-//
-//JSPropertySpec gwkjs_keep_alive_proto_props[] = {
-//    { NULL }
-//};
-//
-//JSFunctionSpec gwkjs_keep_alive_proto_funcs[] = {
-//    { NULL }
-//};
-//
-//JSObject*
-//gwkjs_keep_alive_new(JSContextRef context)
-//{
-//    KeepAlive *priv;
-//    JSObjectRef keep_alive = NULL;
-//    JSObjectRef global;
-//    JSBool found;
-//
-//    /* This function creates an unattached KeepAlive object; following our
-//     * general strategy, we have a single KeepAlive class with a constructor
-//     * stored on our single "load global" pseudo-global object, and we create
-//     * instances with the load global as parent.
-//     */
-//
-//    g_assert(context != NULL);
-//
-//    JS_BeginRequest(context);
-//
-//    global = gwkjs_get_import_global(context);
-//
-//    g_assert(global != NULL);
-//
-//    if (!JS_HasProperty(context, global, gwkjs_keep_alive_class.name, &found))
-//        goto out;
-//
-//    if (!found) {
-//        JSObjectRef prototype;
-//
-//        gwkjs_debug(GWKJS_DEBUG_KEEP_ALIVE,
-//                  "Initializing keep-alive class in context %p global %p",
-//                  context, global);
-//
-//        prototype = JS_InitClass(context, global,
-//                                 /* parent prototype JSObject* for
-//                                  * prototype; NULL for
-//                                  * Object.prototype
-//                                  */
-//                                 NULL,
-//                                 &gwkjs_keep_alive_class,
-//                                 /* constructor for instances (NULL for
-//                                  * none - just name the prototype like
-//                                  * Math - rarely correct)
-//                                  */
-//                                 gwkjs_keep_alive_constructor,
-//                                 /* number of constructor args */
-//                                 0,
-//                                 /* props of prototype */
-//                                 &gwkjs_keep_alive_proto_props[0],
-//                                 /* funcs of prototype */
-//                                 &gwkjs_keep_alive_proto_funcs[0],
-//                                 /* props of constructor, MyConstructor.myprop */
-//                                 NULL,
-//                                 /* funcs of constructor, MyConstructor.myfunc() */
-//                                 NULL);
-//        if (prototype == NULL)
-//            g_error("Can't init class %s", gwkjs_keep_alive_class.name);
-//
-//        gwkjs_debug(GWKJS_DEBUG_KEEP_ALIVE, "Initialized class %s prototype %p",
-//                  gwkjs_keep_alive_class.name, prototype);
-//    }
-//
-//    gwkjs_debug(GWKJS_DEBUG_KEEP_ALIVE,
-//              "Creating new keep-alive object for context %p global %p",
-//              context, global);
-//
-//    keep_alive = JS_NewObject(context, &gwkjs_keep_alive_class, NULL, global);
-//    if (keep_alive == NULL) {
+
+JSClassDefinition gwkjs_keep_alive_class = {
+    0,                           //     Version
+    kJSPropertyAttributeNone,    //     JSClassAttributes
+    "__private_GwkjsKeepAlive",  //     const char* className;
+    NULL,                        //     JSClassRef parentClass;
+    NULL,                        //     const JSStaticValue*                staticValues;
+    NULL,                        //     const JSStaticFunction*             staticFunctions;
+    NULL,                        //     JSObjectInitializeCallback          initialize;
+    keep_alive_finalize,         //     JSObjectFinalizeCallback            finalize;
+    NULL,                        //     JSObjectHasPropertyCallback         hasProperty;
+    NULL,                        //     JSObjectGetPropertyCallback         getProperty;
+    NULL,                        //     JSObjectSetPropertyCallback         setProperty;
+    NULL,                        //     JSObjectDeletePropertyCallback      deleteProperty;
+    NULL,                        //     JSObjectGetPropertyNamesCallback    getPropertyNames;
+    NULL,                        //     JSObjectCallAsFunctionCallback      callAsFunction;
+    gwkjs_keep_alive_constructor,//     JSObjectCallAsConstructorCallback   callAsConstructor;
+    NULL,                        //     JSObjectHasInstanceCallback         hasInstance;
+    NULL,                        //     JSObjectConvertToTypeCallback       convertToType;
+};
+
+
+
+JSObjectRef
+gwkjs_keep_alive_new(JSContextRef context)
+{
+    KeepAlive *priv;
+    JSObjectRef keep_alive = NULL;
+    JSObjectRef global;
+    JSValueRef exception = NULL;
+    JSBool found;
+    JSObjectRef prototype;
+
+
+    /* This function creates an unattached KeepAlive object; following our
+     * general strategy, we have a single KeepAlive class with a constructor
+     * stored on our single "load global" pseudo-global object, and we create
+     * instances with the load global as parent.
+     */
+
+    g_assert(context != NULL);
+
+    global = gwkjs_get_import_global(context);
+
+    g_assert(global != NULL);
+
+    if (!gwkjs_keep_alive_class_ref) {
+        gwkjs_keep_alive_class_ref = JSClassCreate(&gwkjs_keep_alive_class);
+    }
+
+    found = gwkjs_object_has_property(context, global, gwkjs_keep_alive_class.className);
+
+    if (!found) {
+        gwkjs_debug(GWKJS_DEBUG_KEEP_ALIVE,
+                  "Initializing keep-alive class in context %p global %p",
+                  context, global);
+
+        prototype = JSObjectMake(context, gwkjs_keep_alive_class_ref, NULL);
+        gwkjs_object_set_property(context, global, gwkjs_keep_alive_class.className,
+                                  prototype, GWKJS_PROTO_PROP_FLAGS, &exception);
+
+        if (prototype == NULL || exception)
+            g_error("Can't init class %s", gwkjs_keep_alive_class.className);
+
+        gwkjs_debug(GWKJS_DEBUG_KEEP_ALIVE, "Initialized class %s prototype %p",
+                  gwkjs_keep_alive_class.className, prototype);
+    } else {
+        JSValueRef proto_val = gwkjs_object_get_property(context, global,
+                                                         gwkjs_keep_alive_class.className, &exception);
+
+        if (exception || JSVAL_IS_NULL(context, proto_val) || !JSValueIsObject(context, proto_val))
+            g_error("Can't get protoType for class %s", gwkjs_keep_alive_class.className);
+
+        prototype = JSValueToObject(context, proto_val, NULL);
+
+    }
+    g_assert(prototype != NULL);
+
+    gwkjs_debug(GWKJS_DEBUG_KEEP_ALIVE,
+              "Creating new keep-alive object for context %p global %p",
+              context, global);
+
+    keep_alive = gwkjs_new_object(context, gwkjs_keep_alive_class_ref, prototype, global);
+    if (keep_alive == NULL) {
+// TODO: implement
 //        gwkjs_log_exception(context);
-//        g_error("Failed to create keep_alive object");
-//    }
-//
-//    priv = g_slice_new0(KeepAlive);
-//    priv->children = g_hash_table_new_full(child_hash, child_equal, NULL, child_free);
-//
-//    g_assert(priv_from_js(context, keep_alive) == NULL);
-//    JS_SetPrivate(keep_alive, priv);
-//
-//    gwkjs_debug_lifecycle(GWKJS_DEBUG_KEEP_ALIVE,
-//                        "keep_alive constructor, obj %p priv %p", keep_alive, priv);
-//
-// out:
-//    JS_EndRequest(context);
-//
-//    return keep_alive;
-//}
-//
-//void
-//gwkjs_keep_alive_add_child(JSObjectRef          keep_alive,
-//                         GwkjsUnrootedFunc    notify,
-//                         JSObjectRef          obj,
-//                         void              *data)
-//{
-//    KeepAlive *priv;
-//    Child *child;
-//
-//    g_assert(keep_alive != NULL);
-//    priv = (KeepAlive *) JS_GetPrivate(keep_alive);
-//    g_assert(priv != NULL);
-//
-//    g_return_if_fail(!priv->inside_trace);
-//    g_return_if_fail(!priv->inside_finalize);
-//
-//    child = g_slice_new0(Child);
-//    child->notify = notify;
-//    child->child = obj;
-//    child->data = data;
-//
-//    /* this is sort of an expensive check, probably */
-//    g_return_if_fail(g_hash_table_lookup(priv->children, child) == NULL);
-//
-//    /* this overwrites any identical-by-value previous child,
-//     * but there should not be one.
-//     */
-//    g_hash_table_replace(priv->children, child, child);
-//}
-//
-//void
-//gwkjs_keep_alive_remove_child(JSObjectRef          keep_alive,
-//                            GwkjsUnrootedFunc    notify,
-//                            JSObjectRef          obj,
-//                            void              *data)
-//{
-//    KeepAlive *priv;
-//    Child child;
-//
-//    g_assert(keep_alive != NULL);
-//    priv = (KeepAlive *) JS_GetPrivate(keep_alive);
-//    g_assert(priv != NULL);
-//
-//    g_return_if_fail(!priv->inside_trace);
-//    g_return_if_fail(!priv->inside_finalize);
-//
-//    child.notify = notify;
-//    child.child = obj;
-//    child.data = data;
-//
-//    g_hash_table_remove(priv->children, &child);
-//}
-//
-//static JSObject*
-//gwkjs_keep_alive_create(JSContextRef context)
-//{
-//    JSObjectRef keep_alive;
-//
-//    JS_BeginRequest(context);
-//
-//    keep_alive = gwkjs_keep_alive_new(context);
-//    if (!keep_alive)
-//        g_error("could not create keep_alive on global object, no memory?");
-//
-//    gwkjs_set_global_slot(context, GWKJS_GLOBAL_SLOT_KEEP_ALIVE, OBJECT_TO_JSVAL(keep_alive));
-//
-//    JS_EndRequest(context);
-//    return keep_alive;
-//}
-//
-//JSObject*
-//gwkjs_keep_alive_get_global_if_exists (JSContextRef context)
-//{
-//    jsval keep_alive;
-//
-//    keep_alive = gwkjs_get_global_slot(context, GWKJS_GLOBAL_SLOT_KEEP_ALIVE);
-//
-//    if (G_LIKELY (JSVAL_IS_OBJECT(keep_alive)))
-//        return JSVAL_TO_OBJECT(keep_alive);
-//    
-//    return NULL;
-//}
-//
-//JSObject*
-//gwkjs_keep_alive_get_global(JSContextRef context)
-//{
-//    JSObjectRef keep_alive = gwkjs_keep_alive_get_global_if_exists(context);
-//
-//    if (G_LIKELY(keep_alive))
-//        return keep_alive;
-//
-//    return gwkjs_keep_alive_create(context);
-//}
-//
-//void
-//gwkjs_keep_alive_add_global_child(JSContextRef         context,
-//                                GwkjsUnrootedFunc  notify,
-//                                JSObjectRef          child,
-//                                void              *data)
-//{
-//    JSObjectRef keep_alive;
-//
-//    JS_BeginRequest(context);
-//
-//    keep_alive = gwkjs_keep_alive_get_global(context);
-//
-//    gwkjs_keep_alive_add_child(keep_alive, notify, child, data);
-//
-//    JS_EndRequest(context);
-//}
-//
-//void
-//gwkjs_keep_alive_remove_global_child(JSContextRef         context,
-//                                   GwkjsUnrootedFunc  notify,
-//                                   JSObjectRef          child,
-//                                   void              *data)
-//{
-//    JSObjectRef keep_alive;
-//
-//    JS_BeginRequest(context);
-//
-//    keep_alive = gwkjs_keep_alive_get_global(context);
-//
-//    if (!keep_alive)
-//        g_error("no keep_alive property on the global object, have you "
-//                "previously added this child?");
-//
-//    gwkjs_keep_alive_remove_child(keep_alive, notify, child, data);
-//
-//    JS_EndRequest(context);
-//}
+        g_error("Failed to create keep_alive object");
+    }
+
+    priv = g_slice_new0(KeepAlive);
+    priv->children = g_hash_table_new_full(child_hash, child_equal, NULL, child_free);
+
+    g_assert(priv_from_js(keep_alive) == NULL);
+    JSObjectSetPrivate(keep_alive, priv);
+
+    gwkjs_debug_lifecycle(GWKJS_DEBUG_KEEP_ALIVE,
+                        "keep_alive constructor, obj %p priv %p", keep_alive, priv);
+
+ out:
+
+    return keep_alive;
+}
+
+void
+gwkjs_keep_alive_add_child(JSObjectRef          keep_alive,
+                         GwkjsUnrootedFunc    notify,
+                         JSObjectRef          obj,
+                         void              *data)
+{
+    KeepAlive *priv;
+    Child *child;
+
+    g_assert(keep_alive != NULL);
+    priv = (KeepAlive *) JSObjectGetPrivate(keep_alive);
+    g_assert(priv != NULL);
+
+    g_return_if_fail(!priv->inside_trace);
+    g_return_if_fail(!priv->inside_finalize);
+
+    child = g_slice_new0(Child);
+    child->notify = notify;
+    child->child = obj;
+    child->data = data;
+
+    /* this is sort of an expensive check, probably */
+    g_return_if_fail(g_hash_table_lookup(priv->children, child) == NULL);
+
+    /* this overwrites any identical-by-value previous child,
+     * but there should not be one.
+     */
+    g_hash_table_replace(priv->children, child, child);
+}
+
+void
+gwkjs_keep_alive_remove_child(JSObjectRef          keep_alive,
+                            GwkjsUnrootedFunc    notify,
+                            JSObjectRef          obj,
+                            void              *data)
+{
+    KeepAlive *priv;
+    Child child;
+
+    g_assert(keep_alive != NULL);
+    priv = (KeepAlive *) JSObjectGetPrivate(keep_alive);
+    g_assert(priv != NULL);
+
+    g_return_if_fail(!priv->inside_trace);
+    g_return_if_fail(!priv->inside_finalize);
+
+    child.notify = notify;
+    child.child = obj;
+    child.data = data;
+
+    g_hash_table_remove(priv->children, &child);
+}
+
+static JSObjectRef
+gwkjs_keep_alive_create(JSContextRef context)
+{
+    JSObjectRef keep_alive;
+
+
+    keep_alive = gwkjs_keep_alive_new(context);
+    if (!keep_alive)
+        g_error("could not create keep_alive on global object, no memory?");
+
+    gwkjs_set_global_slot(context, GWKJS_GLOBAL_SLOT_KEEP_ALIVE, keep_alive);
+
+    return keep_alive;
+}
+
+JSObjectRef
+gwkjs_keep_alive_get_global_if_exists (JSContextRef context)
+{
+    jsval keep_alive;
+
+    keep_alive = gwkjs_get_global_slot(context, GWKJS_GLOBAL_SLOT_KEEP_ALIVE);
+
+    if (G_LIKELY (JSValueIsObject(context, keep_alive)))
+        return JSValueToObject(context, keep_alive, NULL);
+
+    return NULL;
+}
+
+JSObjectRef
+gwkjs_keep_alive_get_global(JSContextRef context)
+{
+    JSObjectRef keep_alive = gwkjs_keep_alive_get_global_if_exists(context);
+
+    if (G_LIKELY(keep_alive))
+        return keep_alive;
+
+    return gwkjs_keep_alive_create(context);
+}
+
+void
+gwkjs_keep_alive_add_global_child(JSContextRef         context,
+                                GwkjsUnrootedFunc  notify,
+                                JSObjectRef          child,
+                                void              *data)
+{
+    JSObjectRef keep_alive;
+
+    keep_alive = gwkjs_keep_alive_get_global(context);
+
+    gwkjs_keep_alive_add_child(keep_alive, notify, child, data);
+}
+
+void
+gwkjs_keep_alive_remove_global_child(JSContextRef         context,
+                                   GwkjsUnrootedFunc  notify,
+                                   JSObjectRef          child,
+                                   void              *data)
+{
+    JSObjectRef keep_alive;
+
+    keep_alive = gwkjs_keep_alive_get_global(context);
+
+    if (!keep_alive)
+        g_error("no keep_alive property on the global object, have you "
+                "previously added this child?");
+
+    gwkjs_keep_alive_remove_child(keep_alive, notify, child, data);
+}
 //
 //typedef struct {
 //    GHashTableIter hashiter;

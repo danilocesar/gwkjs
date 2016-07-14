@@ -63,71 +63,71 @@ typedef struct {
     GTypeClass *klass;
 } ObjectInstance;
 
-//typedef struct {
-//    ObjectInstance *obj;
-//    GList *link;
-//    GClosure *closure;
-//} ConnectData;
-//
-//typedef enum
-//{
-//  TOGGLE_DOWN,
-//  TOGGLE_UP,
-//} ToggleDirection;
-//
-//typedef struct
-//{
-//    GObject         *gobj;
-//    ToggleDirection  direction;
-//    guint            needs_unref : 1;
-//} ToggleRefNotifyOperation;
-//
-//enum {
-//    PROP_0,
-//    PROP_JS_HANDLED,
-//};
-//
-//static GSList *object_init_list;
-//static GHashTable *class_init_properties;
-//
+typedef struct {
+    ObjectInstance *obj;
+    GList *link;
+    GClosure *closure;
+} ConnectData;
+
+typedef enum
+{
+  TOGGLE_DOWN,
+  TOGGLE_UP,
+} ToggleDirection;
+
+typedef struct
+{
+    GObject         *gobj;
+    ToggleDirection  direction;
+    guint            needs_unref : 1;
+} ToggleRefNotifyOperation;
+
+enum {
+    PROP_0,
+    PROP_JS_HANDLED,
+};
+
+static GSList *object_init_list;
+static GHashTable *class_init_properties;
+
 extern JSClassDefinition gwkjs_object_instance_class;
 static JSClassRef gwkjs_object_instance_class_ref = NULL;
-//static GThread *gwkjs_eval_thread;
-//static volatile gint pending_idle_toggles;
-//
+static GThread *gwkjs_eval_thread;
+static volatile gint pending_idle_toggles;
+
 GWKJS_DEFINE_PRIV_FROM_JS(ObjectInstance, gwkjs_object_instance_class)
-//
-//static JSObject*       peek_js_obj  (GObject   *gobj);
-//static void            set_js_obj   (GObject   *gobj,
-//                                     JSObjectRef  obj);
-//
-//static void            disassociate_js_gobject (GObject *gobj);
-//static void            invalidate_all_signals (ObjectInstance *priv);
-//typedef enum {
-//    SOME_ERROR_OCCURRED = JS_FALSE,
-//    NO_SUCH_G_PROPERTY,
-//    VALUE_WAS_SET
-//} ValueFromPropertyResult;
-//
-//static GQuark
-//gwkjs_is_custom_type_quark (void)
-//{
-//    static GQuark val = 0;
-//    if (!val)
-//        val = g_quark_from_static_string ("gwkjs::custom-type");
-//
-//    return val;
-//}
-//
-//static GQuark
-//gwkjs_is_custom_property_quark (void)
-//{
-//    static GQuark val = 0;
-//    if (!val)
-//        val = g_quark_from_static_string ("gwkjs::custom-property");
-//
-//    return val;
-//}
+
+static JSObjectRef       peek_js_obj  (GObject   *gobj);
+static void              set_js_obj   (GObject   *gobj,
+                                       JSObjectRef  obj);
+
+static void            disassociate_js_gobject (GObject *gobj);
+static void            invalidate_all_signals (ObjectInstance *priv);
+typedef enum {
+    SOME_ERROR_OCCURRED = JS_FALSE,
+    NO_SUCH_G_PROPERTY,
+    VALUE_WAS_SET
+} ValueFromPropertyResult;
+
+static GQuark
+gwkjs_is_custom_type_quark (void)
+{
+    static GQuark val = 0;
+    if (!val)
+        val = g_quark_from_static_string ("gwkjs::custom-type");
+
+    return val;
+}
+
+static GQuark
+gwkjs_is_custom_property_quark (void)
+{
+    static GQuark val = 0;
+    if (!val)
+        val = g_quark_from_static_string ("gwkjs::custom-property");
+
+    return val;
+}
 
 static GQuark
 gwkjs_object_priv_quark (void)
@@ -139,50 +139,50 @@ gwkjs_object_priv_quark (void)
     return val;
 }
 
-//static GQuark
-//gwkjs_toggle_down_quark (void)
-//{
-//    static GQuark val = 0;
-//    if (G_UNLIKELY (!val))
-//        val = g_quark_from_static_string ("gwkjs::toggle-down-quark");
-//
-//    return val;
-//}
-//
-//static GQuark
-//gwkjs_toggle_up_quark (void)
-//{
-//    static GQuark val = 0;
-//    if (G_UNLIKELY (!val))
-//        val = g_quark_from_static_string ("gwkjs::toggle-up-quark");
-//
-//    return val;
-//}
-//
-///* Plain g_type_query fails and leaves @query uninitialized for
-//   dynamic types.
-//   See https://bugzilla.gnome.org/show_bug.cgi?id=687184 and
-//   https://bugzilla.gnome.org/show_bug.cgi?id=687211
-//*/
-//static void
-//g_type_query_dynamic_safe (GType       type,
-//                           GTypeQuery *query)
-//{
-//    while (g_type_get_qdata(type, gwkjs_is_custom_type_quark()))
-//        type = g_type_parent(type);
-//
-//    g_type_query(type, query);
-//}
-//
-//static void
-//throw_priv_is_null_error(JSContextRef context)
-//{
-//    gwkjs_throw(context,
-//              "This JS object wrapper isn't wrapping a GObject."
-//              " If this is a custom subclass, are you sure you chained"
-//              " up to the parent _init properly?");
-//}
-//
+static GQuark
+gwkjs_toggle_down_quark (void)
+{
+    static GQuark val = 0;
+    if (G_UNLIKELY (!val))
+        val = g_quark_from_static_string ("gwkjs::toggle-down-quark");
+
+    return val;
+}
+
+static GQuark
+gwkjs_toggle_up_quark (void)
+{
+    static GQuark val = 0;
+    if (G_UNLIKELY (!val))
+        val = g_quark_from_static_string ("gwkjs::toggle-up-quark");
+
+    return val;
+}
+
+/* Plain g_type_query fails and leaves @query uninitialized for
+   dynamic types.
+   See https://bugzilla.gnome.org/show_bug.cgi?id=687184 and
+   https://bugzilla.gnome.org/show_bug.cgi?id=687211
+*/
+static void
+g_type_query_dynamic_safe (GType       type,
+                           GTypeQuery *query)
+{
+    while (g_type_get_qdata(type, gwkjs_is_custom_type_quark()))
+        type = g_type_parent(type);
+
+    g_type_query(type, query);
+}
+
+static void
+throw_priv_is_null_error(JSContextRef context)
+{
+    gwkjs_throw(context,
+              "This JS object wrapper isn't wrapping a GObject."
+              " If this is a custom subclass, are you sure you chained"
+              " up to the parent _init properly?");
+}
+
 //static ValueFromPropertyResult
 //init_g_param_from_property(JSContextRef  context,
 //                           const char *js_prop_name,
@@ -239,15 +239,21 @@ gwkjs_object_priv_quark (void)
 //    return VALUE_WAS_SET;
 //}
 //
-//static inline ObjectInstance *
-//proto_priv_from_js(JSContextRef context,
-//                   JSObjectRef  obj)
-//{
-//    JSObjectRef proto;
-//    JS_GetPrototype(context, obj, &proto);
-//    return priv_from_js(context, proto);
-//}
-//
+static inline ObjectInstance *
+proto_priv_from_js(JSContextRef context,
+                   JSObjectRef  obj)
+{
+    JSValueRef proto_val = JSObjectGetPrototype(context, obj);
+    JSObjectRef proto = NULL;
+
+    if (JSValueIsObject(context, proto_val))
+        proto = JSValueToObject(context, proto_val, NULL);
+    else
+        gwkjs_throw(context, "Proto_priv_from_js shouldn't return nothing");
+
+    return priv_from_js(proto);
+}
+
 static JSValueRef
 object_instance_get_prop(JSContextRef ctx,
                       JSObjectRef object,
@@ -414,44 +420,44 @@ object_instance_set_prop(JSContextRef ctx, JSObjectRef object, JSStringRef prope
 //
 //    return addr1 == addr2;
 //}
-//
-//static GIVFuncInfo *
-//find_vfunc_on_parents(GIObjectInfo *info,
-//                      gchar        *name,
-//                      gboolean     *out_defined_by_parent)
-//{
-//    GIVFuncInfo *vfunc = NULL;
-//    GIObjectInfo *parent;
-//    gboolean defined_by_parent = FALSE;
-//
-//    /* ref the first info so that we don't destroy
-//     * it when unrefing parents later */
-//    g_base_info_ref(info);
-//    parent = info;
-//
-//    /* Since it isn't possible to override a vfunc on
-//     * an interface without reimplementing it, we don't need
-//     * to search the parent types when looking for a vfunc. */
-//    vfunc = g_object_info_find_vfunc_using_interfaces(parent, name, NULL);
-//    while (!vfunc && parent) {
-//        GIObjectInfo *tmp = parent;
-//        parent = g_object_info_get_parent(tmp);
-//        g_base_info_unref(tmp);
-//        if (parent)
-//            vfunc = g_object_info_find_vfunc(parent, name);
-//
-//        defined_by_parent = TRUE;
-//    }
-//
-//    if (parent)
-//        g_base_info_unref(parent);
-//
-//    if (out_defined_by_parent)
-//        *out_defined_by_parent = defined_by_parent;
-//
-//    return vfunc;
-//}
-//
+
+static GIVFuncInfo *
+find_vfunc_on_parents(GIObjectInfo *info,
+                      gchar        *name,
+                      gboolean     *out_defined_by_parent)
+{
+    GIVFuncInfo *vfunc = NULL;
+    GIObjectInfo *parent;
+    gboolean defined_by_parent = FALSE;
+
+    /* ref the first info so that we don't destroy
+     * it when unrefing parents later */
+    g_base_info_ref(info);
+    parent = info;
+
+    /* Since it isn't possible to override a vfunc on
+     * an interface without reimplementing it, we don't need
+     * to search the parent types when looking for a vfunc. */
+    vfunc = g_object_info_find_vfunc_using_interfaces(parent, name, NULL);
+    while (!vfunc && parent) {
+        GIObjectInfo *tmp = parent;
+        parent = g_object_info_get_parent(tmp);
+        g_base_info_unref(tmp);
+        if (parent)
+            vfunc = g_object_info_find_vfunc(parent, name);
+
+        defined_by_parent = TRUE;
+    }
+
+    if (parent)
+        g_base_info_unref(parent);
+
+    if (out_defined_by_parent)
+        *out_defined_by_parent = defined_by_parent;
+
+    return vfunc;
+}
+
 //static JSBool
 //object_instance_new_resolve_no_info(JSContextRef       context,
 //                                    JS::HandleObject obj,
@@ -664,30 +670,33 @@ object_instance_set_prop(JSContextRef ctx, JSObjectRef object, JSStringRef prope
 //    g_free(name);
 //    return ret;
 //}
-//
-//static void
-//free_g_params(GParameter *params,
-//              int         n_params)
-//{
-//    int i;
-//
-//    for (i = 0; i < n_params; ++i) {
-//        g_value_unset(&params[i].value);
-//    }
-//    g_free(params);
-//}
-//
-///* Set properties from args to constructor (argv[0] is supposed to be
-// * a hash)
-// */
-//static JSBool
-//object_instance_props_to_g_parameters(JSContextRef   context,
-//                                      JSObjectRef    obj,
-//                                      unsigned     argc,
-//                                      jsval       *argv,
-//                                      GType        gtype,
-//                                      GParameter **gparams_p,
-//                                      int         *n_gparams_p)
+
+static void
+free_g_params(GParameter *params,
+              int         n_params)
+{
+    int i;
+
+    for (i = 0; i < n_params; ++i) {
+        g_value_unset(&params[i].value);
+    }
+    g_free(params);
+}
+
+/* Set properties from args to constructor (argv[0] is supposed to be
+ * a hash)
+ */
+static JSBool
+object_instance_props_to_g_parameters(JSContextRef   context,
+                                      JSObjectRef    obj,
+                                      unsigned     argc,
+                                      const JSValueRef argv[],
+                                      GType        gtype,
+                                      GParameter **gparams_p,
+                                      int         *n_gparams_p)
+{
+    return TRUE;
+}
 //{
 //    JSObjectRef props;
 //    JSObjectRef iter;
@@ -702,15 +711,15 @@ object_instance_set_prop(JSContextRef ctx, JSObjectRef object, JSStringRef prope
 //    gparams = g_array_new(/* nul term */ FALSE, /* clear */ TRUE,
 //                          sizeof(GParameter));
 //
-//    if (argc == 0 || JSVAL_IS_VOID(argv[0]))
+//    if (argc == 0 || JSVAL_IS_VOID(context, argv[0]))
 //        goto out;
 //
-//    if (!JSVAL_IS_OBJECT(argv[0])) {
+//    if (!JSValueIsObject(context, argv[0])) {
 //        gwkjs_throw(context, "argument should be a hash with props to set");
 //        goto free_array_and_fail;
 //    }
 //
-//    props = JSVAL_TO_OBJECT(argv[0]);
+//    props = JSValueToObject(context, argv[0], NULL);
 //
 //    iter = JS_NewPropertyIterator(context, props);
 //    if (iter == NULL) {
@@ -776,240 +785,242 @@ object_instance_set_prop(JSContextRef ctx, JSObjectRef object, JSStringRef prope
 //    }
 //    return JS_FALSE;
 //}
-//
-//#define DEBUG_DISPOSE 0
-//#if DEBUG_DISPOSE
-//static void
-//wrapped_gobj_dispose_notify(gpointer      data,
-//                            GObject      *where_the_object_was)
-//{
-//    gwkjs_debug(GWKJS_DEBUG_GOBJECT, "JSObject %p GObject %p disposed", data, where_the_object_was);
-//}
-//#endif
-//
-//static void
-//gobj_no_longer_kept_alive_func(JSObjectRef obj,
-//                               void     *data)
-//{
-//    ObjectInstance *priv;
-//
-//    priv = (ObjectInstance *) data;
-//
-//    gwkjs_debug_lifecycle(GWKJS_DEBUG_GOBJECT,
-//                        "GObject wrapper %p will no longer be kept alive, eligible for collection",
-//                        obj);
-//
-//    priv->keep_alive = NULL;
-//}
-//
-//static GQuark
-//get_qdata_key_for_toggle_direction(ToggleDirection direction)
-//{
-//    GQuark quark;
-//
-//    switch (direction) {
-//        case TOGGLE_UP:
-//            quark = gwkjs_toggle_up_quark();
-//            break;
-//        case TOGGLE_DOWN:
-//            quark = gwkjs_toggle_down_quark();
-//            break;
-//        default:
-//            g_assert_not_reached();
-//    }
-//
-//    return quark;
-//}
-//
-//static gboolean
-//clear_toggle_idle_source(GObject          *gobj,
-//                         ToggleDirection   direction)
-//{
-//    GQuark qdata_key;
-//
-//    qdata_key = get_qdata_key_for_toggle_direction(direction);
-//
-//    return g_object_steal_qdata(gobj, qdata_key) != NULL;
-//}
-//
-//static gboolean
-//toggle_idle_source_is_queued(GObject          *gobj,
-//                             ToggleDirection   direction)
-//{
-//    GQuark qdata_key;
-//
-//    qdata_key = get_qdata_key_for_toggle_direction(direction);
-//
-//    return g_object_get_qdata(gobj, qdata_key) != NULL;
-//}
-//
-//static gboolean
-//cancel_toggle_idle(GObject         *gobj,
-//                   ToggleDirection  direction)
-//{
-//    GQuark qdata_key;
-//    GSource *source;
-//
-//    qdata_key = get_qdata_key_for_toggle_direction(direction);
-//
-//    source = (GSource*) g_object_steal_qdata(gobj, qdata_key);
-//
-//    if (source)
-//        g_source_destroy(source);
-//
-//    return source != 0;
-//}
-//
-//static void
-//handle_toggle_down(GObject *gobj)
-//{
-//    ObjectInstance *priv;
-//    JSObjectRef obj;
-//
-//    obj = peek_js_obj(gobj);
-//
-//    priv = (ObjectInstance *) JS_GetPrivate(obj);
-//
-//    gwkjs_debug_lifecycle(GWKJS_DEBUG_GOBJECT,
-//                        "Toggle notify gobj %p obj %p is_last_ref TRUE keep-alive %p",
-//                        gobj, obj, priv->keep_alive);
-//
-//    /* Change to weak ref so the wrapper-wrappee pair can be
-//     * collected by the GC
-//     */
-//    if (priv->keep_alive != NULL) {
-//        gwkjs_debug_lifecycle(GWKJS_DEBUG_GOBJECT, "Removing object from keep alive");
-//        gwkjs_keep_alive_remove_child(priv->keep_alive,
-//                                    gobj_no_longer_kept_alive_func,
-//                                    obj,
-//                                    priv);
-//        priv->keep_alive = NULL;
-//    }
-//}
-//
-//static void
-//handle_toggle_up(GObject   *gobj)
-//{
-//    ObjectInstance *priv;
-//    JSObjectRef obj;
-//
-//    /* We need to root the JSObject associated with the passed in GObject so it
-//     * doesn't get garbage collected (and lose any associated javascript state
-//     * such as custom properties).
-//     */
-//    obj = peek_js_obj(gobj);
-//
-//    if (!obj) /* Object already GC'd */
-//        return;
-//
-//    priv = (ObjectInstance *) JS_GetPrivate(obj);
-//
-//    gwkjs_debug_lifecycle(GWKJS_DEBUG_GOBJECT,
-//                        "Toggle notify gobj %p obj %p is_last_ref FALSEd keep-alive %p",
-//                        gobj, obj, priv->keep_alive);
-//
-//    /* Change to strong ref so the wrappee keeps the wrapper alive
-//     * in case the wrapper has data in it that the app cares about
-//     */
-//    if (priv->keep_alive == NULL) {
-//        /* FIXME: thread the context through somehow. Maybe by looking up
-//         * the compartment that obj belongs to. */
-//        GwkjsContext *context = gwkjs_context_get_current();
-//        gwkjs_debug_lifecycle(GWKJS_DEBUG_GOBJECT, "Adding object to keep alive");
-//        priv->keep_alive = gwkjs_keep_alive_get_global((JSContext*) gwkjs_context_get_native_context(context));
-//        gwkjs_keep_alive_add_child(priv->keep_alive,
-//                                 gobj_no_longer_kept_alive_func,
-//                                 obj,
-//                                 priv);
-//    }
-//}
-//
-//static gboolean
-//idle_handle_toggle(gpointer data)
-//{
-//    ToggleRefNotifyOperation *operation = (ToggleRefNotifyOperation *) data;
-//
-//    if (!clear_toggle_idle_source(operation->gobj, operation->direction)) {
-//        /* Already cleared, the JSObject is going away, abort mission */
-//        goto out;
-//    }
-//
-//    switch (operation->direction) {
-//        case TOGGLE_UP:
-//            handle_toggle_up(operation->gobj);
-//            break;
-//        case TOGGLE_DOWN:
-//            handle_toggle_down(operation->gobj);
-//            break;
-//        default:
-//            g_assert_not_reached();
-//    }
-//
-//out:
-//    return FALSE;
-//}
-//
-//static void
-//toggle_ref_notify_operation_free(ToggleRefNotifyOperation *operation)
-//{
-//    if (operation->needs_unref)
-//        g_object_unref (operation->gobj);
-//    g_slice_free(ToggleRefNotifyOperation, operation);
-//    g_atomic_int_add(&pending_idle_toggles, -1);
-//}
-//
-//static void
-//queue_toggle_idle(GObject         *gobj,
-//                  ToggleDirection  direction)
-//{
-//    ToggleRefNotifyOperation *operation;
-//    GQuark qdata_key;
-//    GSource *source;
-//
-//    operation = g_slice_new0(ToggleRefNotifyOperation);
-//    operation->direction = direction;
-//
-//    switch (direction) {
-//        case TOGGLE_UP:
-//            /* If we're toggling up we take a reference to the object now,
-//             * so it won't toggle down before we process it. This ensures we
-//             * only ever have at most two toggle notifications queued.
-//             * (either only up, or down-up)
-//             */
-//            operation->gobj = (GObject*) g_object_ref(gobj);
-//            operation->needs_unref = TRUE;
-//            break;
-//        case TOGGLE_DOWN:
-//            /* If we're toggling down, we don't need to take a reference since
-//             * the associated JSObject already has one, and that JSObject won't
-//             * get finalized until we've completed toggling (since it's rooted,
-//             * until we unroot it when we dispatch the toggle down idle).
-//             *
-//             * Taking a reference now would be bad anyway, since it would force
-//             * the object to toggle back up again.
-//             */
-//            operation->gobj = gobj;
-//            break;
-//        default:
-//            g_assert_not_reached();
-//    }
-//
-//    qdata_key = get_qdata_key_for_toggle_direction(direction);
-//
-//    source = g_idle_source_new();
-//    g_source_set_priority(source, G_PRIORITY_HIGH);
-//    g_source_set_callback(source,
-//                          idle_handle_toggle,
-//                          operation,
-//                          (GDestroyNotify) toggle_ref_notify_operation_free);
-//
-//    g_atomic_int_inc(&pending_idle_toggles);
-//    g_object_set_qdata (gobj, qdata_key, source);
-//    g_source_attach (source, NULL);
-//
-//    /* object qdata is piggy-backing off the main loop's ref of the source */
-//    g_source_unref (source);
-//}
+
+#define DEBUG_DISPOSE 0
+#if DEBUG_DISPOSE
+static void
+wrapped_gobj_dispose_notify(gpointer      data,
+                            GObject      *where_the_object_was)
+{
+    gwkjs_debug(GWKJS_DEBUG_GOBJECT, "JSObject %p GObject %p disposed", data, where_the_object_was);
+}
+#endif
+
+static void
+gobj_no_longer_kept_alive_func(JSObjectRef obj,
+                               void     *data)
+{
+    ObjectInstance *priv;
+
+    priv = (ObjectInstance *) data;
+
+    gwkjs_debug_lifecycle(GWKJS_DEBUG_GOBJECT,
+                        "GObject wrapper %p will no longer be kept alive, eligible for collection",
+                        obj);
+
+    priv->keep_alive = NULL;
+}
+
+static GQuark
+get_qdata_key_for_toggle_direction(ToggleDirection direction)
+{
+    GQuark quark;
+
+    switch (direction) {
+        case TOGGLE_UP:
+            quark = gwkjs_toggle_up_quark();
+            break;
+        case TOGGLE_DOWN:
+            quark = gwkjs_toggle_down_quark();
+            break;
+        default:
+            g_assert_not_reached();
+    }
+
+    return quark;
+}
+
+static gboolean
+clear_toggle_idle_source(GObject          *gobj,
+                         ToggleDirection   direction)
+{
+    GQuark qdata_key;
+
+    qdata_key = get_qdata_key_for_toggle_direction(direction);
+
+    return g_object_steal_qdata(gobj, qdata_key) != NULL;
+}
+
+static gboolean
+toggle_idle_source_is_queued(GObject          *gobj,
+                             ToggleDirection   direction)
+{
+    GQuark qdata_key;
+
+    qdata_key = get_qdata_key_for_toggle_direction(direction);
+
+    return g_object_get_qdata(gobj, qdata_key) != NULL;
+}
+
+static gboolean
+cancel_toggle_idle(GObject         *gobj,
+                   ToggleDirection  direction)
+{
+    GQuark qdata_key;
+    GSource *source;
+
+    qdata_key = get_qdata_key_for_toggle_direction(direction);
+
+    source = (GSource*) g_object_steal_qdata(gobj, qdata_key);
+
+    if (source)
+        g_source_destroy(source);
+
+    return source != 0;
+}
+
+static void
+handle_toggle_down(GObject *gobj)
+{
+    ObjectInstance *priv;
+    JSObjectRef obj;
+
+    obj = peek_js_obj(gobj);
+
+    priv = (ObjectInstance *) JSObjectGetPrivate(obj);
+
+    gwkjs_debug_lifecycle(GWKJS_DEBUG_GOBJECT,
+                        "Toggle notify gobj %p obj %p is_last_ref TRUE keep-alive %p",
+                        gobj, obj, priv->keep_alive);
+
+    /* Change to weak ref so the wrapper-wrappee pair can be
+     * collected by the GC
+     */
+    if (priv->keep_alive != NULL) {
+        gwkjs_debug_lifecycle(GWKJS_DEBUG_GOBJECT, "Removing object from keep alive");
+        gwkjs_keep_alive_remove_child(priv->keep_alive,
+                                    gobj_no_longer_kept_alive_func,
+                                    obj,
+                                    priv);
+        priv->keep_alive = NULL;
+    }
+}
+
+static void
+handle_toggle_up(GObject   *gobj)
+{
+    ObjectInstance *priv;
+    JSObjectRef obj;
+
+    /* We need to root the JSObject associated with the passed in GObject so it
+     * doesn't get garbage collected (and lose any associated javascript state
+     * such as custom properties).
+     */
+    obj = peek_js_obj(gobj);
+
+    if (!obj) /* Object already GC'd */
+        return;
+
+    priv = (ObjectInstance *) JSObjectGetPrivate(obj);
+
+    gwkjs_debug_lifecycle(GWKJS_DEBUG_GOBJECT,
+                        "Toggle notify gobj %p obj %p is_last_ref FALSEd keep-alive %p",
+                        gobj, obj, priv->keep_alive);
+
+    g_assert(priv != NULL);
+
+    /* Change to strong ref so the wrappee keeps the wrapper alive
+     * in case the wrapper has data in it that the app cares about
+     */
+    if (priv->keep_alive == NULL) {
+        /* FIXME: thread the context through somehow. Maybe by looking up
+         * the compartment that obj belongs to. */
+        GwkjsContext *context = gwkjs_context_get_current();
+        gwkjs_debug_lifecycle(GWKJS_DEBUG_GOBJECT, "Adding object to keep alive");
+        priv->keep_alive = gwkjs_keep_alive_get_global((JSContextRef) gwkjs_context_get_native_context(context));
+        gwkjs_keep_alive_add_child(priv->keep_alive,
+                                 gobj_no_longer_kept_alive_func,
+                                 obj,
+                                 priv);
+    }
+}
+
+static gboolean
+idle_handle_toggle(gpointer data)
+{
+    ToggleRefNotifyOperation *operation = (ToggleRefNotifyOperation *) data;
+
+    if (!clear_toggle_idle_source(operation->gobj, operation->direction)) {
+        /* Already cleared, the JSObject is going away, abort mission */
+        goto out;
+    }
+
+    switch (operation->direction) {
+        case TOGGLE_UP:
+            handle_toggle_up(operation->gobj);
+            break;
+        case TOGGLE_DOWN:
+            handle_toggle_down(operation->gobj);
+            break;
+        default:
+            g_assert_not_reached();
+    }
+
+out:
+    return FALSE;
+}
+
+static void
+toggle_ref_notify_operation_free(ToggleRefNotifyOperation *operation)
+{
+    if (operation->needs_unref)
+        g_object_unref (operation->gobj);
+    g_slice_free(ToggleRefNotifyOperation, operation);
+    g_atomic_int_add(&pending_idle_toggles, -1);
+}
+
+static void
+queue_toggle_idle(GObject         *gobj,
+                  ToggleDirection  direction)
+{
+    ToggleRefNotifyOperation *operation;
+    GQuark qdata_key;
+    GSource *source;
+
+    operation = g_slice_new0(ToggleRefNotifyOperation);
+    operation->direction = direction;
+
+    switch (direction) {
+        case TOGGLE_UP:
+            /* If we're toggling up we take a reference to the object now,
+             * so it won't toggle down before we process it. This ensures we
+             * only ever have at most two toggle notifications queued.
+             * (either only up, or down-up)
+             */
+            operation->gobj = (GObject*) g_object_ref(gobj);
+            operation->needs_unref = TRUE;
+            break;
+        case TOGGLE_DOWN:
+            /* If we're toggling down, we don't need to take a reference since
+             * the associated JSObject already has one, and that JSObject won't
+             * get finalized until we've completed toggling (since it's rooted,
+             * until we unroot it when we dispatch the toggle down idle).
+             *
+             * Taking a reference now would be bad anyway, since it would force
+             * the object to toggle back up again.
+             */
+            operation->gobj = gobj;
+            break;
+        default:
+            g_assert_not_reached();
+    }
+
+    qdata_key = get_qdata_key_for_toggle_direction(direction);
+
+    source = g_idle_source_new();
+    g_source_set_priority(source, G_PRIORITY_HIGH);
+    g_source_set_callback(source,
+                          idle_handle_toggle,
+                          operation,
+                          (GDestroyNotify) toggle_ref_notify_operation_free);
+
+    g_atomic_int_inc(&pending_idle_toggles);
+    g_object_set_qdata (gobj, qdata_key, source);
+    g_source_attach (source, NULL);
+
+    /* object qdata is piggy-backing off the main loop's ref of the source */
+    g_source_unref (source);
+}
 //
 //static void
 //wrapped_gobj_toggle_notify(gpointer      data,
@@ -1161,75 +1172,75 @@ object_instance_set_prop(JSContextRef ctx, JSObjectRef object, JSStringRef prope
 //        release_native_object(priv);
 //    }
 //}
-//
-//static ObjectInstance *
-//init_object_private (JSContextRef context,
-//                     JSObjectRef  object)
-//{
-//    ObjectInstance *proto_priv;
-//    ObjectInstance *priv;
-//
-//    JS_BeginRequest(context);
-//
-//    priv = g_slice_new0(ObjectInstance);
-//
-//    GWKJS_INC_COUNTER(object);
-//
-//    g_assert(priv_from_js(context, object) == NULL);
-//    JS_SetPrivate(object, priv);
-//
-//    gwkjs_debug_lifecycle(GWKJS_DEBUG_GOBJECT,
-//                        "obj instance constructor, obj %p priv %p", object, priv);
-//
-//    proto_priv = proto_priv_from_js(context, object);
-//    g_assert(proto_priv != NULL);
-//
-//    priv->gtype = proto_priv->gtype;
-//    priv->info = proto_priv->info;
-//    if (priv->info)
-//        g_base_info_ref( (GIBaseInfo*) priv->info);
-//
-//    JS_EndRequest(context);
-//    return priv;
-//}
-//
-//static void
-//associate_js_gobject (JSContextRef      context,
-//                      JSObjectRef       object,
-//                      GObject        *gobj)
-//{
-//    ObjectInstance *priv;
-//
-//    priv = priv_from_js(context, object);
-//    priv->gobj = gobj;
-//
-//    g_assert(peek_js_obj(gobj) == NULL);
-//    set_js_obj(gobj, object);
-//
-//#if DEBUG_DISPOSE
-//    g_object_weak_ref(gobj, wrapped_gobj_dispose_notify, object);
-//#endif
-//
-//    /* OK, here is where things get complicated. We want the
-//     * wrapped gobj to keep the JSObject* wrapper alive, because
-//     * people might set properties on the JSObject* that they care
-//     * about. Therefore, whenever the refcount on the wrapped gobj
-//     * is >1, i.e. whenever something other than the wrapper is
-//     * referencing the wrapped gobj, the wrapped gobj has a strong
-//     * ref (gc-roots the wrapper). When the refcount on the
-//     * wrapped gobj is 1, then we change to a weak ref to allow
-//     * the wrapper to be garbage collected (and thus unref the
-//     * wrappee).
-//     */
-//    priv->keep_alive = gwkjs_keep_alive_get_global(context);
-//    gwkjs_keep_alive_add_child(priv->keep_alive,
-//                             gobj_no_longer_kept_alive_func,
-//                             object,
-//                             priv);
-//
+
+static ObjectInstance *
+init_object_private (JSContextRef context,
+                     JSObjectRef  object)
+{
+    ObjectInstance *proto_priv;
+    ObjectInstance *priv;
+
+
+    priv = g_slice_new0(ObjectInstance);
+
+    GWKJS_INC_COUNTER(object);
+
+    g_assert(priv_from_js(object) == NULL);
+    JSObjectSetPrivate(object, priv);
+
+    gwkjs_debug_lifecycle(GWKJS_DEBUG_GOBJECT,
+                        "obj instance constructor, obj %p priv %p", object, priv);
+
+    proto_priv = proto_priv_from_js(context, object);
+    g_assert(proto_priv != NULL);
+
+    priv->gtype = proto_priv->gtype;
+    priv->info = proto_priv->info;
+    if (priv->info)
+        g_base_info_ref( (GIBaseInfo*) priv->info);
+
+    return priv;
+}
+
+static void
+associate_js_gobject (JSContextRef      context,
+                      JSObjectRef       object,
+                      GObject        *gobj)
+{
+    ObjectInstance *priv;
+
+    priv = priv_from_js(object);
+    priv->gobj = gobj;
+
+    g_assert(peek_js_obj(gobj) == NULL);
+    set_js_obj(gobj, object);
+
+#if DEBUG_DISPOSE
+    g_object_weak_ref(gobj, wrapped_gobj_dispose_notify, object);
+#endif
+
+    /* OK, here is where things get complicated. We want the
+     * wrapped gobj to keep the JSObject* wrapper alive, because
+     * people might set properties on the JSObject* that they care
+     * about. Therefore, whenever the refcount on the wrapped gobj
+     * is >1, i.e. whenever something other than the wrapper is
+     * referencing the wrapped gobj, the wrapped gobj has a strong
+     * ref (gc-roots the wrapper). When the refcount on the
+     * wrapped gobj is 1, then we change to a weak ref to allow
+     * the wrapper to be garbage collected (and thus unref the
+     * wrappee).
+     */
+    priv->keep_alive = gwkjs_keep_alive_get_global(context);
+    gwkjs_keep_alive_add_child(priv->keep_alive,
+                             gobj_no_longer_kept_alive_func,
+                             object,
+                             priv);
+
+// TODO: implement
 //    g_object_add_toggle_ref(gobj, wrapped_gobj_toggle_notify, NULL);
-//}
-//
+
+}
+
 //static void
 //disassociate_js_gobject (GObject   *gobj)
 //{
@@ -1255,144 +1266,151 @@ object_instance_set_prop(JSContextRef ctx, JSObjectRef object, JSStringRef prope
 //#endif
 //}
 //
-//static JSBool
-//object_instance_init (JSContextRef context,
-//                      JSObjectRef *object,
-//                      unsigned   argc,
-//                      jsval     *argv)
-//{
-//    ObjectInstance *priv;
-//    GType gtype;
-//    GParameter *params;
-//    int n_params;
-//    GTypeQuery query;
-//    JSObjectRef old_jsobj;
-//    GObject *gobj;
-//
-//    priv = (ObjectInstance *) JS_GetPrivate(*object);
-//
-//    gtype = priv->gtype;
-//    g_assert(gtype != G_TYPE_NONE);
-//
-//    if (!object_instance_props_to_g_parameters(context, *object, argc, argv,
-//                                               gtype,
-//                                               &params, &n_params)) {
-//        return JS_FALSE;
-//    }
-//
-//    /* Mark this object in the construction stack, it
-//       will be popped in gwkjs_object_custom_init() later
-//       down.
-//    */
-//    if (g_type_get_qdata(gtype, gwkjs_is_custom_type_quark()))
-//        object_init_list = g_slist_prepend(object_init_list, *object);
-//
-//    gobj = (GObject*) g_object_newv(gtype, n_params, params);
-//
-//    free_g_params(params, n_params);
-//
-//    old_jsobj = peek_js_obj(gobj);
-//    if (old_jsobj != NULL && old_jsobj != *object) {
-//        /* g_object_newv returned an object that's already tracked by a JS
-//         * object. Let's assume this is a singleton like IBus.IBus and return
-//         * the existing JS wrapper object.
-//         *
-//         * 'object' has a value that was originally created by
-//         * JS_NewObjectForConstructor in GWKJS_NATIVE_CONSTRUCTOR_PRELUDE, but
-//         * we're not actually using it, so just let it get collected. Avoiding
-//         * this would require a non-trivial amount of work.
-//         * */
-//        *object = old_jsobj;
-//        g_object_unref(gobj); /* We already own a reference */
-//        gobj = NULL;
-//        goto out;
-//    }
-//
-//    g_type_query_dynamic_safe(gtype, &query);
+static JSBool
+object_instance_init (JSContextRef context,
+                      JSObjectRef *object,
+                      unsigned   argc,
+                      const JSValueRef argv[])
+{
+    ObjectInstance *priv;
+    GType gtype;
+    GParameter *params;
+    int n_params;
+    GTypeQuery query;
+    JSObjectRef old_jsobj;
+    GObject *gobj;
+
+    priv = (ObjectInstance *) JSObjectGetPrivate(*object);
+
+    gtype = priv->gtype;
+    g_assert(gtype != G_TYPE_NONE);
+
+    if (!object_instance_props_to_g_parameters(context, *object, argc, argv,
+                                               gtype,
+                                               &params, &n_params)) {
+        return JS_FALSE;
+    }
+
+    /* Mark this object in the construction stack, it
+       will be popped in gwkjs_object_custom_init() later
+       down.
+    */
+    if (g_type_get_qdata(gtype, gwkjs_is_custom_type_quark()))
+        object_init_list = g_slist_prepend(object_init_list, *object);
+
+    gobj = (GObject*) g_object_newv(gtype, n_params, params);
+
+    free_g_params(params, n_params);
+
+    old_jsobj = peek_js_obj(gobj);
+    if (old_jsobj != NULL && old_jsobj != *object) {
+        /* g_object_newv returned an object that's already tracked by a JS
+         * object. Let's assume this is a singleton like IBus.IBus and return
+         * the existing JS wrapper object.
+         *
+         * 'object' has a value that was originally created by
+         * JS_NewObjectForConstructor in GWKJS_NATIVE_CONSTRUCTOR_PRELUDE, but
+         * we're not actually using it, so just let it get collected. Avoiding
+         * this would require a non-trivial amount of work.
+         * */
+        *object = old_jsobj;
+        g_object_unref(gobj); /* We already own a reference */
+        gobj = NULL;
+        goto out;
+    }
+
+    g_type_query_dynamic_safe(gtype, &query);
+//TODO: There's no equivalent in JSC
 //    if (G_LIKELY (query.type))
 //        JS_updateMallocCounter(context, query.instance_size);
-//
-//    if (G_IS_INITIALLY_UNOWNED(gobj) &&
-//        !g_object_is_floating(gobj)) {
-//        /* GtkWindow does not return a ref to caller of g_object_new.
-//         * Need a flag in gobject-introspection to tell us this.
-//         */
-//        gwkjs_debug(GWKJS_DEBUG_GOBJECT,
-//                  "Newly-created object is initially unowned but we did not get the "
-//                  "floating ref, probably GtkWindow, using hacky workaround");
-//        g_object_ref(gobj);
-//    } else if (g_object_is_floating(gobj)) {
-//        g_object_ref_sink(gobj);
-//    } else {
-//        /* we should already have a ref */
-//    }
-//
-//    if (priv->gobj == NULL)
-//        associate_js_gobject(context, *object, gobj);
-//    /* We now have both a ref and a toggle ref, we only want the
-//     * toggle ref. This may immediately remove the GC root
-//     * we just added, since refcount may drop to 1.
-//     */
-//    g_object_unref(gobj);
-//
-//    gwkjs_debug_lifecycle(GWKJS_DEBUG_GOBJECT,
-//                        "JSObject created with GObject %p %s",
-//                        priv->gobj, g_type_name_from_instance((GTypeInstance*) priv->gobj));
-//
-//    TRACE(GWKJS_OBJECT_PROXY_NEW(priv, priv->gobj,
-//                               priv->info ? g_base_info_get_namespace((GIBaseInfo*) priv->info) : "_gwkjs_private",
-//                               priv->info ? g_base_info_get_name((GIBaseInfo*) priv->info) : g_type_name(gtype)));
-//
-// out:
-//    return JS_TRUE;
-//}
-//
-//GWKJS_NATIVE_CONSTRUCTOR_DECLARE(object_instance)
-//{
-//    GWKJS_NATIVE_CONSTRUCTOR_VARIABLES(object_instance)
-//    JSBool ret;
-//    jsval initer;
-//    jsval rval;
-//    jsid object_init_name;
-//
-//    GWKJS_NATIVE_CONSTRUCTOR_PRELUDE(object_instance);
-//
-//    /* Init the private variable before we do anything else. If a garbage
-//     * collection happens when calling the init function then this object
-//     * might be traced and we will end up dereferencing a null pointer */
-//    init_object_private(context, object);
-//
-//    object_init_name = gwkjs_context_get_const_string(context, GWKJS_STRING_GOBJECT_INIT);
-//    if (!gwkjs_object_require_property(context, object, "GObject instance", object_init_name, &initer))
-//        return JS_FALSE;
-//
-//    rval = JSVAL_VOID;
-//    ret = gwkjs_call_function_value(context, object, initer, argc, argv.array(), &rval);
-//
-//    if (JSVAL_IS_VOID(rval))
-//        rval = OBJECT_TO_JSVAL(object);
-//
-//    argv.rval().set(rval);
-//    return ret;
-//}
-//
-//static void
-//invalidate_all_signals(ObjectInstance *priv)
-//{
-//    GList *iter, *next;
-//
-//    for (iter = priv->signals; iter; ) {
-//        ConnectData *cd = (ConnectData*) iter->data;
-//        next = iter->next;
-//
-//        /* This will also free cd and iter, through
-//           the closure invalidation mechanism */
-//        g_closure_invalidate(cd->closure);
-//
-//        iter = next;
-//    }
-//}
-//
+
+    if (G_IS_INITIALLY_UNOWNED(gobj) &&
+        !g_object_is_floating(gobj)) {
+        /* GtkWindow does not return a ref to caller of g_object_new.
+         * Need a flag in gobject-introspection to tell us this.
+         */
+        gwkjs_debug(GWKJS_DEBUG_GOBJECT,
+                  "Newly-created object is initially unowned but we did not get the "
+                  "floating ref, probably GtkWindow, using hacky workaround");
+        g_object_ref(gobj);
+    } else if (g_object_is_floating(gobj)) {
+        g_object_ref_sink(gobj);
+    } else {
+        /* we should already have a ref */
+    }
+
+    if (priv->gobj == NULL)
+        associate_js_gobject(context, *object, gobj);
+    /* We now have both a ref and a toggle ref, we only want the
+     * toggle ref. This may immediately remove the GC root
+     * we just added, since refcount may drop to 1.
+     */
+    g_object_unref(gobj);
+
+    gwkjs_debug_lifecycle(GWKJS_DEBUG_GOBJECT,
+                        "JSObject created with GObject %p %s",
+                        priv->gobj, g_type_name_from_instance((GTypeInstance*) priv->gobj));
+
+    TRACE(GWKJS_OBJECT_PROXY_NEW(priv, priv->gobj,
+                               priv->info ? g_base_info_get_namespace((GIBaseInfo*) priv->info) : "_gwkjs_private",
+                               priv->info ? g_base_info_get_name((GIBaseInfo*) priv->info) : g_type_name(gtype)));
+
+ out:
+    return JS_TRUE;
+}
+
+GWKJS_NATIVE_CONSTRUCTOR_DECLARE(object_instance)
+{
+    GWKJS_NATIVE_CONSTRUCTOR_VARIABLES(object_instance)
+    JSBool ret;
+    jsval initer;
+    jsval rval;
+    const gchar* object_init_name;
+
+    GWKJS_NATIVE_CONSTRUCTOR_PRELUDE(object_instance);
+
+    /* Init the private variable before we do anything else. If a garbage
+     * collection happens when calling the init function then this object
+     * might be traced and we will end up dereferencing a null pointer */
+    init_object_private(context, object);
+
+    object_init_name = gwkjs_context_get_const_string(context, GWKJS_STRING_GOBJECT_INIT);
+    if (!gwkjs_object_require_property(context, object,
+                                       "GObject instance",
+                                       object_init_name,
+                                       &initer))
+        return NULL;
+
+    rval = NULL;
+    ret = gwkjs_call_function_value(context, object, initer, argc, arguments, &rval);
+
+    if (JSVAL_IS_VOID(context, rval))
+        rval = object;
+
+// TODO: implement
+// Native code used to return rval. We're returning the object itself.
+// So, we're keeping a g_warning to check this later
+    g_warning("Return value probably incorrect");
+    return object;
+}
+
+static void
+invalidate_all_signals(ObjectInstance *priv)
+{
+    GList *iter, *next;
+
+    for (iter = priv->signals; iter; ) {
+        ConnectData *cd = (ConnectData*) iter->data;
+        next = iter->next;
+
+        /* This will also free cd and iter, through
+           the closure invalidation mechanism */
+        g_closure_invalidate(cd->closure);
+
+        iter = next;
+    }
+}
+
 //static void
 //object_instance_trace(JSTracer *tracer,
 //                      JSObjectRef obj)
@@ -1527,7 +1545,7 @@ gwkjs_lookup_object_constructor_from_info(JSContextRef    context,
     return constructor;
 }
 
-static JSObjectRef 
+static JSObjectRef
 gwkjs_lookup_object_prototype_from_info(JSContextRef    context,
                                       GIObjectInfo *info,
                                       GType         gtype)
@@ -1550,7 +1568,7 @@ gwkjs_lookup_object_prototype_from_info(JSContextRef    context,
     return JSValueToObject(context, value, NULL);
 }
 
-static JSObjectRef 
+static JSObjectRef
 gwkjs_lookup_object_prototype(JSContextRef context,
                             GType      gtype)
 {
@@ -1565,23 +1583,24 @@ gwkjs_lookup_object_prototype(JSContextRef context,
     return proto;
 }
 
-//static void
-//signal_connection_invalidated (gpointer  user_data,
-//                               GClosure *closure)
-//{
-//    ConnectData *connect_data = (ConnectData *) user_data;
-//
-//    connect_data->obj->signals = g_list_delete_link(connect_data->obj->signals,
-//                                                    connect_data->link);
-//    g_slice_free(ConnectData, connect_data);
-//}
-//
-//static JSBool
-//real_connect_func(JSContextRef context,
-//                  unsigned   argc,
-//                  jsval     *vp,
-//                  gboolean  after)
-//{
+static void
+signal_connection_invalidated (gpointer  user_data,
+                               GClosure *closure)
+{
+    ConnectData *connect_data = (ConnectData *) user_data;
+
+    connect_data->obj->signals = g_list_delete_link(connect_data->obj->signals,
+                                                    connect_data->link);
+    g_slice_free(ConnectData, connect_data);
+}
+
+static JSValueRef
+real_connect_func(JSContextRef context,
+                  JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception, gboolean after)
+{
+    g_warning("real_connect_func NOT IMPLEMENTED");
+    return JSValueMakeUndefined(context);
+
 //    JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
 //    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
 //
@@ -1669,29 +1688,25 @@ gwkjs_lookup_object_prototype(JSContextRef context,
 // out:
 //    g_free(signal_name);
 //    return ret;
-//}
-//
-//static JSBool
-//connect_after_func(JSContextRef context,
-//                   unsigned   argc,
-//                   jsval     *vp)
-//{
-//    return real_connect_func(context, argc, vp, TRUE);
-//}
-//
-//static JSBool
-//connect_func(JSContextRef context,
-//             unsigned   argc,
-//             jsval     *vp)
-//{
-//    return real_connect_func(context, argc, vp, FALSE);
-//}
-//
-//static JSBool
-//emit_func(JSContextRef context,
-//          unsigned   argc,
-//          jsval     *vp)
-//{
+}
+
+static JSValueRef
+connect_after_func(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception)
+{
+    return real_connect_func(ctx, function, thisObject, argumentCount, arguments, exception, TRUE);
+}
+
+static JSValueRef
+connect_func(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception)
+{
+    return real_connect_func(ctx, function, thisObject, argumentCount, arguments, exception, false);
+}
+
+static JSValueRef
+emit_func(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception)
+{
+    g_warning("emit_func NOT IMPLEMENTED");
+    return NULL;
 //    JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
 //    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
 //
@@ -1809,46 +1824,133 @@ gwkjs_lookup_object_prototype(JSContextRef context,
 // out:
 //    g_free(signal_name);
 //    return ret;
-//}
-//
-//static JSBool
-//to_string_func(JSContextRef context,
-//               unsigned   argc,
-//               jsval     *vp)
-//{
-//    JS::CallReceiver rec = JS::CallReceiverFromVp(vp);
-//    JSObjectRef obj = JSVAL_TO_OBJECT(rec.thisv());
-//
-//    ObjectInstance *priv;
-//    JSBool ret = JS_FALSE;
-//    jsval retval;
-//
-//    if (!do_base_typecheck(context, obj, JS_TRUE))
-//        goto out;
-//
-//    priv = priv_from_js(context, obj);
-//
-//    if (priv == NULL) {
-//        throw_priv_is_null_error(context);
-//        goto out;  /* wrong class passed in */
-//    }
-//    
-//    if (!_gwkjs_proxy_to_string_func(context, obj, "object", (GIBaseInfo*)priv->info,
-//                                   priv->gtype, priv->gobj, &retval))
-//        goto out;
-//
-//    ret = JS_TRUE;
-//    rec.rval().set(retval);
-// out:
-//    return ret;
-//}
+}
+
+static JSValueRef
+to_string_func(JSContextRef context, JSObjectRef function, JSObjectRef obj, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception)
+{
+
+    ObjectInstance *priv;
+    jsval retval;
+
+    if (!do_base_typecheck(context, obj, JS_TRUE))
+        goto out;
+
+    priv = priv_from_js(obj);
+
+    if (priv == NULL) {
+        throw_priv_is_null_error(context);
+        goto out;  /* wrong class passed in */
+    }
+
+    if (!_gwkjs_proxy_to_string_func(context, obj, "object", (GIBaseInfo*)priv->info,
+                                   priv->gtype, priv->gobj, &retval))
+        goto out;
+
+    return retval;
+ out:
+    return JSValueMakeUndefined(context);
+}
+
+static JSValueRef
+init_func (JSContextRef context,
+           JSObjectRef function,
+           JSObjectRef obj,
+           size_t argumentCount,
+           const JSValueRef arguments[],
+           JSValueRef* exception)
+{
+    JSBool ret;
+
+    if (!do_base_typecheck(context, obj, TRUE))
+        return FALSE;
+
+    ret = object_instance_init(context, &obj, argumentCount, arguments);
+
+    if (ret)
+        return obj;
+
+    return NULL;
+}
+
+
+JSBool
+gwkjs_object_define_static_methods(JSContextRef    context,
+                                 JSObjectRef     constructor,
+                                 GType         gtype,
+                                 GIObjectInfo *object_info)
+{
+    GIStructInfo *gtype_struct;
+    int i;
+    int n_methods;
+
+    n_methods = g_object_info_get_n_methods(object_info);
+
+    for (i = 0; i < n_methods; i++) {
+        GIFunctionInfo *meth_info;
+        GIFunctionInfoFlags flags;
+
+        meth_info = g_object_info_get_method(object_info, i);
+        flags = g_function_info_get_flags (meth_info);
+
+        /* Anything that isn't a method we put on the prototype of the
+         * constructor.  This includes <constructor> introspection
+         * methods, as well as the forthcoming "static methods"
+         * support.  We may want to change this to use
+         * GI_FUNCTION_IS_CONSTRUCTOR and GI_FUNCTION_IS_STATIC or the
+         * like in the near future.
+         */
+        if (!(flags & GI_FUNCTION_IS_METHOD)) {
+            gwkjs_define_function(context, constructor, gtype,
+                                (GICallableInfo *)meth_info);
+        }
+
+        g_base_info_unref((GIBaseInfo*) meth_info);
+    }
+
+    gtype_struct = g_object_info_get_class_struct(object_info);
+
+    if (gtype_struct == NULL)
+        return JS_TRUE;
+
+    n_methods = g_struct_info_get_n_methods(gtype_struct);
+
+    for (i = 0; i < n_methods; i++) {
+        GIFunctionInfo *meth_info;
+
+        meth_info = g_struct_info_get_method(gtype_struct, i);
+
+        gwkjs_define_function(context, constructor, gtype,
+                            (GICallableInfo*)meth_info);
+
+        g_base_info_unref((GIBaseInfo*) meth_info);
+    }
+
+    g_base_info_unref((GIBaseInfo*) gtype_struct);
+    return JS_TRUE;
+}
+
+JSStaticValue gwkjs_object_instance_proto_props[] = {
+    { NULL, NULL, NULL, 0 }
+};
+
+JSStaticFunction gwkjs_object_instance_proto_funcs[] = {
+    { "_init", init_func, 0 },
+    { "connect", connect_func, 0 },
+    { "connect_after", connect_after_func, 0 },
+    { "emit", emit_func, 0 },
+    { "toString", to_string_func, 0 },
+    { NULL }
+};
+
+
 JSClassDefinition gwkjs_object_instance_class = {
     0,                         //     Version
     kJSPropertyAttributeNone,  //     JSClassAttributes
     "GObject_Object",          //     const char* className;
     NULL,                      //     JSClassRef parentClass;
-    NULL,                      //     const JSStaticValue*                staticValues;
-    NULL,                      //     const JSStaticFunction*             staticFunctions;
+    gwkjs_object_instance_proto_props, //     const JSStaticValue*                staticValues;
+    gwkjs_object_instance_proto_funcs, //     const JSStaticFunction*             staticFunctions;
     NULL,                      //     JSObjectInitializeCallback          initialize;
     object_instance_finalize,  //     JSObjectFinalizeCallback            finalize;
     NULL,                      //     JSObjectHasPropertyCallback         hasProperty;
@@ -1860,119 +1962,10 @@ JSClassDefinition gwkjs_object_instance_class = {
     NULL,                      //     JSObjectDeletePropertyCallback      deleteProperty;
     NULL,                      //     JSObjectGetPropertyNamesCallback    getPropertyNames;
     NULL,                      //     JSObjectCallAsFunctionCallback      callAsFunction;
-    NULL,                      //     JSObjectCallAsConstructorCallback   callAsConstructor;
+    gwkjs_object_instance_constructor,//     JSObjectCallAsConstructorCallback   callAsConstructor;
     NULL,                      //     JSObjectHasInstanceCallback         hasInstance;
     NULL,                      //     JSObjectConvertToTypeCallback       convertToType;
 };
-//struct JSClass gwkjs_object_instance_class = {
-//    "GObject_Object",
-//    JSCLASS_HAS_PRIVATE |
-//    JSCLASS_NEW_RESOLVE,
-//    JS_PropertyStub,
-//    JS_DeletePropertyStub,
-//    object_instance_get_prop,
-//    object_instance_set_prop,
-//    JS_EnumerateStub,
-//    (JSResolveOp) object_instance_new_resolve, /* needs cast since it's the new resolve signature */
-//    JS_ConvertStub,
-//    object_instance_finalize,
-//    NULL,
-//    NULL,
-//    NULL,
-//    NULL,
-//    object_instance_trace,
-//    
-//};
-//
-//static JSBool
-//init_func (JSContextRef context,
-//           unsigned   argc,
-//           jsval     *vp)
-//{
-//    JS::CallArgs argv = JS::CallArgsFromVp (argc, vp);
-//    JSObjectRef obj = JSVAL_TO_OBJECT(argv.thisv());
-//
-//    JSBool ret;
-//
-//    if (!do_base_typecheck(context, obj, TRUE))
-//        return FALSE;
-//
-//    ret = object_instance_init(context, &obj, argc, argv.array());
-//
-//    if (ret)
-//        argv.rval().set(OBJECT_TO_JSVAL(obj));
-//
-//    return ret;
-//}
-//
-//JSPropertySpec gwkjs_object_instance_proto_props[] = {
-//    { NULL }
-//};
-//
-//JSFunctionSpec gwkjs_object_instance_proto_funcs[] = {
-//    { "_init", JSOP_WRAPPER((JSNative)init_func), 0, 0 },
-//    { "connect", JSOP_WRAPPER((JSNative)connect_func), 0, 0 },
-//    { "connect_after", JSOP_WRAPPER((JSNative)connect_after_func), 0, 0 },
-//    { "emit", JSOP_WRAPPER((JSNative)emit_func), 0, 0 },
-//    { "toString", JSOP_WRAPPER((JSNative)to_string_func), 0, 0 },
-//    { NULL }
-//};
-//
-//JSBool
-//gwkjs_object_define_static_methods(JSContextRef    context,
-//                                 JSObjectRef     constructor,
-//                                 GType         gtype,
-//                                 GIObjectInfo *object_info)
-//{
-//    GIStructInfo *gtype_struct;
-//    int i;
-//    int n_methods;
-//
-//    n_methods = g_object_info_get_n_methods(object_info);
-//
-//    for (i = 0; i < n_methods; i++) {
-//        GIFunctionInfo *meth_info;
-//        GIFunctionInfoFlags flags;
-//
-//        meth_info = g_object_info_get_method(object_info, i);
-//        flags = g_function_info_get_flags (meth_info);
-//
-//        /* Anything that isn't a method we put on the prototype of the
-//         * constructor.  This includes <constructor> introspection
-//         * methods, as well as the forthcoming "static methods"
-//         * support.  We may want to change this to use
-//         * GI_FUNCTION_IS_CONSTRUCTOR and GI_FUNCTION_IS_STATIC or the
-//         * like in the near future.
-//         */
-//        if (!(flags & GI_FUNCTION_IS_METHOD)) {
-//            gwkjs_define_function(context, constructor, gtype,
-//                                (GICallableInfo *)meth_info);
-//        }
-//
-//        g_base_info_unref((GIBaseInfo*) meth_info);
-//    }
-//
-//    gtype_struct = g_object_info_get_class_struct(object_info);
-//
-//    if (gtype_struct == NULL)
-//        return JS_TRUE;
-//
-//    n_methods = g_struct_info_get_n_methods(gtype_struct);
-//
-//    for (i = 0; i < n_methods; i++) {
-//        GIFunctionInfo *meth_info;
-//
-//        meth_info = g_struct_info_get_method(gtype_struct, i);
-//
-//        gwkjs_define_function(context, constructor, gtype,
-//                            (GICallableInfo*)meth_info);
-//
-//        g_base_info_unref((GIBaseInfo*) meth_info);
-//    }
-//
-//    g_base_info_unref((GIBaseInfo*) gtype_struct);
-//    return JS_TRUE;
-//}
 
 JSObjectRef
 gwkjs_define_object_class(JSContextRef      context,
@@ -1981,69 +1974,68 @@ gwkjs_define_object_class(JSContextRef      context,
                         GType           gtype,
                         JSObjectRef      *constructor_p)
 {
-// TODO: implement
-//    const char *constructor_name;
-//    JSObjectRef prototype;
-//    JSObjectRef constructor;
-//    JSObjectRef parent_proto;
-//    JSObjectRef global;
-//
-//    jsval value;
-//    ObjectInstance *priv;
-//    const char *ns;
-//    GType parent_type;
-//
-//    g_assert(in_object != NULL);
-//    g_assert(gtype != G_TYPE_INVALID);
-//
-//    /*   http://egachine.berlios.de/embedding-sm-best-practice/apa.html
-//     *   http://www.sitepoint.com/blogs/2006/01/17/javascript-inheritance/
-//     *   http://www.cs.rit.edu/~atk/JavaScript/manuals/jsobj/
-//     *
-//     * What we want is:
-//     *
-//     * repoobj.Gtk.Window is constructor for a GtkWindow wrapper JSObject
-//     *   (gwkjs_define_object_constructor() is supposed to define Window in Gtk)
-//     *
-//     * Window.prototype contains the methods on Window, e.g. set_default_size()
-//     * mywindow.__proto__ is Window.prototype
-//     * mywindow.__proto__.__proto__ is Bin.prototype
-//     * mywindow.__proto__.__proto__.__proto__ is Container.prototype
-//     *
-//     * Because Window.prototype is an instance of Window in a sense,
-//     * Window.prototype.__proto__ is Window.prototype, just as
-//     * mywindow.__proto__ is Window.prototype
-//     *
-//     * If we do "mywindow = new Window()" then we should get:
-//     *     mywindow.__proto__ == Window.prototype
-//     * which means "mywindow instanceof Window" is true.
-//     *
-//     * Remember "Window.prototype" is "the __proto__ of stuff
-//     * constructed with new Window()"
-//     *
-//     * __proto__ is used to search for properties if you do "this.foo"
-//     * while __parent__ defines the scope to search if you just have
-//     * "foo".
-//     *
-//     * __proto__ is used to look up properties, while .prototype is only
-//     * relevant for constructors and is used to set __proto__ on new'd
-//     * objects. So .prototype only makes sense on constructors.
-//     *
-//     * JS_SetPrototype() and JS_GetPrototype() are for __proto__.
-//     * To set/get .prototype, just use the normal property accessors,
-//     * or JS_InitClass() sets it up automatically.
-//     *
-//     * JavaScript is SO AWESOME
-//     */
-//
-//    parent_proto = NULL;
-//    parent_type = g_type_parent(gtype);
-//    if (parent_type != G_TYPE_INVALID)
-//       parent_proto = gwkjs_lookup_object_prototype(context, parent_type);
-//
-//    ns = gwkjs_get_names_from_gtype_and_gi_info(gtype, (GIBaseInfo *) info,
-//                                              &constructor_name);
-//
+    const char *constructor_name;
+    JSObjectRef prototype;
+    JSObjectRef constructor;
+    JSObjectRef parent_proto;
+    JSObjectRef global;
+
+    jsval value;
+    ObjectInstance *priv;
+    const char *ns;
+    GType parent_type;
+
+    g_assert(in_object != NULL);
+    g_assert(gtype != G_TYPE_INVALID);
+
+    /*   http://egachine.berlios.de/embedding-sm-best-practice/apa.html
+     *   http://www.sitepoint.com/blogs/2006/01/17/javascript-inheritance/
+     *   http://www.cs.rit.edu/~atk/JavaScript/manuals/jsobj/
+     *
+     * What we want is:
+     *
+     * repoobj.Gtk.Window is constructor for a GtkWindow wrapper JSObject
+     *   (gwkjs_define_object_constructor() is supposed to define Window in Gtk)
+     *
+     * Window.prototype contains the methods on Window, e.g. set_default_size()
+     * mywindow.__proto__ is Window.prototype
+     * mywindow.__proto__.__proto__ is Bin.prototype
+     * mywindow.__proto__.__proto__.__proto__ is Container.prototype
+     *
+     * Because Window.prototype is an instance of Window in a sense,
+     * Window.prototype.__proto__ is Window.prototype, just as
+     * mywindow.__proto__ is Window.prototype
+     *
+     * If we do "mywindow = new Window()" then we should get:
+     *     mywindow.__proto__ == Window.prototype
+     * which means "mywindow instanceof Window" is true.
+     *
+     * Remember "Window.prototype" is "the __proto__ of stuff
+     * constructed with new Window()"
+     *
+     * __proto__ is used to search for properties if you do "this.foo"
+     * while __parent__ defines the scope to search if you just have
+     * "foo".
+     *
+     * __proto__ is used to look up properties, while .prototype is only
+     * relevant for constructors and is used to set __proto__ on new'd
+     * objects. So .prototype only makes sense on constructors.
+     *
+     * JS_SetPrototype() and JS_GetPrototype() are for __proto__.
+     * To set/get .prototype, just use the normal property accessors,
+     * or JS_InitClass() sets it up automatically.
+     *
+     * JavaScript is SO AWESOME
+     */
+
+    parent_proto = NULL;
+    parent_type = g_type_parent(gtype);
+    if (parent_type != G_TYPE_INVALID)
+       parent_proto = gwkjs_lookup_object_prototype(context, parent_type);
+
+    ns = gwkjs_get_names_from_gtype_and_gi_info(gtype, (GIBaseInfo *) info,
+                                              &constructor_name);
+
 //    if (!gwkjs_init_class_dynamic(context, in_object,
 //                                parent_proto,
 //                                ns, constructor_name,
@@ -2061,28 +2053,29 @@ gwkjs_define_object_class(JSContextRef      context,
 //                                &constructor)) {
 //        g_error("Can't init class %s", constructor_name);
 //    }
-//
-//    GWKJS_INC_COUNTER(object);
-//    priv = g_slice_new0(ObjectInstance);
-//    priv->info = info;
-//    if (info)
-//        g_base_info_ref((GIBaseInfo*) info);
-//    priv->gtype = gtype;
-//    priv->klass = (GTypeClass*) g_type_class_ref (gtype);
-//    JS_SetPrivate(prototype, priv);
-//
-//    gwkjs_debug(GWKJS_DEBUG_GOBJECT, "Defined class %s prototype %p class %p in object %p",
-//              constructor_name, prototype, JS_GetClass(prototype), in_object);
-//
-//    if (info)
-//        gwkjs_object_define_static_methods(context, constructor, gtype, info);
-//
-//    value = OBJECT_TO_JSVAL(gwkjs_gtype_create_gtype_wrapper(context, gtype));
-//    JS_DefineProperty(context, constructor, "$gtype", value,
-//                      NULL, NULL, JSPROP_PERMANENT);
-//
-//    if (constructor_p)
-//        *constructor_p = constructor;
+
+    g_warning("gwkjs_define_object_class went too far: %s : %s", ns, constructor_name);
+
+    GWKJS_INC_COUNTER(object);
+    priv = g_slice_new0(ObjectInstance);
+    priv->info = info;
+    if (info)
+        g_base_info_ref((GIBaseInfo*) info);
+    priv->gtype = gtype;
+    priv->klass = (GTypeClass*) g_type_class_ref (gtype);
+    JSObjectSetPrivate(prototype, priv);
+
+    gwkjs_debug(GWKJS_DEBUG_GOBJECT, "Defined class %s prototype %p class %p in object %p",
+              constructor_name, prototype, prototype, in_object);
+
+    if (info)
+        gwkjs_object_define_static_methods(context, constructor, gtype, info);
+
+    value = gwkjs_gtype_create_gtype_wrapper(context, gtype);
+    gwkjs_object_set_property(context, constructor, "$gtype", value, kJSPropertyAttributeDontEnum | kJSPropertyAttributeDontDelete, NULL);
+
+    if (constructor_p)
+        *constructor_p = constructor;
 }
 
 static JSObjectRef
@@ -2100,12 +2093,12 @@ peek_js_obj(GObject *gobj)
     return object;
 }
 
-//static void
-//set_js_obj(GObject  *gobj,
-//           JSObjectRef obj)
-//{
-//    g_object_set_qdata(gobj, gwkjs_object_priv_quark(), obj);
-//}
+static void
+set_js_obj(GObject  *gobj,
+           JSObjectRef obj)
+{
+    g_object_set_qdata(gobj, gwkjs_object_priv_quark(), obj);
+}
 
 JSObjectRef
 gwkjs_object_from_g_object(JSContextRef    context,
@@ -2136,14 +2129,13 @@ gwkjs_object_from_g_object(JSContextRef    context,
 //        obj = JS_NewObjectWithGivenProto(context,
 //                                         JS_GetClass(proto), proto,
 //                                         gwkjs_get_import_global (context));
-//
+
 
         if (obj == NULL)
             goto out;
 
-// TODO: implement the following
-//        init_object_private(context, obj);
-//
+        init_object_private(context, obj);
+
         g_object_ref_sink(gobj);
 //        associate_js_gobject(context, obj, gobj);
 

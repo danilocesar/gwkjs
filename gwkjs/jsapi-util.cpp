@@ -62,6 +62,9 @@ JSObjectRef gwkjs_new_object(JSContextRef context,
                                   "__parent__", parent,
                                   kJSPropertyAttributeDontDelete, NULL);
 
+    if (proto)
+        JSObjectSetPrototype(context, ret, proto);
+
     return ret;
 }
 
@@ -975,28 +978,40 @@ gwkjs_move_exception(JSContextRef      src_context,
 //    return success;
 }
 
-//JSBool
-//gwkjs_call_function_value(JSContextRef      context,
-//                        JSObjectRef       obj,
-//                        jsval           fval,
-//                        unsigned        argc,
-//                        jsval          *argv,
-//                        jsval          *rval)
-//{
-//    JSBool result;
-//
-//    JS_BeginRequest(context);
-//
-//    result = JS_CallFunctionValue(context, obj, fval,
-//                                  argc, argv, rval);
-//
-//    if (result)
-//        gwkjs_schedule_gc_if_needed(context);
-//
-//    JS_EndRequest(context);
-//    return result;
-//}
-//
+JSBool
+gwkjs_call_function_value(JSContextRef      context,
+                        JSObjectRef       obj,
+                        jsval           fval,
+                        unsigned        argc,
+                        const JSValueRef argv[],
+                        jsval          *rval)
+{
+    JSObjectRef fobj = NULL;
+    JSValueRef ret = NULL;
+    JSValueRef exception = NULL;
+
+    if (!JSValueIsObject(context, fval)) {
+        g_warning("Function %p cannot be called as it's not a object", fval);
+        return FALSE;
+    }
+    fobj = JSValueToObject(context, fval, NULL);
+
+    if (!JSObjectIsFunction(context, fobj)) {
+        g_warning("Function %p cannot be called as it's not a object", fval);
+        return FALSE;
+    }
+
+
+    ret = JSObjectCallAsFunction(context, obj, fobj,
+                                 argc, argv, &exception);
+    if (rval)
+        *rval = ret;
+
+    gwkjs_schedule_gc_if_needed(context);
+
+    return TRUE;
+}
+
 //static JSBool
 //log_prop(JSContextRef  context,
 //         JSObjectRef   obj,

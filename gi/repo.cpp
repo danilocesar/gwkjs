@@ -493,8 +493,7 @@ gwkjs_define_info(JSContextRef context,
 //                ret = gwkjs_define_param_class(context, in_object);
             } else if (g_type_is_a (gtype, G_TYPE_OBJECT)) {
                 gwkjs_throw(context, "Thing was a OBJECT!");
-// TODO: IMPLEMENT
-//                ret = gwkjs_define_object_class(context, in_object, (GIObjectInfo*) info, gtype, NULL);
+                ret = gwkjs_define_object_class(context, in_object, (GIObjectInfo*) info, gtype, NULL);
             } else if (G_TYPE_IS_INSTANTIATABLE(gtype)) {
                 gwkjs_throw(context, "Thing was a INSTANTIABLE!");
 //TODO: IMPLEMENT
