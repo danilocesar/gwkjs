@@ -128,6 +128,7 @@ resolve_namespace_object(JSContextRef context,
      * in the repo.
      */
     gi_namespace = gwkjs_create_ns(context, ns_name);
+    JSValueProtect(context, gi_namespace);
 
     /* Define the property early, to avoid reentrancy issues if
        the override module looks for namespaces that import this */
@@ -154,6 +155,8 @@ resolve_namespace_object(JSContextRef context,
     gwkjs_schedule_gc_if_needed(context);
 
  out:
+    if (gi_namespace)
+        JSValueUnprotect(context, gi_namespace);
     return ret;
 }
 

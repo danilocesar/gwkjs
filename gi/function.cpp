@@ -88,10 +88,7 @@ gwkjs_callback_trampoline_unref(GwkjsCallbackTrampoline *trampoline)
         JSContextRef context = trampoline->context;
 
         if (!trampoline->is_vfunc) {
-//TODO: CHECK
-//            JS_BeginRequest(context);
-//            JS_RemoveValueRoot(context, &trampoline->js_function);
-//            JS_EndRequest(context);
+            JSValueUnprotect(context, trampoline->js_function);
         }
 
         g_callable_info_free_closure(trampoline->info, trampoline->closure);
@@ -448,9 +445,8 @@ gwkjs_callback_trampoline_new(JSContextRef      context,
     trampoline->info = callable_info;
     g_base_info_ref((GIBaseInfo*)trampoline->info);
     trampoline->js_function = function;
-// TODO: Donn't think the following is necessary in JSC
-//    if (!is_vfunc)
-//        JS_AddValueRoot(context, &trampoline->js_function);
+    if (!is_vfunc)
+        JSValueProtect(context, trampoline->js_function);
 
     /* Analyze param types and directions, similarly to init_cached_function_data */
     n_args = g_callable_info_get_n_args(trampoline->info);
@@ -1686,7 +1682,7 @@ function_new(JSContextRef      context,
     JSObjectRef prototype = NULL;
     Function *priv = NULL;
     JSBool found = FALSE;
-    JSValueRef exception = NULL; 
+    JSValueRef exception = NULL;
 
     /* put constructor for GIRepositoryFunction() in the global namespace */
     global = gwkjs_get_import_global(context);
@@ -1735,6 +1731,7 @@ function_new(JSContextRef      context,
         if (exception) {
             g_error("Can't get protoType for class %s", gwkjs_function_class.className);
         }
+        prototype = JSValueToObject(context, proto_val, 0);
 
     }
 

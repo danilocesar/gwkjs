@@ -79,8 +79,8 @@ gwkjs_init_class_dynamic(JSContextRef       context,
     JSObjectRef global;
     /* Force these variables on the stack, so the conservative GC will
        find them */
-    JSObjectRef  volatile prototype = NULL;
-    JSObjectRef  volatile constructor = NULL;
+    JSObjectRef prototype = NULL;
+    JSObjectRef constructor = NULL;
     char *full_function_name = NULL;
     JSBool res = JS_FALSE;
     JSValueRef exception = NULL;

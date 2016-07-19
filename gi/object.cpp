@@ -61,6 +61,8 @@ typedef struct {
     /* the GObjectClass wrapped by this JS Object (only used for
        prototypes) */
     GTypeClass *klass;
+
+    GHashTable *modules;
 } ObjectInstance;
 
 typedef struct {
@@ -108,6 +110,12 @@ typedef enum {
     NO_SUCH_G_PROPERTY,
     VALUE_WAS_SET
 } ValueFromPropertyResult;
+
+static JSBool
+object_instance_new_resolve(JSContextRef context,
+                            JSObjectRef obj,
+                            const gchar propertyName[],
+                            JSValueRef *objp);
 
 static GQuark
 gwkjs_is_custom_type_quark (void)
@@ -183,61 +191,61 @@ throw_priv_is_null_error(JSContextRef context)
               " up to the parent _init properly?");
 }
 
-//static ValueFromPropertyResult
-//init_g_param_from_property(JSContextRef  context,
-//                           const char *js_prop_name,
-//                           jsval       js_value,
-//                           GType       gtype,
-//                           GParameter *parameter,
-//                           gboolean    constructing)
-//{
-//    char *gname;
-//    GParamSpec *param_spec;
-//    void *klass;
-//
-//    gname = gwkjs_hyphen_from_camel(js_prop_name);
-//    gwkjs_debug_jsprop(GWKJS_DEBUG_GOBJECT,
-//                     "Hyphen name %s on %s", gname, g_type_name(gtype));
-//
-//    klass = g_type_class_ref(gtype);
-//    param_spec = g_object_class_find_property(G_OBJECT_CLASS(klass),
-//                                              gname);
-//    g_type_class_unref(klass);
-//    g_free(gname);
-//
-//    if (param_spec == NULL) {
-//        /* not a GObject prop, so nothing else to do */
-//        return NO_SUCH_G_PROPERTY;
-//    }
-//
-//    /* Do not set JS overridden properties through GObject, to avoid
-//     * infinite recursion (but set them when constructing) */
-//    if (!constructing &&
-//        g_param_spec_get_qdata(param_spec, gwkjs_is_custom_property_quark()))
-//        return NO_SUCH_G_PROPERTY;
-//
-//
-//    if ((param_spec->flags & G_PARAM_WRITABLE) == 0) {
-//        /* prevent setting the prop even in JS */
-//        gwkjs_throw(context, "Property %s (GObject %s) is not writable",
-//                     js_prop_name, param_spec->name);
-//        return SOME_ERROR_OCCURRED;
-//    }
-//
-//    gwkjs_debug_jsprop(GWKJS_DEBUG_GOBJECT,
-//                     "Syncing %s to GObject prop %s",
-//                     js_prop_name, param_spec->name);
-//
-//    g_value_init(&parameter->value, G_PARAM_SPEC_VALUE_TYPE(param_spec));
-//    if (!gwkjs_value_to_g_value(context, js_value, &parameter->value)) {
-//        g_value_unset(&parameter->value);
-//        return SOME_ERROR_OCCURRED;
-//    }
-//
-//    parameter->name = param_spec->name;
-//
-//    return VALUE_WAS_SET;
-//}
+static ValueFromPropertyResult
+init_g_param_from_property(JSContextRef  context,
+                           const char *js_prop_name,
+                           jsval       js_value,
+                           GType       gtype,
+                           GParameter *parameter,
+                           gboolean    constructing)
+{
+    char *gname;
+    GParamSpec *param_spec;
+    void *klass;
+
+    gname = gwkjs_hyphen_from_camel(js_prop_name);
+    gwkjs_debug_jsprop(GWKJS_DEBUG_GOBJECT,
+                     "Hyphen name %s on %s", gname, g_type_name(gtype));
+
+    klass = g_type_class_ref(gtype);
+    param_spec = g_object_class_find_property(G_OBJECT_CLASS(klass),
+                                              gname);
+    g_type_class_unref(klass);
+    g_free(gname);
+
+    if (param_spec == NULL) {
+        /* not a GObject prop, so nothing else to do */
+        return NO_SUCH_G_PROPERTY;
+    }
+
+    /* Do not set JS overridden properties through GObject, to avoid
+     * infinite recursion (but set them when constructing) */
+    if (!constructing &&
+        g_param_spec_get_qdata(param_spec, gwkjs_is_custom_property_quark()))
+        return NO_SUCH_G_PROPERTY;
+
+
+    if ((param_spec->flags & G_PARAM_WRITABLE) == 0) {
+        /* prevent setting the prop even in JS */
+        gwkjs_throw(context, "Property %s (GObject %s) is not writable",
+                     js_prop_name, param_spec->name);
+        return SOME_ERROR_OCCURRED;
+    }
+
+    gwkjs_debug_jsprop(GWKJS_DEBUG_GOBJECT,
+                     "Syncing %s to GObject prop %s",
+                     js_prop_name, param_spec->name);
+
+    g_value_init(&parameter->value, G_PARAM_SPEC_VALUE_TYPE(param_spec));
+    if (!gwkjs_value_to_g_value(context, js_value, &parameter->value)) {
+        g_value_unset(&parameter->value);
+        return SOME_ERROR_OCCURRED;
+    }
+
+    parameter->name = param_spec->name;
+
+    return VALUE_WAS_SET;
+}
 
 static inline ObjectInstance *
 proto_priv_from_js(JSContextRef context,
@@ -248,182 +256,177 @@ proto_priv_from_js(JSContextRef context,
 
     if (JSValueIsObject(context, proto_val))
         proto = JSValueToObject(context, proto_val, NULL);
-    else
+    else {
         gwkjs_throw(context, "Proto_priv_from_js shouldn't return nothing");
+        return NULL;
+    }
 
     return priv_from_js(proto);
 }
 
 static JSValueRef
-object_instance_get_prop(JSContextRef ctx,
-                      JSObjectRef object,
+object_instance_get_prop(JSContextRef context,
+                      JSObjectRef obj,
                       JSStringRef property_name,
                       JSValueRef* exception)
 {
-    gchar *prop = gwkjs_jsstring_to_cstring(property_name);
-    g_warning("object_instance_get_prop NOT IMPLEMENTED :%s ", prop);
-//TODO: implement
-    return NULL;
+    ObjectInstance *priv;
+    char *name;
+    char *gname;
+    GParamSpec *param;
+    GValue gvalue = { 0, };
+    JSValueRef ret = NULL;
+    JSValueRef tryOut = NULL;
+
+    name = gwkjs_jsstring_to_cstring(property_name);
+
+    priv = priv_from_js(obj);
+    gwkjs_debug_jsprop(GWKJS_DEBUG_GOBJECT,
+                     "Get prop '%s' hook obj %p priv %p",
+                     name, (void *)obj, priv);
+
+    if (priv == NULL) {
+        /* If we reach this point, either object_instance_new_resolve
+         * did not throw (so name == "_init"), or the property actually
+         * exists and it's not something we should be concerned with */
+        goto out;
+    }
+
+    if (g_hash_table_contains(priv->modules, name))
+        goto out;
+
+    g_hash_table_replace(priv->modules, g_strdup(name), NULL);
+    object_instance_new_resolve(context, obj, name, &tryOut);
+    if (tryOut) {
+        ret = tryOut;
+        goto out;
+    }
+
+
+
+    if (priv->gobj == NULL) /* prototype, not an instance. */
+        goto out;
+
+    gname = gwkjs_hyphen_from_camel(name);
+    param = g_object_class_find_property(G_OBJECT_GET_CLASS(priv->gobj),
+                                         gname);
+    g_free(gname);
+
+    if (param == NULL) {
+        /* leave value_p as it was */
+        goto out;
+    }
+
+    /* Do not fetch JS overridden properties from GObject, to avoid
+     * infinite recursion. */
+    if (g_param_spec_get_qdata(param, gwkjs_is_custom_property_quark()))
+        goto out;
+
+    if ((param->flags & G_PARAM_READABLE) == 0)
+        goto out;
+
+    gwkjs_debug_jsprop(GWKJS_DEBUG_GOBJECT,
+                     "Overriding %s with GObject prop %s",
+                     name, param->name);
+
+    g_value_init(&gvalue, G_PARAM_SPEC_VALUE_TYPE(param));
+    g_object_get_property(priv->gobj, param->name,
+                          &gvalue);
+    if (!gwkjs_value_from_g_value(context, &ret, &gvalue)) {
+        g_value_unset(&gvalue);
+        goto out;
+    }
+    g_value_unset(&gvalue);
+
+ out:
+    if (!ret)
+        g_warning("object_instance_get_prop is NULL for %s %p", name, obj);
+
+    g_free(name);
+    return ret;
 }
-///* a hook on getting a property; set value_p to override property's value.
-// * Return value is JS_FALSE on OOM/exception.
-// */
-//static JSBool
-//object_instance_get_prop(JSContextRef              context,
-//                         JS::HandleObject        obj,
-//                         JS::HandleId            id,
-//                         JS::MutableHandleValue  value_p)
-//{
-//    ObjectInstance *priv;
-//    char *name;
-//    char *gname;
-//    GParamSpec *param;
-//    GValue gvalue = { 0, };
-//    JSBool ret = JS_TRUE;
-//
-//    if (!gwkjs_get_string_id(context, id, &name))
-//        return JS_TRUE; /* not resolved, but no error */
-//
-//    priv = priv_from_js(context, obj);
-//    gwkjs_debug_jsprop(GWKJS_DEBUG_GOBJECT,
-//                     "Get prop '%s' hook obj %p priv %p",
-//                     name, (void *)obj, priv);
-//
-//    if (priv == NULL) {
-//        /* If we reach this point, either object_instance_new_resolve
-//         * did not throw (so name == "_init"), or the property actually
-//         * exists and it's not something we should be concerned with */
-//        goto out;
-//    }
-//    if (priv->gobj == NULL) /* prototype, not an instance. */
-//        goto out;
-//
-//    gname = gwkjs_hyphen_from_camel(name);
-//    param = g_object_class_find_property(G_OBJECT_GET_CLASS(priv->gobj),
-//                                         gname);
-//    g_free(gname);
-//
-//    if (param == NULL) {
-//        /* leave value_p as it was */
-//        goto out;
-//    }
-//
-//    /* Do not fetch JS overridden properties from GObject, to avoid
-//     * infinite recursion. */
-//    if (g_param_spec_get_qdata(param, gwkjs_is_custom_property_quark()))
-//        goto out;
-//
-//    if ((param->flags & G_PARAM_READABLE) == 0)
-//        goto out;
-//
-//    gwkjs_debug_jsprop(GWKJS_DEBUG_GOBJECT,
-//                     "Overriding %s with GObject prop %s",
-//                     name, param->name);
-//
-//    g_value_init(&gvalue, G_PARAM_SPEC_VALUE_TYPE(param));
-//    g_object_get_property(priv->gobj, param->name,
-//                          &gvalue);
-//    if (!gwkjs_value_from_g_value(context, value_p.address(), &gvalue)) {
-//        g_value_unset(&gvalue);
-//        ret = JS_FALSE;
-//        goto out;
-//    }
-//    g_value_unset(&gvalue);
-//
-// out:
-//    g_free(name);
-//    return ret;
-//}
 
 ///* a hook on setting a property; set value_p to override property value to
 // * be set. Return value is JS_FALSE on OOM/exception.
 // */
 static bool 
-object_instance_set_prop(JSContextRef ctx, JSObjectRef object, JSStringRef propertyName, JSValueRef value, JSValueRef* exception)
+object_instance_set_prop(JSContextRef ctx,
+                         JSObjectRef obj,
+                         JSStringRef propertyName,
+                         JSValueRef value,
+                         JSValueRef* exception)
 {
-// TODO: implement
-    gchar *prop = gwkjs_jsstring_to_cstring(propertyName);
-    g_warning("object_instance_SET_prop NOT IMPLEMENTED :%s ", prop);
-    return JS_FALSE;
+    ObjectInstance *priv = NULL;
+    char *name = NULL;
+    GParameter param = { NULL, { 0, }};
+    JSBool ret = FALSE;
+
+    name = gwkjs_jsstring_to_cstring(propertyName);
+
+    priv = priv_from_js(obj);
+    gwkjs_debug_jsprop(GWKJS_DEBUG_GOBJECT,
+                     "Set prop '%s' hook obj %p priv %p",
+                     name, (void *)obj, priv);
+
+    if (priv == NULL) {
+        /* see the comment in object_instance_get_prop() on this */
+        goto out;
+    }
+    if (priv->gobj == NULL) /* prototype, not an instance. */
+        goto out;
+
+    switch (init_g_param_from_property(ctx, name,
+                                       value,
+                                       G_TYPE_FROM_INSTANCE(priv->gobj),
+                                       &param,
+                                       FALSE /* constructing */)) {
+    case SOME_ERROR_OCCURRED:
+        ret = JS_FALSE;
+    case NO_SUCH_G_PROPERTY:
+        goto out;
+    case VALUE_WAS_SET:
+        break;
+    }
+
+    g_object_set_property(priv->gobj, param.name,
+                          &param.value);
+
+    g_value_unset(&param.value);
+
+    /* note that the prop will also have been set in JS, which I think
+     * is OK, since we hook get and set so will always override that
+     * value. We could also use JS_DefineProperty though and specify a
+     * getter/setter maybe, don't know if that is better.
+     */
+
+ out:
+    g_warning("object_instance_SET_prop for %s %p == %p", name, obj, value);
+    g_free(name);
+    return ret;
 }
-//static JSBool
-//object_instance_set_prop(JSContextRef              context,
-//                         JS::HandleObject        obj,
-//                         JS::HandleId            id,
-//                         JSBool                  strict,
-//                         JS::MutableHandleValue  value_p)
-//{
-//    ObjectInstance *priv;
-//    char *name;
-//    GParameter param = { NULL, { 0, }};
-//    JSBool ret = JS_TRUE;
-//
-//    if (!gwkjs_get_string_id(context, id, &name))
-//        return JS_TRUE; /* not resolved, but no error */
-//
-//    priv = priv_from_js(context, obj);
-//    gwkjs_debug_jsprop(GWKJS_DEBUG_GOBJECT,
-//                     "Set prop '%s' hook obj %p priv %p",
-//                     name, (void *)obj, priv);
-//
-//    if (priv == NULL) {
-//        /* see the comment in object_instance_get_prop() on this */
-//        goto out;
-//    }
-//    if (priv->gobj == NULL) /* prototype, not an instance. */
-//        goto out;
-//
-//    switch (init_g_param_from_property(context, name,
-//                                       value_p,
-//                                       G_TYPE_FROM_INSTANCE(priv->gobj),
-//                                       &param,
-//                                       FALSE /* constructing */)) {
-//    case SOME_ERROR_OCCURRED:
-//        ret = JS_FALSE;
-//    case NO_SUCH_G_PROPERTY:
-//        goto out;
-//    case VALUE_WAS_SET:
-//        break;
-//    }
-//
-//    g_object_set_property(priv->gobj, param.name,
-//                          &param.value);
-//
-//    g_value_unset(&param.value);
-//
-//    /* note that the prop will also have been set in JS, which I think
-//     * is OK, since we hook get and set so will always override that
-//     * value. We could also use JS_DefineProperty though and specify a
-//     * getter/setter maybe, don't know if that is better.
-//     */
-//
-// out:
-//    g_free(name);
-//    return ret;
-//}
-//
-//static gboolean
-//is_vfunc_unchanged(GIVFuncInfo *info,
-//                   GType        gtype)
-//{
-//    GType ptype = g_type_parent(gtype);
-//    GError *error = NULL;
-//    gpointer addr1, addr2;
-//
-//    addr1 = g_vfunc_info_get_address(info, gtype, &error);
-//    if (error) {
-//        g_clear_error(&error);
-//        return FALSE;
-//    }
-//
-//    addr2 = g_vfunc_info_get_address(info, ptype, &error);
-//    if (error) {
-//        g_clear_error(&error);
-//        return FALSE;
-//    }
-//
-//    return addr1 == addr2;
-//}
+
+static gboolean
+is_vfunc_unchanged(GIVFuncInfo *info,
+                   GType        gtype)
+{
+    GType ptype = g_type_parent(gtype);
+    GError *error = NULL;
+    gpointer addr1, addr2;
+
+    addr1 = g_vfunc_info_get_address(info, gtype, &error);
+    if (error) {
+        g_clear_error(&error);
+        return FALSE;
+    }
+
+    addr2 = g_vfunc_info_get_address(info, ptype, &error);
+    if (error) {
+        g_clear_error(&error);
+        return FALSE;
+    }
+
+    return addr1 == addr2;
+}
 
 static GIVFuncInfo *
 find_vfunc_on_parents(GIObjectInfo *info,
@@ -462,218 +465,215 @@ find_vfunc_on_parents(GIObjectInfo *info,
     return vfunc;
 }
 
-//static JSBool
-//object_instance_new_resolve_no_info(JSContextRef       context,
-//                                    JS::HandleObject obj,
-//                                    JS::MutableHandleObject objp,
-//                                    ObjectInstance  *priv,
-//                                    char            *name)
-//{
-//    GIFunctionInfo *method_info;
-//    JSBool ret;
-//    GType *interfaces;
-//    guint n_interfaces;
-//    guint i;
-//
-//    ret = JS_TRUE;
-//    interfaces = g_type_interfaces(priv->gtype, &n_interfaces);
-//    for (i = 0; i < n_interfaces; i++) {
-//        GIBaseInfo *base_info;
-//        GIInterfaceInfo *iface_info;
-//
-//        base_info = g_irepository_find_by_gtype(g_irepository_get_default(),
-//                                                interfaces[i]);
-//
-//        if (base_info == NULL)
-//            continue;
-//
-//        /* An interface GType ought to have interface introspection info */
-//        g_assert (g_base_info_get_type(base_info) == GI_INFO_TYPE_INTERFACE);
-//
-//        iface_info = (GIInterfaceInfo*) base_info;
-//
-//        method_info = g_interface_info_find_method(iface_info, name);
-//
-//        g_base_info_unref(base_info);
-//
-//
-//        if (method_info != NULL) {
-//            if (g_function_info_get_flags (method_info) & GI_FUNCTION_IS_METHOD) {
-//                if (gwkjs_define_function(context, obj, priv->gtype,
-//                                        (GICallableInfo *)method_info)) {
-//                    objp.set(obj);
-//                } else {
-//                    ret = JS_FALSE;
-//                }
-//            }
-//
-//            g_base_info_unref( (GIBaseInfo*) method_info);
-//        }
-//    }
-//
-//    g_free(interfaces);
-//    return ret;
-//}
-//
-///*
-// * Like JSResolveOp, but flags provide contextual information as follows:
-// *
-// *  JSRESOLVE_QUALIFIED   a qualified property id: obj.id or obj[id], not id
-// *  JSRESOLVE_ASSIGNING   obj[id] is on the left-hand side of an assignment
-// *  JSRESOLVE_DETECTING   'if (o.p)...' or similar detection opcode sequence
-// *  JSRESOLVE_DECLARING   var, const, or object prolog declaration opcode
-// *  JSRESOLVE_CLASSNAME   class name used when constructing
-// *
-// * The *objp out parameter, on success, should be null to indicate that id
-// * was not resolved; and non-null, referring to obj or one of its prototypes,
-// * if id was resolved.
-// */
-//static JSBool
-//object_instance_new_resolve(JSContextRef context,
-//                            JS::HandleObject obj,
-//                            JS::HandleId id,
-//                            unsigned flags,
-//                            JS::MutableHandleObject objp)
-//{
-//    GIFunctionInfo *method_info;
-//    ObjectInstance *priv;
-//    char *name;
-//    JSBool ret = JS_FALSE;
-//
-//    if (!gwkjs_get_string_id(context, id, &name))
-//        return JS_TRUE; /* not resolved, but no error */
-//
-//    priv = priv_from_js(context, obj);
-//
-//    gwkjs_debug_jsprop(GWKJS_DEBUG_GOBJECT,
-//                     "Resolve prop '%s' hook obj %p priv %p (%s.%s) gobj %p %s",
-//                     name,
-//                     (void *)obj,
-//                     priv,
-//                     priv && priv->info ? g_base_info_get_namespace (priv->info) : "",
-//                     priv && priv->info ? g_base_info_get_name (priv->info) : "",
-//                     priv ? priv->gobj : NULL,
-//                     (priv && priv->gobj) ? g_type_name_from_instance((GTypeInstance*) priv->gobj) : "(type unknown)");
-//
-//    if (priv == NULL) {
-//        /* We won't have a private until the initializer is called, so
-//         * just defer to prototype chains in this case.
-//         *
-//         * This isn't too bad: either you get undefined if the field
-//         * doesn't exist on any of the prototype chains, or whatever code
-//         * will run afterwards will fail because of the "priv == NULL"
-//         * check there.
-//         */
-//        ret = JS_TRUE;
-//        goto out;
-//    }
-//
-//    if (priv->gobj != NULL) {
-//        ret = JS_TRUE;
-//        goto out;
-//    }
-//
-//    /* If we have no GIRepository information (we're a JS GObject subclass),
-//     * we need to look at exposing interfaces. Look up our interfaces through
-//     * GType data, and then hope that *those* are introspectable. */
-//    if (priv->info == NULL) {
-//        ret = object_instance_new_resolve_no_info(context, obj, objp, priv, name);
-//        goto out;
-//    }
-//
-//    if (g_str_has_prefix (name, "vfunc_")) {
-//        /* The only time we find a vfunc info is when we're the base
-//         * class that defined the vfunc. If we let regular prototype
-//         * chaining resolve this, we'd have the implementation for the base's
-//         * vfunc on the base class, without any other "real" implementations
-//         * in the way. If we want to expose a "real" vfunc implementation,
-//         * we need to go down to the parent infos and look at their VFuncInfos.
-//         *
-//         * This is good, but it's memory-hungry -- we would define every
-//         * possible vfunc on every possible object, even if it's the same
-//         * "real" vfunc underneath. Instead, only expose vfuncs that are
-//         * different from their parent, and let prototype chaining do the
-//         * rest.
-//         */
-//
-//        gchar *name_without_vfunc_ = &name[6];
-//        GIVFuncInfo *vfunc;
-//        gboolean defined_by_parent;
-//
-//        vfunc = find_vfunc_on_parents(priv->info, name_without_vfunc_, &defined_by_parent);
-//        if (vfunc != NULL) {
-//            /* In the event that the vfunc is unchanged, let regular
-//             * prototypal inheritance take over. */
-//            if (defined_by_parent && is_vfunc_unchanged(vfunc, priv->gtype)) {
-//                g_base_info_unref((GIBaseInfo *)vfunc);
-//                ret = JS_TRUE;
-//                goto out;
-//            }
-//
-//            gwkjs_define_function(context, obj, priv->gtype, vfunc);
-//            objp.set(obj);
-//            g_base_info_unref((GIBaseInfo *)vfunc);
-//            ret = JS_TRUE;
-//            goto out;
-//        }
-//
-//        /* If the vfunc wasn't found, fall through, back to normal
-//         * method resolution. */
-//    }
-//
-//    /* find_method does not look at methods on parent classes,
-//     * we rely on javascript to walk up the __proto__ chain
-//     * and find those and define them in the right prototype.
-//     *
-//     * Note that if it isn't a method on the object, since JS
-//     * lacks multiple inheritance, we're sticking the iface
-//     * methods in the object prototype, which means there are many
-//     * copies of the iface methods (one per object class node that
-//     * introduces the iface)
-//     */
-//
-//    method_info = g_object_info_find_method_using_interfaces(priv->info,
-//                                                             name,
-//                                                             NULL);
-//
-//    /**
-//     * Search through any interfaces implemented by the GType;
-//     * this could be done better.  See
-//     * https://bugzilla.gnome.org/show_bug.cgi?id=632922
-//     */
-//    if (method_info == NULL) {
-//        ret = object_instance_new_resolve_no_info(context, obj, objp,
-//                                                  priv, name);
-//        goto out;
-//    } else {
-//#if GWKJS_VERBOSE_ENABLE_GI_USAGE
-//        _gwkjs_log_info_usage((GIBaseInfo*) method_info);
-//#endif
-//
-//        if (g_function_info_get_flags (method_info) & GI_FUNCTION_IS_METHOD) {
-//            gwkjs_debug(GWKJS_DEBUG_GOBJECT,
-//                      "Defining method %s in prototype for %s (%s.%s)",
-//                      g_base_info_get_name( (GIBaseInfo*) method_info),
-//                      g_type_name(priv->gtype),
-//                      g_base_info_get_namespace( (GIBaseInfo*) priv->info),
-//                      g_base_info_get_name( (GIBaseInfo*) priv->info));
-//
-//            if (gwkjs_define_function(context, obj, priv->gtype, method_info) == NULL) {
-//                g_base_info_unref( (GIBaseInfo*) method_info);
-//                goto out;
-//            }
-//
-//            objp.set(obj); /* we defined the prop in obj */
-//        }
-//
-//        g_base_info_unref( (GIBaseInfo*) method_info);
-//    }
-//
-//    ret = JS_TRUE;
-// out:
-//    g_free(name);
-//    return ret;
-//}
+static JSBool
+object_instance_new_resolve_no_info(JSContextRef       context,
+                                     JSObjectRef       obj,
+                                     JSValueRef       *objp,
+                                    ObjectInstance  *priv,
+                                    char            *name)
+{
+    GIFunctionInfo *method_info;
+    JSBool ret;
+    GType *interfaces;
+    guint n_interfaces;
+    guint i;
+
+    ret = JS_TRUE;
+    interfaces = g_type_interfaces(priv->gtype, &n_interfaces);
+    for (i = 0; i < n_interfaces; i++) {
+        GIBaseInfo *base_info;
+        GIInterfaceInfo *iface_info;
+
+        base_info = g_irepository_find_by_gtype(g_irepository_get_default(),
+                                                interfaces[i]);
+
+        if (base_info == NULL)
+            continue;
+
+        /* An interface GType ought to have interface introspection info */
+        g_assert (g_base_info_get_type(base_info) == GI_INFO_TYPE_INTERFACE);
+
+        iface_info = (GIInterfaceInfo*) base_info;
+
+        method_info = g_interface_info_find_method(iface_info, name);
+
+        g_base_info_unref(base_info);
+
+
+        if (method_info != NULL) {
+            if (g_function_info_get_flags (method_info) & GI_FUNCTION_IS_METHOD) {
+                if ((*objp = gwkjs_define_function(context, obj, priv->gtype,
+                                        (GICallableInfo *)method_info))) {
+                } else {
+                    ret = JS_FALSE;
+                }
+            }
+
+            g_base_info_unref( (GIBaseInfo*) method_info);
+        }
+    }
+
+    g_free(interfaces);
+    return ret;
+}
+
+/*
+ * Like JSResolveOp, but flags provide contextual information as follows:
+ *
+ *  JSRESOLVE_QUALIFIED   a qualified property id: obj.id or obj[id], not id
+ *  JSRESOLVE_ASSIGNING   obj[id] is on the left-hand side of an assignment
+ *  JSRESOLVE_DETECTING   'if (o.p)...' or similar detection opcode sequence
+ *  JSRESOLVE_DECLARING   var, const, or object prolog declaration opcode
+ *  JSRESOLVE_CLASSNAME   class name used when constructing
+ *
+ * The *objp out parameter, on success, should be null to indicate that id
+ * was not resolved; and non-null, referring to obj or one of its prototypes,
+ * if id was resolved.
+ */
+static JSBool
+object_instance_new_resolve(JSContextRef context,
+                            JSObjectRef obj,
+                            const gchar propertyName[],
+                            JSValueRef *objp)
+{
+    GIFunctionInfo *method_info;
+    ObjectInstance *priv;
+    gchar *name;
+    JSBool ret = JS_FALSE;
+
+    name = g_strdup(propertyName);
+
+    priv = priv_from_js(obj);
+
+    gwkjs_debug_jsprop(GWKJS_DEBUG_GOBJECT,
+                     "Resolve prop '%s' hook obj %p priv %p (%s.%s) gobj %p %s",
+                     name,
+                     (void *)obj,
+                     priv,
+                     priv && priv->info ? g_base_info_get_namespace (priv->info) : "",
+                     priv && priv->info ? g_base_info_get_name (priv->info) : "",
+                     priv ? priv->gobj : NULL,
+                     (priv && priv->gobj) ? g_type_name_from_instance((GTypeInstance*) priv->gobj) : "(type unknown)");
+
+    if (priv == NULL) {
+        /* We won't have a private until the initializer is called, so
+         * just defer to prototype chains in this case.
+         *
+         * This isn't too bad: either you get undefined if the field
+         * doesn't exist on any of the prototype chains, or whatever code
+         * will run afterwards will fail because of the "priv == NULL"
+         * check there.
+         */
+        ret = JS_TRUE;
+        goto out;
+    }
+
+    if (priv->gobj != NULL) {
+        ret = JS_TRUE;
+        goto out;
+    }
+
+    /* If we have no GIRepository information (we're a JS GObject subclass),
+     * we need to look at exposing interfaces. Look up our interfaces through
+     * GType data, and then hope that *those* are introspectable. */
+    if (priv->info == NULL) {
+        ret = object_instance_new_resolve_no_info(context, obj, objp, priv, name);
+        goto out;
+    }
+
+    if (g_str_has_prefix (name, "vfunc_")) {
+        /* The only time we find a vfunc info is when we're the base
+         * class that defined the vfunc. If we let regular prototype
+         * chaining resolve this, we'd have the implementation for the base's
+         * vfunc on the base class, without any other "real" implementations
+         * in the way. If we want to expose a "real" vfunc implementation,
+         * we need to go down to the parent infos and look at their VFuncInfos.
+         *
+         * This is good, but it's memory-hungry -- we would define every
+         * possible vfunc on every possible object, even if it's the same
+         * "real" vfunc underneath. Instead, only expose vfuncs that are
+         * different from their parent, and let prototype chaining do the
+         * rest.
+         */
+
+        gchar *name_without_vfunc_ = &name[6];
+        GIVFuncInfo *vfunc;
+        gboolean defined_by_parent;
+
+        vfunc = find_vfunc_on_parents(priv->info, name_without_vfunc_, &defined_by_parent);
+        if (vfunc != NULL) {
+            /* In the event that the vfunc is unchanged, let regular
+             * prototypal inheritance take over. */
+            if (defined_by_parent && is_vfunc_unchanged(vfunc, priv->gtype)) {
+                g_base_info_unref((GIBaseInfo *)vfunc);
+                ret = JS_TRUE;
+                goto out;
+            }
+
+            *objp = gwkjs_define_function(context, obj, priv->gtype, vfunc);
+            g_base_info_unref((GIBaseInfo *)vfunc);
+            ret = JS_TRUE;
+            goto out;
+        }
+
+        /* If the vfunc wasn't found, fall through, back to normal
+         * method resolution. */
+    }
+
+    /* find_method does not look at methods on parent classes,
+     * we rely on javascript to walk up the __proto__ chain
+     * and find those and define them in the right prototype.
+     *
+     * Note that if it isn't a method on the object, since JS
+     * lacks multiple inheritance, we're sticking the iface
+     * methods in the object prototype, which means there are many
+     * copies of the iface methods (one per object class node that
+     * introduces the iface)
+     */
+
+    method_info = g_object_info_find_method_using_interfaces(priv->info,
+                                                             name,
+                                                             NULL);
+
+    /**
+     * Search through any interfaces implemented by the GType;
+     * this could be done better.  See
+     * https://bugzilla.gnome.org/show_bug.cgi?id=632922
+     */
+    if (method_info == NULL) {
+        ret = object_instance_new_resolve_no_info(context, obj, objp,
+                                                  priv, name);
+        goto out;
+    } else {
+#if GWKJS_VERBOSE_ENABLE_GI_USAGE
+        _gwkjs_log_info_usage((GIBaseInfo*) method_info);
+#endif
+
+        if (g_function_info_get_flags (method_info) & GI_FUNCTION_IS_METHOD) {
+            gwkjs_debug(GWKJS_DEBUG_GOBJECT,
+                      "Defining method %s in prototype for %s (%s.%s)",
+                      g_base_info_get_name( (GIBaseInfo*) method_info),
+                      g_type_name(priv->gtype),
+                      g_base_info_get_namespace( (GIBaseInfo*) priv->info),
+                      g_base_info_get_name( (GIBaseInfo*) priv->info));
+
+            *objp = gwkjs_define_function(context, obj, priv->gtype, method_info);
+            if (*objp == NULL) {
+                g_base_info_unref( (GIBaseInfo*) method_info);
+                goto out;
+            }
+
+            *objp = obj; /* we defined the prop in obj */
+        }
+
+        g_base_info_unref( (GIBaseInfo*) method_info);
+    }
+
+    ret = JS_TRUE;
+ out:
+    g_free(name);
+    return ret;
+}
 
 static void
 free_g_params(GParameter *params,
@@ -1187,6 +1187,7 @@ init_object_private (JSContextRef context,
     ObjectInstance *priv;
 
     priv = g_slice_new0(ObjectInstance);
+    priv->modules = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
     GWKJS_INC_COUNTER(object);
 
@@ -2079,6 +2080,7 @@ gwkjs_define_object_class(JSContextRef      context,
 
     GWKJS_INC_COUNTER(object);
     priv = g_slice_new0(ObjectInstance);
+    priv->modules = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
     priv->info = info;
     if (info)
         g_base_info_ref((GIBaseInfo*) info);
