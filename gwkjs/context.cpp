@@ -60,7 +60,6 @@ static void     gwkjs_context_set_property      (GObject               *object,
 struct _GwkjsContext {
     GObject parent;
 
-//    JSRuntime *runtime;
     JSContextRef context;
     JSObjectRef global;
 
@@ -68,9 +67,10 @@ struct _GwkjsContext {
 
     char **search_path;
 
+    gboolean destroying;
+
 //TODO: IMPLEMENT
-//    gboolean destroying;
-//
+//    JSRuntime *runtime;
 //    guint    auto_gc_id;
 //
 //    jsid const_strings[GWKJS_STRING_LAST];
@@ -517,13 +517,13 @@ gwkjs_context_new_with_search_path(char** search_path)
                          "search-path", search_path,
                          NULL);
 }
-//
-//gboolean
-//_gwkjs_context_destroying (GwkjsContext *context)
-//{
-//    return context->destroying;
-//}
-//
+
+gboolean
+_gwkjs_context_destroying (GwkjsContext *context)
+{
+    return context->destroying;
+}
+
 //static gboolean
 //trigger_gc_if_needed (gpointer user_data)
 //{

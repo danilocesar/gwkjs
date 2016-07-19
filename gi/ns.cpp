@@ -51,9 +51,9 @@ ns_get_property(JSContextRef context,
                 JSStringRef property_name,
                 JSValueRef* exception)
 {
-    Ns *priv;
-    char *name;
-    GIRepository *repo;
+    Ns *priv = NULL;
+    char *name = NULL;
+    GIRepository *repo = NULL;
     GIBaseInfo *info;
     JSValueRef ret = NULL;
     gboolean defined;
@@ -97,8 +97,7 @@ ns_get_property(JSContextRef context,
 
     g_hash_table_replace(priv->modules, g_strdup(name), NULL);
     if ((ret = gwkjs_define_info(context, obj, info, &defined))) {
-        g_warning("Namespace imported: %s", name);
-        g_base_info_unref(info);
+//        g_base_info_unref(info);
 //XXX: Does it return THIS?!
 //        if (defined)
 //            objp.set(obj); /* we defined the property in this object */
@@ -246,8 +245,7 @@ ns_new(JSContextRef context,
     g_assert(priv_from_js(ret) == NULL);
     JSObjectSetPrivate(ret, priv);
 
-
-    gwkjs_debug_lifecycle(GWKJS_DEBUG_GNAMESPACE, "ns constructor, obj %p priv %p", ns, priv);
+    gwkjs_debug_lifecycle(GWKJS_DEBUG_GNAMESPACE, "ns constructor, obj %p priv %p", ret, priv);
 
     priv = priv_from_js(ret);
     priv->modules = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);

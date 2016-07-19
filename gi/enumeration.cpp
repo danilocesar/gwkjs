@@ -37,30 +37,33 @@
 
 #include "enumeration.h"
 
-//JSObject*
-//gwkjs_lookup_enumeration(JSContextRef    context,
-//                       GIEnumInfo   *info)
-//{
-//    JSObjectRef in_object;
-//    const char *enum_name;
-//    jsval value;
-//
-//    in_object = gwkjs_lookup_namespace_object(context, (GIBaseInfo*) info);
-//
-//    if (G_UNLIKELY (!in_object))
-//        return NULL;
-//
-//    enum_name = g_base_info_get_name((GIBaseInfo*) info);
-//
-//    if (!JS_GetProperty(context, in_object, enum_name, &value))
-//        return NULL;
-//
-//    if (G_UNLIKELY (!JSVAL_IS_OBJECT(value)))
-//        return NULL;
-//
-//    return JSVAL_TO_OBJECT(value);
-//}
-//
+JSObjectRef
+gwkjs_lookup_enumeration(JSContextRef    context,
+                       GIEnumInfo   *info)
+{
+    JSObjectRef in_object;
+    const char *enum_name;
+    jsval value = NULL;
+    JSValueRef exception = NULL;
+
+    in_object = gwkjs_lookup_namespace_object(context, (GIBaseInfo*) info);
+
+    if (G_UNLIKELY (!in_object))
+        return NULL;
+
+    enum_name = g_base_info_get_name((GIBaseInfo*) info);
+
+
+    value = gwkjs_object_get_property(context, in_object, enum_name, &exception);
+    if (exception)
+        return NULL;
+
+    if (G_UNLIKELY (!JSValueIsObject(context, value)))
+        return NULL;
+
+    return JSValueToObject(context, value, NULL);
+}
+
 static JSBool
 gwkjs_define_enum_value(JSContextRef context,
                         JSObjectRef  in_object,
@@ -144,41 +147,41 @@ gwkjs_define_enum_values(JSContextRef context,
     return JS_TRUE;
 }
 
-//JSBool
-//gwkjs_define_enum_static_methods(JSContextRef    context,
-//                               JSObjectRef     constructor,
-//                               GIEnumInfo   *enum_info)
-//{
-//    int i, n_methods;
-//
-//    n_methods = g_enum_info_get_n_methods(enum_info);
-//
-//    for (i = 0; i < n_methods; i++) {
-//        GIFunctionInfo *meth_info;
-//        GIFunctionInfoFlags flags;
-//
-//        meth_info = g_enum_info_get_method(enum_info, i);
-//        flags = g_function_info_get_flags(meth_info);
-//
-//        g_warn_if_fail(!(flags & GI_FUNCTION_IS_METHOD));
-//        /* Anything that isn't a method we put on the prototype of the
-//         * constructor.  This includes <constructor> introspection
-//         * methods, as well as the forthcoming "static methods"
-//         * support.  We may want to change this to use
-//         * GI_FUNCTION_IS_CONSTRUCTOR and GI_FUNCTION_IS_STATIC or the
-//         * like in the near future.
-//         */
-//        if (!(flags & GI_FUNCTION_IS_METHOD)) {
-//            gwkjs_define_function(context, constructor, G_TYPE_NONE,
-//                                (GICallableInfo *)meth_info);
-//        }
-//
-//        g_base_info_unref((GIBaseInfo*) meth_info);
-//    }
-//
-//    return JS_TRUE;
-//}
-//
+JSBool
+gwkjs_define_enum_static_methods(JSContextRef    context,
+                               JSObjectRef     constructor,
+                               GIEnumInfo   *enum_info)
+{
+    int i, n_methods;
+
+    n_methods = g_enum_info_get_n_methods(enum_info);
+
+    for (i = 0; i < n_methods; i++) {
+        GIFunctionInfo *meth_info;
+        GIFunctionInfoFlags flags;
+
+        meth_info = g_enum_info_get_method(enum_info, i);
+        flags = g_function_info_get_flags(meth_info);
+
+        g_warn_if_fail(!(flags & GI_FUNCTION_IS_METHOD));
+        /* Anything that isn't a method we put on the prototype of the
+         * constructor.  This includes <constructor> introspection
+         * methods, as well as the forthcoming "static methods"
+         * support.  We may want to change this to use
+         * GI_FUNCTION_IS_CONSTRUCTOR and GI_FUNCTION_IS_STATIC or the
+         * like in the near future.
+         */
+        if (!(flags & GI_FUNCTION_IS_METHOD)) {
+            gwkjs_define_function(context, constructor, G_TYPE_NONE,
+                                (GICallableInfo *)meth_info);
+        }
+
+        g_base_info_unref((GIBaseInfo*) meth_info);
+    }
+
+    return JS_TRUE;
+}
+
 JSObjectRef
 gwkjs_define_enumeration(JSContextRef context,
                        JSObjectRef    in_object,
@@ -206,8 +209,7 @@ gwkjs_define_enumeration(JSContextRef context,
 
     if (!gwkjs_define_enum_values(context, enum_obj, info))
         return NULL;
-//TODO: IMPLEMENT
-//    gwkjs_define_enum_static_methods (context, enum_obj, info);
+    gwkjs_define_enum_static_methods (context, enum_obj, info);
 
     gwkjs_debug(GWKJS_DEBUG_GENUM,
               "Defining %s.%s as %p",

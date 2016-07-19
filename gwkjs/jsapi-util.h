@@ -177,6 +177,9 @@ JSObjectRef gwkjs_##cname##_create_proto(JSContextRef context, JSObjectRef modul
             gwkjs_throw(context, "Couldn't create object for %s", proto_name); \
             return NULL; \
         } \
+        gwkjs_object_set_property(context, global, gwkjs_##cname##_class.className, prototype,  \
+                                  kJSPropertyAttributeDontEnum | kJSPropertyAttributeDontDelete, \
+                                  NULL);\
         if (!gwkjs_object_require_property( \
                 context, global, NULL, \
                 gwkjs_##cname##_class.className, &rval)) { \
@@ -276,7 +279,8 @@ gboolean    gwkjs_object_require_property      (JSContextRef     context,
                                                 JSValueRef       *value_p);
 
 JSObjectRef gwkjs_new_object_for_constructor   (JSContextRef    context,
-                                                JSClassRef      clasp);
+                                                JSClassRef      clasp,
+                                                JSObjectRef     constructor);
 
 ///*
 // * XXX: FIX
@@ -295,6 +299,19 @@ JSObjectRef gwkjs_new_object_for_constructor   (JSContextRef    context,
 //                                              JSObjectRef       *constructor_p,
 //                                              JSObjectRef       *prototype_p);
 //*/
+ JSBool      gwkjs_init_class_dynamic           (JSContextRef       context,
+                       JSObjectRef        in_object,
+                       JSObjectRef        parent_proto,
+                       const char        *ns_name,
+                       const char        *class_name,
+                       JSClassDefinition *clasp,
+                       JSClassRef        clasp_ref,
+                       JSObjectCallAsConstructorCallback      constructor_native,
+                       unsigned         nargs,
+                       JSObjectRef       *prototype_p,
+                       JSObjectRef       *constructor_p);
+
+
 //void gwkjs_throw_constructor_error             (JSContextRef       context);
 
 void gwkjs_throw_abstract_constructor_error    (JSContextRef       context,

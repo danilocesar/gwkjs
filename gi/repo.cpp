@@ -492,7 +492,6 @@ gwkjs_define_info(JSContextRef context,
 // TODO: IMPLEMENT
 //                ret = gwkjs_define_param_class(context, in_object);
             } else if (g_type_is_a (gtype, G_TYPE_OBJECT)) {
-                gwkjs_throw(context, "Thing was a OBJECT!");
                 ret = gwkjs_define_object_class(context, in_object, (GIObjectInfo*) info, gtype, NULL);
             } else if (G_TYPE_IS_INSTANTIATABLE(gtype)) {
                 gwkjs_throw(context, "Thing was a INSTANTIABLE!");
@@ -536,7 +535,6 @@ gwkjs_define_info(JSContextRef context,
             return ret;
         break;
     case GI_INFO_TYPE_ENUM:
-         gwkjs_throw(context, "Thing was a ENUM!");
 // TODO: IMPLEMENT
         if (g_enum_info_get_error_domain((GIEnumInfo*) info)) {
             /* define as GError subclass */
@@ -547,8 +545,7 @@ gwkjs_define_info(JSContextRef context,
 
     case GI_INFO_TYPE_FLAGS:
          gwkjs_throw(context, "Thing was a TYPE FLAGS!");
-// TODO: IMPLEMENT
-//        ret = gwkjs_define_enumeration(context, in_object, (GIEnumInfo*) info);
+        ret = gwkjs_define_enumeration(context, in_object, (GIEnumInfo*) info);
         if (!ret)
             return ret;
         break;

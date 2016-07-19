@@ -41,7 +41,7 @@ typedef struct {
 } Param;
 
 extern JSClassDefinition gwkjs_param_class;
-static JSClassRef gwkjs_paramclass_ref = NULL;
+static JSClassRef gwkjs_param_class_ref = NULL;
 
 //GWKJS_DEFINE_PRIV_FROM_JS(Param, gwkjs_param_class)
 //

@@ -390,42 +390,42 @@ gwkjs_keep_alive_remove_global_child(JSContextRef         context,
 
     gwkjs_keep_alive_remove_child(keep_alive, notify, child, data);
 }
-//
-//typedef struct {
-//    GHashTableIter hashiter;
-//} GwkjsRealKeepAliveIter;
-//
-//void
-//gwkjs_keep_alive_iterator_init (GwkjsKeepAliveIter *iter,
-//                              JSObjectRef         keep_alive)
-//{
-//    GwkjsRealKeepAliveIter *real = (GwkjsRealKeepAliveIter*)iter;
-//    KeepAlive *priv = (KeepAlive *) JS_GetPrivate(keep_alive);
-//    g_assert(priv != NULL);
-//    g_hash_table_iter_init(&real->hashiter, priv->children);
-//}
-//
-//gboolean
-//gwkjs_keep_alive_iterator_next (GwkjsKeepAliveIter  *iter,
-//                              GwkjsUnrootedFunc    notify_func,
-//                              JSObjectRef         *out_child,
-//                              void             **out_data)
-//{
-//    GwkjsRealKeepAliveIter *real = (GwkjsRealKeepAliveIter*)iter;
-//    gpointer k, v;
-//    gboolean ret = FALSE;
-//
-//    while (g_hash_table_iter_next(&real->hashiter, &k, &v)) {
-//        Child *child = (Child*)k;
-//
-//        if (child->notify != notify_func)
-//            continue;
-//
-//        ret = TRUE;
-//        *out_child = child->child;
-//        *out_data = child->data;
-//        break;
-//    }
-//
-//    return ret;
-//}
+
+typedef struct {
+    GHashTableIter hashiter;
+} GwkjsRealKeepAliveIter;
+
+void
+gwkjs_keep_alive_iterator_init (GwkjsKeepAliveIter *iter,
+                              JSObjectRef         keep_alive)
+{
+    GwkjsRealKeepAliveIter *real = (GwkjsRealKeepAliveIter*)iter;
+    KeepAlive *priv = (KeepAlive *) JSObjectGetPrivate(keep_alive);
+    g_assert(priv != NULL);
+    g_hash_table_iter_init(&real->hashiter, priv->children);
+}
+
+gboolean
+gwkjs_keep_alive_iterator_next (GwkjsKeepAliveIter  *iter,
+                              GwkjsUnrootedFunc    notify_func,
+                              JSObjectRef         *out_child,
+                              void             **out_data)
+{
+    GwkjsRealKeepAliveIter *real = (GwkjsRealKeepAliveIter*)iter;
+    gpointer k, v;
+    gboolean ret = FALSE;
+
+    while (g_hash_table_iter_next(&real->hashiter, &k, &v)) {
+        Child *child = (Child*)k;
+
+        if (child->notify != notify_func)
+            continue;
+
+        ret = TRUE;
+        *out_child = child->child;
+        *out_data = child->data;
+        break;
+    }
+
+    return ret;
+}

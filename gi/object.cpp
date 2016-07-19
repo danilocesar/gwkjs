@@ -238,7 +238,7 @@ throw_priv_is_null_error(JSContextRef context)
 //
 //    return VALUE_WAS_SET;
 //}
-//
+
 static inline ObjectInstance *
 proto_priv_from_js(JSContextRef context,
                    JSObjectRef  obj)
@@ -260,6 +260,8 @@ object_instance_get_prop(JSContextRef ctx,
                       JSStringRef property_name,
                       JSValueRef* exception)
 {
+    gchar *prop = gwkjs_jsstring_to_cstring(property_name);
+    g_warning("object_instance_get_prop NOT IMPLEMENTED :%s ", prop);
 //TODO: implement
     return NULL;
 }
@@ -340,7 +342,9 @@ static bool
 object_instance_set_prop(JSContextRef ctx, JSObjectRef object, JSStringRef propertyName, JSValueRef value, JSValueRef* exception)
 {
 // TODO: implement
-    return true;
+    gchar *prop = gwkjs_jsstring_to_cstring(propertyName);
+    g_warning("object_instance_SET_prop NOT IMPLEMENTED :%s ", prop);
+    return JS_FALSE;
 }
 //static JSBool
 //object_instance_set_prop(JSContextRef              context,
@@ -695,6 +699,7 @@ object_instance_props_to_g_parameters(JSContextRef   context,
                                       GParameter **gparams_p,
                                       int         *n_gparams_p)
 {
+    g_warning("object_instance_props_to_g_parameters NOT IMPLEMENTED");
     return TRUE;
 }
 //{
@@ -1021,157 +1026,158 @@ queue_toggle_idle(GObject         *gobj,
     /* object qdata is piggy-backing off the main loop's ref of the source */
     g_source_unref (source);
 }
-//
-//static void
-//wrapped_gobj_toggle_notify(gpointer      data,
-//                           GObject      *gobj,
-//                           gboolean      is_last_ref)
-//{
-//    gboolean is_main_thread, is_sweeping;
-//    gboolean toggle_up_queued, toggle_down_queued;
-//    GwkjsContext *context;
-//    JSContextRef js_context;
-//
-//    context = gwkjs_context_get_current();
-//    if (_gwkjs_context_destroying(context)) {
-//        /* Do nothing here - we're in the process of disassociating
-//         * the objects.
-//         */
-//        return;
-//    }
-//
-//    /* We only want to touch javascript from one thread.
-//     * If we're not in that thread, then we need to defer processing
-//     * to it.
-//     * In case we're toggling up (and thus rooting the JS object) we
-//     * also need to take care if GC is running. The marking side
-//     * of it is taken care by JS::Heap, which we use in KeepAlive,
-//     * so we're safe. As for sweeping, it is too late: the JS object
-//     * is dead, and attempting to keep it alive would soon crash
-//     * the process. Plus, if we touch the JSAPI, libmozjs aborts in
-//     * the first BeginRequest.
-//     * Thus, in the toggleup+sweeping case we deassociate the object
-//     * and the wrapper and let the wrapper die. Then, if the object
-//     * appears again, we log a critical.
-//     * In practice, a toggle up during JS finalize can only happen
-//     * for temporary refs/unrefs of objects that are garbage anyway,
-//     * because JS code is never invoked while the finalizers run
-//     * and C code needs to clean after itself before it returns
-//     * from dispose()/finalize().
-//     * On the other hand, toggling down is a lot simpler, because
-//     * we're creating more garbage. So we just add the object to
-//     * the keep alive and wait for the next GC cycle.
-//     *
-//     * Note that one would think that toggling up only happens
-//     * in the main thread (because toggling up is the result of
-//     * the JS object, previously visible only to JS code, becoming
-//     * visible to the refcounted C world), but because of weird
-//     * weak singletons like g_bus_get_sync() objects can see toggle-ups
-//     * from different threads too.
-//     * We could lock the keep alive structure and avoid the idle maybe,
-//     * but there aren't many peculiar objects like that and it's
-//     * not a big deal.
-//     */
-//    is_main_thread = (gwkjs_eval_thread == g_thread_self());
-//    if (is_main_thread) {
-//        js_context = (JSContext*) gwkjs_context_get_native_context(context);
-//        is_sweeping = gwkjs_runtime_is_sweeping(JS_GetRuntime(js_context));
-//    } else {
-//        is_sweeping = FALSE;
-//    }
-//
-//    toggle_up_queued = toggle_idle_source_is_queued(gobj, TOGGLE_UP);
-//    toggle_down_queued = toggle_idle_source_is_queued(gobj, TOGGLE_DOWN);
-//
-//    if (is_last_ref) {
-//        /* We've transitions from 2 -> 1 references,
-//         * The JSObject is rooted and we need to unroot it so it
-//         * can be garbage collected
-//         */
-//        if (is_main_thread) {
-//            if (G_UNLIKELY (toggle_up_queued || toggle_down_queued)) {
-//                g_error("toggling down object %s that's already queued to toggle %s\n",
-//                        G_OBJECT_TYPE_NAME(gobj),
-//                        toggle_up_queued && toggle_down_queued? "up and down" :
-//                        toggle_up_queued? "up" : "down");
-//            }
-//
-//            handle_toggle_down(gobj);
-//        } else {
-//            queue_toggle_idle(gobj, TOGGLE_DOWN);
-//        }
-//    } else {
-//        /* We've transitioned from 1 -> 2 references.
-//         *
-//         * The JSObject associated with the gobject is not rooted,
-//         * but it needs to be. We'll root it.
-//         */
-//        if (is_main_thread && !toggle_down_queued) {
-//            if (G_UNLIKELY (toggle_up_queued)) {
-//                g_error("toggling up object %s that's already queued to toggle up\n",
-//                        G_OBJECT_TYPE_NAME(gobj));
-//            }
-//            if (is_sweeping) {
-//                JSObjectRef object;
-//
-//                object = peek_js_obj(gobj);
+
+static void
+wrapped_gobj_toggle_notify(gpointer      data,
+                           GObject      *gobj,
+                           gboolean      is_last_ref)
+{
+    gboolean is_main_thread, is_sweeping;
+    gboolean toggle_up_queued, toggle_down_queued;
+    GwkjsContext *context;
+    JSContextRef js_context;
+
+    context = gwkjs_context_get_current();
+    if (_gwkjs_context_destroying(context)) {
+        /* Do nothing here - we're in the process of disassociating
+         * the objects.
+         */
+        return;
+    }
+
+    /* We only want to touch javascript from one thread.
+     * If we're not in that thread, then we need to defer processing
+     * to it.
+     * In case we're toggling up (and thus rooting the JS object) we
+     * also need to take care if GC is running. The marking side
+     * of it is taken care by JS::Heap, which we use in KeepAlive,
+     * so we're safe. As for sweeping, it is too late: the JS object
+     * is dead, and attempting to keep it alive would soon crash
+     * the process. Plus, if we touch the JSAPI, libmozjs aborts in
+     * the first BeginRequest.
+     * Thus, in the toggleup+sweeping case we deassociate the object
+     * and the wrapper and let the wrapper die. Then, if the object
+     * appears again, we log a critical.
+     * In practice, a toggle up during JS finalize can only happen
+     * for temporary refs/unrefs of objects that are garbage anyway,
+     * because JS code is never invoked while the finalizers run
+     * and C code needs to clean after itself before it returns
+     * from dispose()/finalize().
+     * On the other hand, toggling down is a lot simpler, because
+     * we're creating more garbage. So we just add the object to
+     * the keep alive and wait for the next GC cycle.
+     *
+     * Note that one would think that toggling up only happens
+     * in the main thread (because toggling up is the result of
+     * the JS object, previously visible only to JS code, becoming
+     * visible to the refcounted C world), but because of weird
+     * weak singletons like g_bus_get_sync() objects can see toggle-ups
+     * from different threads too.
+     * We could lock the keep alive structure and avoid the idle maybe,
+     * but there aren't many peculiar objects like that and it's
+     * not a big deal.
+     */
+    is_main_thread = (gwkjs_eval_thread == g_thread_self());
+    if (is_main_thread) {
+        js_context = (JSContextRef) gwkjs_context_get_native_context(context);
+        is_sweeping = JS_FALSE;
+    } else {
+        is_sweeping = FALSE;
+    }
+
+    toggle_up_queued = toggle_idle_source_is_queued(gobj, TOGGLE_UP);
+    toggle_down_queued = toggle_idle_source_is_queued(gobj, TOGGLE_DOWN);
+
+    if (is_last_ref) {
+        /* We've transitions from 2 -> 1 references,
+         * The JSObject is rooted and we need to unroot it so it
+         * can be garbage collected
+         */
+        if (is_main_thread) {
+            if (G_UNLIKELY (toggle_up_queued || toggle_down_queued)) {
+                g_error("toggling down object %s that's already queued to toggle %s\n",
+                        G_OBJECT_TYPE_NAME(gobj),
+                        toggle_up_queued && toggle_down_queued? "up and down" :
+                        toggle_up_queued? "up" : "down");
+            }
+
+            handle_toggle_down(gobj);
+        } else {
+            queue_toggle_idle(gobj, TOGGLE_DOWN);
+        }
+    } else {
+        /* We've transitioned from 1 -> 2 references.
+         *
+         * The JSObject associated with the gobject is not rooted,
+         * but it needs to be. We'll root it.
+         */
+        if (is_main_thread && !toggle_down_queued) {
+            if (G_UNLIKELY (toggle_up_queued)) {
+                g_error("toggling up object %s that's already queued to toggle up\n",
+                        G_OBJECT_TYPE_NAME(gobj));
+            }
+            if (is_sweeping) {
+                JSObjectRef object;
+
+                object = peek_js_obj(gobj);
+// TODO: no equivalence in JSC
 //                if (JS_IsAboutToBeFinalized(&object)) {
 //                    /* Ouch, the JS object is dead already. Disassociate the GObject
 //                     * and hope the GObject dies too.
 //                     */
 //                    disassociate_js_gobject(gobj);
 //                }
-//            } else {
-//                handle_toggle_up(gobj);
-//            }
-//        } else {
-//            queue_toggle_idle(gobj, TOGGLE_UP);
-//        }
-//    }
-//}
-//
-//static void
-//release_native_object (ObjectInstance *priv)
-//{
-//    set_js_obj(priv->gobj, NULL);
-//    g_object_remove_toggle_ref(priv->gobj, wrapped_gobj_toggle_notify, NULL);
-//    priv->gobj = NULL;
-//}
-//
-///* At shutdown, we need to ensure we've cleared the context of any
-// * pending toggle references.
-// */
-//void
-//gwkjs_object_prepare_shutdown (JSContextRef context)
-//{
-//    JSObjectRef keep_alive = gwkjs_keep_alive_get_global_if_exists (context);
-//    GwkjsKeepAliveIter kiter;
-//    JSObjectRef child;
-//    void *data;
-//
-//    if (!keep_alive)
-//        return;
-//
-//    /* First, get rid of anything left over on the main context */
-//    while (g_main_context_pending(NULL) &&
-//           g_atomic_int_get(&pending_idle_toggles) > 0) {
-//        g_main_context_iteration(NULL, FALSE);
-//    }
-//
-//    /* Now, we iterate over all of the objects, breaking the JS <-> C
-//     * associaton.  We avoid the potential recursion implied in:
-//     *   toggle ref removal -> gobj dispose -> toggle ref notify
-//     * by simply ignoring toggle ref notifications during this process.
-//     */
-//    gwkjs_keep_alive_iterator_init(&kiter, keep_alive);
-//    while (gwkjs_keep_alive_iterator_next(&kiter,
-//                                        gobj_no_longer_kept_alive_func,
-//                                        &child, &data)) {
-//        ObjectInstance *priv = (ObjectInstance*)data;
-//
-//        release_native_object(priv);
-//    }
-//}
+            } else {
+                handle_toggle_up(gobj);
+            }
+        } else {
+            queue_toggle_idle(gobj, TOGGLE_UP);
+        }
+    }
+}
+
+static void
+release_native_object (ObjectInstance *priv)
+{
+    set_js_obj(priv->gobj, NULL);
+    g_object_remove_toggle_ref(priv->gobj, wrapped_gobj_toggle_notify, NULL);
+    priv->gobj = NULL;
+}
+
+/* At shutdown, we need to ensure we've cleared the context of any
+ * pending toggle references.
+ */
+void
+gwkjs_object_prepare_shutdown (JSContextRef context)
+{
+    JSObjectRef keep_alive = gwkjs_keep_alive_get_global_if_exists (context);
+    GwkjsKeepAliveIter kiter;
+    JSObjectRef child;
+    void *data;
+
+    if (!keep_alive)
+        return;
+
+    /* First, get rid of anything left over on the main context */
+    while (g_main_context_pending(NULL) &&
+           g_atomic_int_get(&pending_idle_toggles) > 0) {
+        g_main_context_iteration(NULL, FALSE);
+    }
+
+    /* Now, we iterate over all of the objects, breaking the JS <-> C
+     * associaton.  We avoid the potential recursion implied in:
+     *   toggle ref removal -> gobj dispose -> toggle ref notify
+     * by simply ignoring toggle ref notifications during this process.
+     */
+    gwkjs_keep_alive_iterator_init(&kiter, keep_alive);
+    while (gwkjs_keep_alive_iterator_next(&kiter,
+                                        gobj_no_longer_kept_alive_func,
+                                        &child, &data)) {
+        ObjectInstance *priv = (ObjectInstance*)data;
+
+        release_native_object(priv);
+    }
+}
 
 static ObjectInstance *
 init_object_private (JSContextRef context,
@@ -1180,13 +1186,13 @@ init_object_private (JSContextRef context,
     ObjectInstance *proto_priv;
     ObjectInstance *priv;
 
-
     priv = g_slice_new0(ObjectInstance);
 
     GWKJS_INC_COUNTER(object);
 
     g_assert(priv_from_js(object) == NULL);
     JSObjectSetPrivate(object, priv);
+    g_assert(priv_from_js(object) == priv);
 
     gwkjs_debug_lifecycle(GWKJS_DEBUG_GOBJECT,
                         "obj instance constructor, obj %p priv %p", object, priv);
@@ -1236,8 +1242,7 @@ associate_js_gobject (JSContextRef      context,
                              object,
                              priv);
 
-// TODO: implement
-//    g_object_add_toggle_ref(gobj, wrapped_gobj_toggle_notify, NULL);
+    g_object_add_toggle_ref(gobj, wrapped_gobj_toggle_notify, NULL);
 
 }
 
@@ -1272,7 +1277,7 @@ object_instance_init (JSContextRef context,
                       unsigned   argc,
                       const JSValueRef argv[])
 {
-    ObjectInstance *priv;
+    ObjectInstance *priv = NULL;
     GType gtype;
     GParameter *params;
     int n_params;
@@ -1390,8 +1395,10 @@ GWKJS_NATIVE_CONSTRUCTOR_DECLARE(object_instance)
 // TODO: implement
 // Native code used to return rval. We're returning the object itself.
 // So, we're keeping a g_warning to check this later
-    g_warning("Return value probably incorrect");
-    return object;
+    if (!JSValueIsObject(context, rval))
+        g_warning("Return value probably incorrect");
+
+    return JSValueToObject(context, rval, NULL);
 }
 
 static void
@@ -1507,9 +1514,9 @@ gwkjs_lookup_object_constructor_from_info(JSContextRef    context,
                                         GIObjectInfo *info,
                                         GType         gtype)
 {
-    JSObjectRef in_object;
-    JSObjectRef constructor;
-    const char *constructor_name;
+    JSObjectRef in_object = NULL;
+    JSObjectRef constructor = NULL;
+    const char *constructor_name = NULL;
     JSValueRef value = NULL;
     JSValueRef exception = NULL;
 
@@ -1830,8 +1837,8 @@ static JSValueRef
 to_string_func(JSContextRef context, JSObjectRef function, JSObjectRef obj, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception)
 {
 
-    ObjectInstance *priv;
-    jsval retval;
+    ObjectInstance *priv = NULL;
+    jsval retval = NULL;
 
     if (!do_base_typecheck(context, obj, JS_TRUE))
         goto out;
@@ -1849,7 +1856,7 @@ to_string_func(JSContextRef context, JSObjectRef function, JSObjectRef obj, size
 
     return retval;
  out:
-    return JSValueMakeUndefined(context);
+    return NULL;
 }
 
 static JSValueRef
@@ -1974,15 +1981,15 @@ gwkjs_define_object_class(JSContextRef      context,
                         GType           gtype,
                         JSObjectRef      *constructor_p)
 {
-    const char *constructor_name;
-    JSObjectRef prototype;
-    JSObjectRef constructor;
-    JSObjectRef parent_proto;
-    JSObjectRef global;
+    const char *constructor_name = NULL;
+    JSObjectRef prototype = NULL;
+    JSObjectRef constructor = NULL;
+    JSObjectRef parent_proto = NULL;
+    JSObjectRef global = NULL;
 
-    jsval value;
-    ObjectInstance *priv;
-    const char *ns;
+    JSObjectRef value = NULL;
+    ObjectInstance *priv = NULL;
+    const char *ns = NULL;
     GType parent_type;
 
     g_assert(in_object != NULL);
@@ -2036,10 +2043,16 @@ gwkjs_define_object_class(JSContextRef      context,
     ns = gwkjs_get_names_from_gtype_and_gi_info(gtype, (GIBaseInfo *) info,
                                               &constructor_name);
 
+    if (!gwkjs_object_instance_class_ref) {
+        gwkjs_object_instance_class_ref = JSClassCreate(&gwkjs_object_instance_class);
+    }
+
+// TODO: check the conversion bellow
 //    if (!gwkjs_init_class_dynamic(context, in_object,
 //                                parent_proto,
 //                                ns, constructor_name,
 //                                &gwkjs_object_instance_class,
+//                                &gwkjs_object_instance_class_ref,
 //                                gwkjs_object_instance_constructor, 0,
 //                                /* props of prototype */
 //                                parent_proto ? NULL : &gwkjs_object_instance_proto_props[0],
@@ -2053,8 +2066,16 @@ gwkjs_define_object_class(JSContextRef      context,
 //                                &constructor)) {
 //        g_error("Can't init class %s", constructor_name);
 //    }
-
-    g_warning("gwkjs_define_object_class went too far: %s : %s", ns, constructor_name);
+//
+    if (!gwkjs_init_class_dynamic(context, in_object,
+                                  parent_proto, ns, constructor_name,
+                                  &gwkjs_object_instance_class,
+                                  gwkjs_object_instance_class_ref,
+                                  gwkjs_object_instance_constructor, 0,
+                                  &prototype,
+                                  &constructor)) {
+        g_error("Can't init class %s", constructor_name);
+    }
 
     GWKJS_INC_COUNTER(object);
     priv = g_slice_new0(ObjectInstance);
@@ -2074,8 +2095,11 @@ gwkjs_define_object_class(JSContextRef      context,
     value = gwkjs_gtype_create_gtype_wrapper(context, gtype);
     gwkjs_object_set_property(context, constructor, "$gtype", value, kJSPropertyAttributeDontEnum | kJSPropertyAttributeDontDelete, NULL);
 
-    if (constructor_p)
+    if (constructor_p) {
         *constructor_p = constructor;
+    }
+
+    return constructor;
 }
 
 static JSObjectRef
@@ -2125,11 +2149,6 @@ gwkjs_object_from_g_object(JSContextRef    context,
         proto = gwkjs_lookup_object_prototype(context, gtype);
 
         obj = gwkjs_new_object(context, NULL, proto, gwkjs_get_import_global (context));
-// TODO: implement the following
-//        obj = JS_NewObjectWithGivenProto(context,
-//                                         JS_GetClass(proto), proto,
-//                                         gwkjs_get_import_global (context));
-
 
         if (obj == NULL)
             goto out;
@@ -2137,7 +2156,7 @@ gwkjs_object_from_g_object(JSContextRef    context,
         init_object_private(context, obj);
 
         g_object_ref_sink(gobj);
-//        associate_js_gobject(context, obj, gobj);
+        associate_js_gobject(context, obj, gobj);
 
         /* see the comment in init_object_instance() for this */
         g_object_unref(gobj);

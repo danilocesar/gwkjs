@@ -107,7 +107,7 @@ gwkjs_##name##_constructor(JSContextRef context,        \
     {                                                                  \
         if (!gwkjs_##name##_class_ref)                                 \
             gwkjs_##name##_class_ref = JSClassCreate(&gwkjs_##name##_class);   \
-        object = gwkjs_new_object_for_constructor(context, gwkjs_##name##_class_ref); \
+        object = gwkjs_new_object_for_constructor(context, gwkjs_##name##_class_ref, constructor); \
         if (object == NULL) {                                            \
             g_warning("Couldn't create object");                    \
             return object;                           \

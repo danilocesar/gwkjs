@@ -55,7 +55,10 @@ JSObjectRef gwkjs_new_object(JSContextRef context,
         empty_class_ref = JSClassCreate(&definition);
     }
 
-    ret = JSObjectMake(context, empty_class_ref, NULL);
+    if (clas)
+        ret = JSObjectMake(context, clas, NULL);
+    else
+        ret = JSObjectMake(context, empty_class_ref, NULL);
 
     if (parent)
         gwkjs_object_set_property(context, ret,
@@ -353,7 +356,7 @@ gwkjs_object_require_property(JSContextRef  context,
 
     value = gwkjs_object_get_property(context, obj, property_name, NULL);
     if (G_UNLIKELY (value == NULL))
-        return JS_FALSE;
+        return FALSE;
 
     if (G_LIKELY (!JSValueIsNull(context, value) && !JSValueIsUndefined(context, value))) {
         if (value_p)
@@ -444,8 +447,7 @@ gwkjs_throw_abstract_constructor_error(JSContextRef context,
 
     s = gwkjs_jsvalue_to_cstring(context, object, NULL);
 
-    //TODO: implement throw
-    //gwkjs_throw(context, "You cannot construct new instances of '%s'", name);
+    gwkjs_throw(context, "You cannot construct new instances of '%s'", name);
 
     gwkjs_make_exception(context, exception, "ConstructorError",
                          "You cannot construct new instances of '%s'", s? s : "[anonymous]");
@@ -1006,6 +1008,10 @@ gwkjs_call_function_value(JSContextRef      context,
                                  argc, argv, &exception);
     if (rval)
         *rval = ret;
+
+    if (exception) {
+        g_warning("*** EXCEPTION gwkjs_call_function_value: %s", gwkjs_exception_to_string(context, exception));
+    }
 
     gwkjs_schedule_gc_if_needed(context);
 

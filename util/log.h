@@ -89,7 +89,7 @@ typedef enum {
  * various kinds of JavaScript thingy
  */
 #ifndef GWKJS_VERBOSE_ENABLE_LIFECYCLE
-#define GWKJS_VERBOSE_ENABLE_LIFECYCLE 0
+#define GWKJS_VERBOSE_ENABLE_LIFECYCLE 1
 #endif
 
 /* Whether to log all gobject-introspection types and methods we use
