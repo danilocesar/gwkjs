@@ -239,7 +239,6 @@ import_native_file(JSContextRef  context,
     if (!define_meta_properties(context, module_obj, NULL, name, obj))
         goto out;
 
-    // XXX: So, we can't set a property to retrieve it later. Creates an infinite recursion
     gwkjs_object_set_property(context, obj, name, module_obj, kJSPropertyAttributeReadOnly | kJSPropertyAttributeDontDelete | kJSPropertyAttributeDontEnum, &exception);
     if (exception)
         goto out;
@@ -260,7 +259,7 @@ static JSBool
 import_file(JSContextRef  context,
             const char *name,
             GFile      *file,
-            JSObjectRef   module_obj)
+            JSObjectRef   *module_obj)
 {
     JSBool ret = JS_FALSE;
     char *script = NULL;
@@ -284,8 +283,8 @@ import_file(JSContextRef  context,
 
     full_path = g_file_get_parse_name (file);
 
-    if (!gwkjs_eval_with_scope(context, module_obj, script, script_len,
-                             full_path, NULL, NULL))
+    if (!gwkjs_eval_with_scope(context, NULL, script, script_len,
+                               full_path, NULL, module_obj, NULL))
         goto out;
 
     ret = JS_TRUE;
@@ -301,7 +300,7 @@ load_module_init(JSContextRef  context,
                  JSObjectRef   in_object,
                  const char *full_path)
 {
-    JSObjectRef module_obj;
+    JSObjectRef module_obj = NULL;
     JSValueRef exception = NULL;
     JSBool found;
     const gchar* module_init_name;
@@ -314,14 +313,13 @@ load_module_init(JSContextRef  context,
         jsval module_obj_val;
 
         module_obj_val = gwkjs_object_get_property(context, in_object, module_init_name, &exception);
-        if (module_obj_val && !exception) {
+        if (!JSVAL_IS_VOID(context, module_obj_val) && !exception) {
             return JSValueToObject(context, module_obj_val, NULL);
         }
     }
 
-    module_obj = create_module_object (context);
     file = g_file_new_for_commandline_arg(full_path);
-    if (!import_file (context, "__init__", file, module_obj))
+    if (!import_file (context, "__init__", file, &module_obj))
         goto out;
 
     gwkjs_object_set_property(context, in_object, module_init_name, module_obj,
@@ -368,16 +366,15 @@ import_file_on_module(JSContextRef context,
                       const char *name,
                       GFile      *file)
 {
-    JSObjectRef module_obj;
     JSBool retval = JS_FALSE;
     char *full_path = NULL;
 
-    module_obj = create_module_object (context);
+    JSObjectRef module_obj = NULL;
 
-    if (!define_import(context, obj, module_obj, name))
+    if (!import_file(context, name, file, &module_obj))
         goto out;
 
-    if (!import_file(context, name, file, module_obj))
+    if (!define_import(context, obj, module_obj, name))
         goto out;
 
     full_path = g_file_get_parse_name (file);
@@ -474,7 +471,7 @@ do_import(JSContextRef context,
         g_free(dirname);
         dirname = NULL;
 
-        if (!(dirname == gwkjs_jsvalue_to_cstring(context, elem, NULL)))
+        if (!(dirname = gwkjs_jsvalue_to_cstring(context, elem, NULL)))
             goto out; /* Error message already set */
 
         /* Ignore empty path elements */
@@ -975,7 +972,7 @@ importer_get_property(JSContextRef ctx,
     // Otherwise, there will be an infinite recursing in SET/GET methods.
     g_hash_table_replace(priv->modules, g_strdup(name), NULL);
     if ((ret = do_import(ctx, object, priv, name))) {
-        g_warning("Module imported");
+        g_warning("Module imported: %s", name);
     } else {
         g_hash_table_remove(priv->modules, name);
     }
@@ -1247,7 +1244,7 @@ gwkjs_create_importer(JSContextRef context,
                     gboolean      is_root,
                     JSObjectRef   in_object)
 {
-    JSObjectRef importer;
+    JSObjectRef importer = NULL;
     char **paths[2] = {0};
     char **search_path;
 
@@ -1278,13 +1275,13 @@ gwkjs_create_importer(JSContextRef context,
 
 JSObjectRef
 gwkjs_define_importer(JSContextRef  context,
-                    JSObjectRef     in_object,
-                    const char      *importer_name,
-                    const char      **initial_search_path,
-                    gboolean        add_standard_search_path)
+                      JSObjectRef     in_object,
+                      const char      *importer_name,
+                      const char      **initial_search_path,
+                      gboolean        add_standard_search_path)
 
 {
-    JSObjectRef importer;
+    JSObjectRef importer = NULL;
     JSValueRef exception = NULL;
 
     importer = gwkjs_create_importer(context, importer_name, initial_search_path, add_standard_search_path, FALSE, in_object);
@@ -1296,7 +1293,7 @@ gwkjs_define_importer(JSContextRef  context,
 
     gwkjs_object_set_property(context, in_object, importer_name, importer, kJSPropertyAttributeReadOnly | kJSPropertyAttributeDontDelete | kJSPropertyAttributeDontEnum, &exception);
 
-    if (exception == NULL) {
+    if (exception != NULL) {
         g_error("Problems to define importer property");
     }
 

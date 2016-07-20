@@ -492,11 +492,12 @@ void              gwkjs_set_values              (JSContextRef     context,
 //                                              jsval      *lineNumber);
 //
 JSBool            gwkjs_eval_with_scope        (JSContextRef    context,
-                                                JSObjectRef     object,
+                                                JSObjectRef    object,
                                                 const char   *script,
                                                 gssize        script_len,
                                                 const char   *filename,
                                                 JSValueRef   *retval_p,
+                                                JSObjectRef  *ret_module,
                                                 JSValueRef   *exception);
 
 typedef enum {

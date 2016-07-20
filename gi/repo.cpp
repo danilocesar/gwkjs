@@ -139,16 +139,13 @@ resolve_namespace_object(JSContextRef context,
         g_error("no memory to define ns property %s", ns_name);
 
     override = lookup_override_function(context, ns_name);
-// TODO: IMPLEMENT
-//    if (override && !JS_CallFunctionValue (context,
-//                                           gi_namespace, // thisp
-//                                           OBJECT_TO_JSVAL(override), // callee
-//                                           0, // argc
-//                                           NULL, // argv
-//                                           &result))
-//        goto out;
-//
-    gwkjs_debug(GWKJS_DEBUG_GNAMESPACE,
+    if (override && JSObjectIsFunction(context, override))
+        result = JSObjectCallAsFunction(context, override, gi_namespace, 0, NULL, &exception);
+
+    if (exception)
+        goto out;
+
+  gwkjs_debug(GWKJS_DEBUG_GNAMESPACE,
                 "Defined namespace '%s' %p in GIRepository %p",
                 ns_name, gi_namespace, repo_obj);
 
@@ -607,9 +604,9 @@ static JSObjectRef
 lookup_override_function(JSContextRef  context,
                          const gchar   *ns_name)
 {
-    jsval overridespkg;
-    jsval module;
-    jsval function;
+    jsval overridespkg = NULL;
+    jsval module = NULL;
+    jsval function = NULL;
     JSObjectRef importer = NULL;
     jsval importer_val = NULL;
     const gchar * overrides_name = NULL;
@@ -631,14 +628,17 @@ lookup_override_function(JSContextRef  context,
         goto fail;
 
     object_init_name = gwkjs_context_get_const_string(context, GWKJS_STRING_GOBJECT_INIT);
-    if (!gwkjs_object_require_property(context, JSValueToObject(context, module, NULL), "override module",
-                                     object_init_name, &function) ||
+    if (!gwkjs_object_require_property(context,
+                                       JSValueToObject(context, module, NULL),
+                                       "override module",
+                                       object_init_name, &function) ||
         !JSValueIsObject(context, function))
         goto fail;
 
     return JSValueToObject(context, function, NULL);
 
  fail:
+    g_warning("lookup_override_function for %s returned nothing", ns_name);
     return NULL;
 }
 

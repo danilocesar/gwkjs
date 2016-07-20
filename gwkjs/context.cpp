@@ -76,6 +76,8 @@ struct _GwkjsContext {
 //    jsid const_strings[GWKJS_STRING_LAST];
 };
 
+// XXX: Do we want only one context group?
+static JSContextGroupRef ContextGroup = NULL;
 
 /* Keep this consistent with GwkjsConstString */
 static const char *const_strings[] = {
@@ -391,10 +393,10 @@ gwkjs_context_constructed(GObject *object)
     // NO RUNTIME in JSC
     //js_context->runtime = gwkjs_runtime_for_current_thread();
 
-    // TODO: Might want to put this inside the js_context objecT?
-    JSContextGroupRef context_group = JSContextGroupCreate();
+    if (ContextGroup == NULL)
+        ContextGroup = JSContextGroupCreate();
 
-    js_context->context = JSGlobalContextCreateInGroup(context_group, NULL);
+    js_context->context = JSGlobalContextCreateInGroup(ContextGroup, NULL);
     if (js_context->context == NULL)
         g_error("Failed to create javascript context");
 
@@ -633,7 +635,7 @@ gwkjs_context_eval(GwkjsContext   *js_context,
 
     g_object_ref(G_OBJECT(js_context));
 
-    if (!gwkjs_eval_with_scope(js_context->context, js_context->global, script, script_len, filename, &retval, &exception)) {
+    if (!gwkjs_eval_with_scope(js_context->context, js_context->global, script, script_len, filename, &retval, NULL, &exception)) {
         gwkjs_log_exception(js_context->context, exception);
         g_set_error(error,
                     GWKJS_ERROR,

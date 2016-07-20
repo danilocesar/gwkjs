@@ -1581,6 +1581,32 @@ gwkjs_strip_unix_shebang(const char  *script,
     return script;
 }
 
+void prepare_global(JSContextRef old_context,
+                    JSContextRef new_context,
+                    JSObjectRef old_global,
+                    JSObjectRef new_global)
+{
+#define COPY_OBJ(name) \
+    name = gwkjs_object_get_property(old_context, old_global, #name, NULL); \
+    gwkjs_object_set_property(new_context, new_global, #name, name, \
+                              kJSPropertyAttributeReadOnly | \
+                              kJSPropertyAttributeDontEnum | \
+                              kJSPropertyAttributeDontDelete, \
+                              NULL);
+    JSValueRef log = NULL;
+    JSValueRef logErr = NULL;
+    JSValueRef print = NULL;
+    JSValueRef printErr = NULL;
+    JSValueRef imports = NULL;
+
+    COPY_OBJ(log);
+    COPY_OBJ(logErr);
+    COPY_OBJ(print);
+    COPY_OBJ(printErr);
+    COPY_OBJ(imports);
+#undef COPY_OBJ
+}
+
 JSBool
 gwkjs_eval_with_scope(JSContextRef context,
                       JSObjectRef  object,
@@ -1588,8 +1614,10 @@ gwkjs_eval_with_scope(JSContextRef context,
                       gssize       script_len,
                       const char   *filename,
                       JSValueRef   *retval_p,
+                      JSObjectRef   *ret_module,
 					  JSValueRef   *exception)
 {
+    JSBool ret = FALSE;
     int start_line_number = 1;
     JSValueRef retval = NULL;
     JSValueRef locException = NULL;
@@ -1608,22 +1636,38 @@ gwkjs_eval_with_scope(JSContextRef context,
 //        return JS_FALSE;
 //    }
 
-    if (!object)
-        object = JSObjectMake(context, NULL, NULL);
+    JSContextGroupRef context_group =  JSContextGetGroup(context);
+
+    JSContextRef new_context = JSGlobalContextCreateInGroup(context_group, 0);
+    JSObjectRef new_global = JSContextGetGlobalObject(new_context);
+    // Protects new_global in the original context.
+    // Looks the be the way seed used to do.
+    JSValueProtect(context, new_global);
+    JSObjectRef old_global = gwkjs_get_import_global(context);
+    prepare_global(context, new_context, old_global, new_global);
+    if (ret_module)
+        *ret_module = new_global;
 
     JSStringRef jsscript = gwkjs_cstring_to_jsstring(script);
     JSStringRef jsfilename = NULL;
     if (filename)
         jsfilename = gwkjs_cstring_to_jsstring(filename);
 
-    retval = JSEvaluateScript(context, jsscript, object, jsfilename, start_line_number, &locException);
-	if (JSValueIsObject(context, locException)) {
+
+    retval = JSEvaluateScript(new_context, jsscript, object, jsfilename, start_line_number, &locException);
+	if (locException) {
 	    if (exception)
 	        *exception = locException;
 
+	    g_warning("Exception when importing \"%s\"module: %s", filename,
+	              gwkjs_exception_to_string(context, locException));
+
+	    JSGlobalContextRelease((JSGlobalContextRef)new_context);
+
 		// There was a problem during script execution,
 		// We will return an exception instead
-		return FALSE;
+		ret = FALSE;
+		goto out;
 	}
 
 // TODO: check if needs implementation
@@ -1640,6 +1684,9 @@ gwkjs_eval_with_scope(JSContextRef context,
 
     if (retval_p)
         *retval_p = retval;
+    ret = TRUE;
 
-    return TRUE;
+out:
+
+    return ret;
 }
