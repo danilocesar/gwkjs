@@ -341,6 +341,8 @@ object_instance_get_prop(JSContextRef context,
  out:
     if (!ret)
         g_warning("object_instance_get_prop is NULL for %s %p", name, obj);
+    else
+        g_warning("object_instance_get_prop is NOT! NULL for %s %p", name, obj);
 
     g_free(name);
     return ret;
@@ -400,7 +402,7 @@ object_instance_set_prop(JSContextRef ctx,
      */
 
  out:
-    g_warning("object_instance_SET_prop for %s %p == %p", name, obj, value);
+    g_warning("object_instance_SET_prop for %s %p == %p   |  %d", name, obj, value, ret);
     g_free(name);
     return ret;
 }
