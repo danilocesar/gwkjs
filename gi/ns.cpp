@@ -97,7 +97,7 @@ ns_get_property(JSContextRef context,
 
     g_hash_table_replace(priv->modules, g_strdup(name), NULL);
     if ((ret = gwkjs_define_info(context, obj, info, &defined))) {
-//        g_base_info_unref(info);
+        g_base_info_unref(info);
 //XXX: Does it return THIS?!
 //        if (defined)
 //            objp.set(obj); /* we defined the property in this object */
@@ -198,6 +198,7 @@ ns_new(JSContextRef context,
     // XXX: NOT THREAD SAFE?
     if (!gwkjs_ns_class_ref) {
         gwkjs_ns_class_ref = JSClassCreate(&gwkjs_ns_class);
+        JSClassRetain(gwkjs_ns_class_ref);
     }
 
     global = gwkjs_get_import_global(context);
