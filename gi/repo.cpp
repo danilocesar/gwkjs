@@ -488,9 +488,7 @@ gwkjs_define_info(JSContextRef context,
             gtype = g_registered_type_info_get_g_type((GIRegisteredTypeInfo*)info);
 
             if (g_type_is_a (gtype, G_TYPE_PARAM)) {
-                gwkjs_throw(context, "Thing was a PARAM!");
-// TODO: IMPLEMENT
-//                ret = gwkjs_define_param_class(context, in_object);
+                ret = gwkjs_define_param_class(context, in_object);
             } else if (g_type_is_a (gtype, G_TYPE_OBJECT)) {
                 ret = gwkjs_define_object_class(context, in_object, (GIObjectInfo*) info, gtype, NULL);
             } else if (G_TYPE_IS_INSTANTIATABLE(gtype)) {
