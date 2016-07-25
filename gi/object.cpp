@@ -292,16 +292,18 @@ object_instance_get_prop(JSContextRef context,
         goto out;
     }
 
-    if (g_hash_table_contains(priv->modules, name))
+    if (g_hash_table_contains(priv->modules, name)) {
+        ret = (JSValueRef) g_hash_table_lookup(priv->modules, name);
         goto out;
+    }
 
     g_hash_table_replace(priv->modules, g_strdup(name), NULL);
     object_instance_new_resolve(context, obj, name, &tryOut);
     if (tryOut) {
+        g_hash_table_replace(priv->modules, g_strdup(name), (void*)tryOut);
         ret = tryOut;
         goto out;
     }
-
 
 
     if (priv->gobj == NULL) /* prototype, not an instance. */
@@ -340,7 +342,7 @@ object_instance_get_prop(JSContextRef context,
 
  out:
     if (!ret)
-        g_warning("object_instance_get_prop is NULL for %s %p", name, obj);
+        g_warning("object_instance_get_prop is NULL for %p: %s", obj, name);
     else
         g_warning("object_instance_get_prop is NOT! NULL for %s %p", name, obj);
 
