@@ -925,6 +925,10 @@ GWKJS_DEFINE_PRIV_FROM_JS(Boxed, gwkjs_boxed_class)
 // * reserved slot is used to hold onto the parent Javascript object and
 // * make sure it doesn't get freed.
 // */
+//
+// TODO: to implement!
+
+JSClassDefinition gwkjs_boxed_class = kJSClassDefinitionEmpty;
 //struct JSClass gwkjs_boxed_class = {
 //    "GObject_Boxed",
 //    JSCLASS_HAS_PRIVATE |
@@ -1199,7 +1203,8 @@ gwkjs_boxed_from_c_struct(JSContextRef             context,
                         void                  *gboxed,
                         GwkjsBoxedCreationFlags  flags)
 {
-    gwkjs_throw(context, "gwkjs_boxed_from_c_struct not implemented");
+    gwkjs_throw(context, "gwkjs_boxed_from_c_struct NOT IMPLEMENTED");
+    return NULL;
 // TODO: implement
 //    JSObjectRef obj;
 //    JSObjectRef proto;

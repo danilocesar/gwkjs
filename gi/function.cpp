@@ -1689,6 +1689,7 @@ function_new(JSContextRef      context,
 
     if (!gwkjs_function_class_ref)
         gwkjs_function_class_ref = JSClassCreate(&gwkjs_function_class);
+        JSClassRetain(gwkjs_function_class_ref);
 
     found = gwkjs_object_has_property(context, global, gwkjs_function_class.className);
     if (!found) {
@@ -1707,6 +1708,7 @@ function_new(JSContextRef      context,
 
         /* We take advantage from that fact that Function.__proto__ is Function.prototype */
         parent_proto_val = JSObjectGetPrototype(context, native_function_obj);
+        g_assert(parent_proto_val == gwkjs_object_get_property(context, native_function_obj, "prototype", NULL));
         parent_proto = JSValueToObject(context, parent_proto_val, &exception);
         if (exception)
             g_error ("Couldn't find native_function Object");

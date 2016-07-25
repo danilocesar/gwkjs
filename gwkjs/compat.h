@@ -105,13 +105,15 @@ gwkjs_##name##_constructor(JSContextRef context,        \
  */
 #define GWKJS_NATIVE_CONSTRUCTOR_PRELUDE(name)                         \
     {                                                                  \
-        if (!gwkjs_##name##_class_ref)                                 \
+        if (!gwkjs_##name##_class_ref) {                               \
             gwkjs_##name##_class_ref = JSClassCreate(&gwkjs_##name##_class);   \
+            JSClassRetain(gwkjs_##name##_class_ref);                   \
+        }                                                              \
         object = gwkjs_new_object_for_constructor(context, gwkjs_##name##_class_ref, constructor); \
-        if (object == NULL) {                                            \
-            g_warning("Couldn't create object");                    \
-            return object;                           \
-        }                                                           \
+        if (object == NULL) {                                          \
+            g_warning("Couldn't create object");                       \
+            return object;                                             \
+        }                                                              \
     }
 
 /**

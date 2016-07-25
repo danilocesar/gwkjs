@@ -41,21 +41,23 @@ extern JSClassDefinition gwkjs_byte_array_class;
 static JSClassRef gwkjs_byte_array_class_ref = NULL;
 GWKJS_DEFINE_PRIV_FROM_JS(ByteArrayInstance, gwkjs_byte_array_class)
 
-//static JSValueRef byte_array_get_prop      (JSContextRef ctx,
-//											JSObjectRef object,
-//											JSStringRef propertyName,
-//											JSValueRef* exception);
-//
-//static bool byte_array_set_prop      (JSContextRef ctx,
-//                                      JSObjectRef object,
-//                                      JSStringRef propertyName,
-//                                      JSValueRef value,
-//                                      JSValueRef* exception);
-//GWKJS_NATIVE_CONSTRUCTOR_DECLARE(byte_array);
-//
-//static void   byte_array_finalize      (JSObjectRef  obj);
-//
-//
+static JSValueRef byte_array_get_prop      (JSContextRef ctx,
+											JSObjectRef object,
+											JSStringRef propertyName,
+											JSValueRef* exception);
+
+static bool byte_array_set_prop      (JSContextRef ctx,
+                                      JSObjectRef object,
+                                      JSStringRef propertyName,
+                                      JSValueRef value,
+                                      JSValueRef* exception);
+GWKJS_NATIVE_CONSTRUCTOR_DECLARE(byte_array);
+
+static void   byte_array_finalize      (JSObjectRef  obj);
+
+
+//TODO:
+JSClassDefinition gwkjs_byte_array_class = kJSClassDefinitionEmpty;
 //JSClassDefinition gwkjs_byte_array_class = {
 //    0,                            /* Version, always 0 */
 //    0,                            // Flags: We're ignoring JSCLASS_HAS_PRIVATE and
@@ -76,7 +78,7 @@ GWKJS_DEFINE_PRIV_FROM_JS(ByteArrayInstance, gwkjs_byte_array_class)
 //    NULL,                         /* Has Instance */
 //    NULL                          /* Convert To Type */
 //};
-//
+
 JSBool
 gwkjs_typecheck_bytearray(JSContextRef context,
                           JSObjectRef      object,
@@ -787,6 +789,7 @@ gwkjs_byte_array_from_byte_array (JSContextRef context,
                                 GByteArray *array)
 {
     gwkjs_throw(context, "gwkjs_byte_array_from_byte_array not implemented");
+    return NULL;
 // TODO: implement
 //    JSObjectRef object;
 //    ByteArrayInstance *priv;

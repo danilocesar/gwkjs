@@ -302,7 +302,8 @@ GWKJS_DEFINE_PRIV_FROM_JS(Error, gwkjs_error_class)
 //    return TRUE;
 //}
 //
-//
+//TODO: IMPLEMENT
+JSClassDefinition gwkjs_error_class = kJSClassDefinitionEmpty;
 ///* The bizarre thing about this vtable is that it applies to both
 // * instances of the object, and to the prototype that instances of the
 // * class have.
