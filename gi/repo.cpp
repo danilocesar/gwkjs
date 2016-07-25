@@ -185,7 +185,7 @@ repo_get_property(JSContextRef ctx,
     if (g_hash_table_contains(priv->modules, name))
         goto out;
 
-    gwkjs_debug_jsprop(GWKJS_DEBUG_GREPO, "Resolve prop '%s' hook obj %p priv %p"
+    gwkjs_debug_jsprop(GWKJS_DEBUG_GREPO, "Resolve prop '%s' hook obj %p priv %p",
                        name, (void *)obj, priv);
 
     if (priv == NULL) /* we are the prototype, or have the wrong class */

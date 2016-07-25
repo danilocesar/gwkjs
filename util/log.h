@@ -77,7 +77,7 @@ typedef enum {
 
 /* Whether to be verbose about JavaScript property access and resolution */
 #ifndef GWKJS_VERBOSE_ENABLE_PROPS
-#define GWKJS_VERBOSE_ENABLE_PROPS 0
+#define GWKJS_VERBOSE_ENABLE_PROPS 1
 #endif
 
 /* Whether to be verbose about JavaScript function arg and closure marshaling */
@@ -95,7 +95,7 @@ typedef enum {
 /* Whether to log all gobject-introspection types and methods we use
  */
 #ifndef GWKJS_VERBOSE_ENABLE_GI_USAGE
-#define GWKJS_VERBOSE_ENABLE_GI_USAGE 0
+#define GWKJS_VERBOSE_ENABLE_GI_USAGE 1
 #endif
 
 /* Whether to log all callback GClosure debugging (finalizing, invalidating etc)
