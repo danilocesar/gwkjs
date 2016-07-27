@@ -50,6 +50,7 @@
 #include <girepository.h>
 
 typedef struct {
+    guint64 signature;
     GIObjectInfo *info;
     GObject *gobj; /* NULL if we are the prototype and not an instance */
     JSObjectRef keep_alive; /* NULL if we are not added to it */
@@ -64,6 +65,7 @@ typedef struct {
 
     GHashTable *modules;
 } ObjectInstance;
+static guint64 ObjectInstanceSignature = 123456789;
 
 typedef struct {
     ObjectInstance *obj;
@@ -1191,6 +1193,7 @@ init_object_private (JSContextRef context,
     ObjectInstance *priv;
 
     priv = g_slice_new0(ObjectInstance);
+    priv->signature = ObjectInstanceSignature;
     priv->modules = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
     GWKJS_INC_COUNTER(object);
@@ -1562,8 +1565,8 @@ gwkjs_lookup_object_prototype_from_info(JSContextRef    context,
                                       GIObjectInfo *info,
                                       GType         gtype)
 {
-    JSObjectRef constructor;
-    jsval value;
+    JSObjectRef constructor = NULL;
+    jsval value = NULL;
 
     constructor = gwkjs_lookup_object_constructor_from_info(context, info, gtype);
 
@@ -2084,6 +2087,7 @@ gwkjs_define_object_class(JSContextRef      context,
 
     GWKJS_INC_COUNTER(object);
     priv = g_slice_new0(ObjectInstance);
+    priv->signature = ObjectInstanceSignature;
     priv->modules = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
     priv->info = info;
     if (info)
