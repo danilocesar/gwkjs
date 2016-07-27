@@ -123,7 +123,7 @@ gwkjs_init_class_dynamic(JSContextRef       context,
 
     full_function_name = g_strdup_printf("return \"[%s_%s constructor]\";", ns_name, class_name);
 
-    constructor = JSObjectMakeConstructor(context, clasp_ref, constructor_native);
+    constructor = gwkjs_new_object(context, clasp_ref, parent_proto, global);
     func = JSObjectMakeFunction(context, gwkjs_cstring_to_jsstring("toString"), 0, NULL, gwkjs_cstring_to_jsstring(full_function_name), NULL, 0, NULL);
     gwkjs_object_set_property(context, constructor, "toString", func, 0, NULL);
 
@@ -132,7 +132,12 @@ gwkjs_init_class_dynamic(JSContextRef       context,
 //    if (static_fs && !JS_DefineFunctions(context, constructor, static_fs))
 //        goto out;
 
-    JSObjectSetPrototype(context, constructor, prototype);
+    gwkjs_object_set_property(context, constructor, "prototype", prototype,
+                              kJSPropertyAttributeNone, &exception);
+    if (exception) {
+        g_assert(!exception);
+        goto out;
+    }
 
     gwkjs_object_set_property(context, prototype, "constructor", constructor,
                               kJSPropertyAttributeNone, &exception);

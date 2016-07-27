@@ -110,6 +110,8 @@ gwkjs_object_set_property(JSContextRef ctx,
         return FALSE;
     }
 
+    g_assert(value == gwkjs_object_get_property(ctx, object, propertyName, 0));
+
     return TRUE;
 }
 
@@ -1004,7 +1006,7 @@ gwkjs_call_function_value(JSContextRef      context,
     }
 
 
-    ret = JSObjectCallAsFunction(context, obj, fobj,
+    ret = JSObjectCallAsFunction(context, fobj, obj,
                                  argc, argv, &exception);
     if (rval)
         *rval = ret;

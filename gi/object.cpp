@@ -65,6 +65,7 @@ typedef struct {
 
     GHashTable *modules;
 } ObjectInstance;
+// TODO: Remove this later
 static guint64 ObjectInstanceSignature = 123456789;
 
 typedef struct {
@@ -293,6 +294,7 @@ object_instance_get_prop(JSContextRef context,
          * exists and it's not something we should be concerned with */
         goto out;
     }
+    g_assert(priv->signature == ObjectInstanceSignature);
 
     if (g_hash_table_contains(priv->modules, name)) {
         ret = (JSValueRef) g_hash_table_lookup(priv->modules, name);
@@ -343,10 +345,10 @@ object_instance_get_prop(JSContextRef context,
     g_value_unset(&gvalue);
 
  out:
-    if (!ret)
-        g_warning("object_instance_get_prop is NULL for %p: %s", obj, name);
-    else
-        g_warning("object_instance_get_prop is NOT! NULL for %s %p", name, obj);
+//    if (!ret)
+//        g_warning("object_instance_get_prop is NULL for      %p: %s", obj, name);
+//    else
+//        g_warning("object_instance_get_prop is NOT! NULL for %p %s", obj, name);
 
     g_free(name);
     return ret;
@@ -406,7 +408,7 @@ object_instance_set_prop(JSContextRef ctx,
      */
 
  out:
-    g_warning("object_instance_SET_prop for %s %p == %p   |  %d", name, obj, value, ret);
+//    g_warning("object_instance_SET_prop for %s %p == %p   |  %d", name, obj, value, ret);
     g_free(name);
     return ret;
 }
@@ -668,8 +670,6 @@ object_instance_new_resolve(JSContextRef context,
                 g_base_info_unref( (GIBaseInfo*) method_info);
                 goto out;
             }
-
-            *objp = obj; /* we defined the prop in obj */
         }
 
         g_base_info_unref( (GIBaseInfo*) method_info);
@@ -1207,6 +1207,7 @@ init_object_private (JSContextRef context,
 
     proto_priv = proto_priv_from_js(context, object);
     g_assert(proto_priv != NULL);
+    g_assert(proto_priv->signature == ObjectInstanceSignature);
 
     priv->gtype = proto_priv->gtype;
     priv->info = proto_priv->info;
@@ -1574,7 +1575,7 @@ gwkjs_lookup_object_prototype_from_info(JSContextRef    context,
         return NULL;
 
     if (!gwkjs_object_get_property_const(context, constructor,
-                                       GWKJS_STRING_PROTOTYPE, &value))
+                                               GWKJS_STRING_PROTOTYPE, &value))
         return NULL;
 
     if (G_UNLIKELY (!JSValueIsObject(context, value)))

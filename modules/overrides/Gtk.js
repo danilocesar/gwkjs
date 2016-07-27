@@ -97,6 +97,7 @@ function _init() {
     Gtk = this;
 
     Gtk.Widget.prototype.__metaclass__ = GtkWidgetClass;
+   if (GwkjsPrivate)
     if (GwkjsPrivate.gtk_container_child_set_property) {
         Gtk.Container.prototype.child_set_property = function(child, property, value) {
             GwkjsPrivate.gtk_container_child_set_property(this, child, property, value);
