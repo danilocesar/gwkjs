@@ -705,97 +705,82 @@ object_instance_props_to_g_parameters(JSContextRef   context,
                                       GParameter **gparams_p,
                                       int         *n_gparams_p)
 {
-    g_warning("object_instance_props_to_g_parameters NOT IMPLEMENTED");
-    return TRUE;
+    JSPropertyNameArrayRef property_names = NULL;
+    JSObjectRef prop_obj = NULL;
+    GArray *gparams;
+    int i = 0;
+
+    if (gparams_p)
+        *gparams_p = NULL;
+    if (n_gparams_p)
+        *n_gparams_p = 0;
+
+    gparams = g_array_new(/* nul term */ FALSE, /* clear */ TRUE,
+                          sizeof(GParameter));
+
+    if (argc == 0 || JSVAL_IS_VOID(context, argv[0]))
+        goto out;
+
+    if (!JSValueIsObject(context, argv[0])) {
+        gwkjs_throw(context, "argument should be a hash with props to set");
+        goto free_array_and_fail;
+    }
+    prop_obj = JSValueToObject(context, argv[0], NULL);
+
+    property_names = JSObjectCopyPropertyNames(context, prop_obj);
+    for (i = 0; i < JSPropertyNameArrayGetCount(property_names); i++) {
+        gchar *name;
+        jsval value = NULL;
+        GParameter gparam = { NULL, { 0, }};
+        JSStringRef prop_name_js = JSPropertyNameArrayGetNameAtIndex(property_names, i);
+        name = gwkjs_jsstring_to_cstring(prop_name_js);
+
+        if (!gwkjs_object_require_property(context, prop_obj, "property list", name, &value)) {
+            g_free(name);
+            goto free_array_and_fail;
+        }
+
+        switch (init_g_param_from_property(context, name,
+                                           value,
+                                           gtype,
+                                           &gparam,
+                                           TRUE /* constructing */)) {
+        case NO_SUCH_G_PROPERTY:
+            gwkjs_throw(context, "No property %s on this GObject %s",
+                         name, g_type_name(gtype));
+        case SOME_ERROR_OCCURRED:
+            g_free(name);
+            goto free_array_and_fail;
+        case VALUE_WAS_SET:
+            break;
+        }
+        g_free(name);
+
+        g_array_append_val(gparams, gparam);
+    }
+
+ out:
+    if (n_gparams_p)
+        *n_gparams_p = gparams->len;
+    if (gparams_p)
+        *gparams_p = (GParameter*) g_array_free(gparams, FALSE);
+
+    if (property_names) JSPropertyNameArrayRelease(property_names);
+
+    return JS_TRUE;
+
+ free_array_and_fail:
+    {
+        if (property_names) JSPropertyNameArrayRelease(property_names);
+
+        GParameter *to_free;
+        int count;
+        count = gparams->len;
+        to_free = (GParameter*) g_array_free(gparams, FALSE);
+        free_g_params(to_free, count);
+    }
+    return JS_FALSE;
 }
-//{
-//    JSObjectRef props;
-//    JSObjectRef iter;
-//    jsid prop_id;
-//    GArray *gparams;
-//
-//    if (gparams_p)
-//        *gparams_p = NULL;
-//    if (n_gparams_p)
-//        *n_gparams_p = 0;
-//
-//    gparams = g_array_new(/* nul term */ FALSE, /* clear */ TRUE,
-//                          sizeof(GParameter));
-//
-//    if (argc == 0 || JSVAL_IS_VOID(context, argv[0]))
-//        goto out;
-//
-//    if (!JSValueIsObject(context, argv[0])) {
-//        gwkjs_throw(context, "argument should be a hash with props to set");
-//        goto free_array_and_fail;
-//    }
-//
-//    props = JSValueToObject(context, argv[0], NULL);
-//
-//    iter = JS_NewPropertyIterator(context, props);
-//    if (iter == NULL) {
-//        gwkjs_throw(context, "Failed to create property iterator for object props hash");
-//        goto free_array_and_fail;
-//    }
-//
-//    prop_id = JSID_VOID;
-//    if (!JS_NextProperty(context, iter, &prop_id))
-//        goto free_array_and_fail;
-//
-//    while (!JSID_IS_VOID(prop_id)) {
-//        char *name = NULL;
-//        jsval value;
-//        GParameter gparam = { NULL, { 0, }};
-//
-//        if (!gwkjs_object_require_property(context, props, "property list", prop_id, &value)) {
-//            goto free_array_and_fail;
-//        }
-//
-//        if (!gwkjs_get_string_id(context, prop_id, &name))
-//            goto free_array_and_fail;
-//
-//        switch (init_g_param_from_property(context, name,
-//                                           value,
-//                                           gtype,
-//                                           &gparam,
-//                                           TRUE /* constructing */)) {
-//        case NO_SUCH_G_PROPERTY:
-//            gwkjs_throw(context, "No property %s on this GObject %s",
-//                         name, g_type_name(gtype));
-//        case SOME_ERROR_OCCURRED:
-//            g_free(name);
-//            goto free_array_and_fail;
-//        case VALUE_WAS_SET:
-//            break;
-//        }
-//
-//        g_free(name);
-//
-//        g_array_append_val(gparams, gparam);
-//
-//        prop_id = JSID_VOID;
-//        if (!JS_NextProperty(context, iter, &prop_id))
-//            goto free_array_and_fail;
-//    }
-//
-// out:
-//    if (n_gparams_p)
-//        *n_gparams_p = gparams->len;
-//    if (gparams_p)
-//        *gparams_p = (GParameter*) g_array_free(gparams, FALSE);
-//
-//    return JS_TRUE;
-//
-// free_array_and_fail:
-//    {
-//        GParameter *to_free;
-//        int count;
-//        count = gparams->len;
-//        to_free = (GParameter*) g_array_free(gparams, FALSE);
-//        free_g_params(to_free, count);
-//    }
-//    return JS_FALSE;
-//}
 
 #define DEBUG_DISPOSE 0
 #if DEBUG_DISPOSE
