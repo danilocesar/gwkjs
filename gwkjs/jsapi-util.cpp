@@ -1598,13 +1598,13 @@ void prepare_global(JSContextRef old_context,
     JSValueRef log = NULL;
     JSValueRef logErr = NULL;
     JSValueRef print = NULL;
-    JSValueRef printErr = NULL;
+    JSValueRef printerr = NULL;
     JSValueRef imports = NULL;
 
     COPY_OBJ(log);
     COPY_OBJ(logErr);
     COPY_OBJ(print);
-    COPY_OBJ(printErr);
+    COPY_OBJ(printerr);
     COPY_OBJ(imports);
 #undef COPY_OBJ
 }
