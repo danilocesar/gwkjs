@@ -1130,26 +1130,107 @@ gwkjs_get_type_name(JSContextRef context, JSValueRef value)
  *   rounded to the nearest 64-bit integer. Like JS_ValueToInt32(),
  *   undefined throws, but null => 0, false => 0, true => 1.
  */
-JSBool
+gint64
 gwkjs_value_to_int64  (JSContextRef  context,
                      const jsval val,
-                     gint64     *result)
+                     JSValueRef *exception_out)
 {
     JSValueRef exception = NULL;
     if (JSValueIsNumber (context, val)) {
         double value_double = JSValueToNumber(context, val, &exception);
-        if (exception) {
-            return JS_FALSE;
-
-            gwkjs_throw(context,
-                      "Value is not a valid 64-bit integer");
+        if (exception && exception_out) {
+            gwkjs_make_exception(context, exception_out, "ConversionError",
+                                 "Value is not a valid 64-bit integer: %s",
+                                 gwkjs_exception_to_string(context, exception));
         }
 
-        *result = (gint64)(value_double + 0.5);
-        return JS_TRUE;
+        return (gint64)(value_double + 0.5);
     }
-    return FALSE;
+    return 0;
 }
+
+gint32
+gwkjs_value_to_int32  (JSContextRef  context,
+                     const jsval val,
+                     JSValueRef *exception_out)
+{
+    JSValueRef exception = NULL;
+    if (JSValueIsNumber (context, val)) {
+        double value_double = JSValueToNumber(context, val, &exception);
+        if (exception && exception_out) {
+            gwkjs_make_exception(context, exception_out, "ConversionError",
+                                 "Value is not a valid 32-bit integer: %s",
+                                 gwkjs_exception_to_string(context, exception));
+        }
+
+        return (gint32)(value_double + 0.5);
+    }
+    return 0;
+}
+
+guint32
+gwkjs_value_to_uint32  (JSContextRef  context,
+                     const jsval val,
+                     JSValueRef *exception_out)
+{
+    JSValueRef exception = NULL;
+    if (JSValueIsNumber (context, val)) {
+        double value_double = JSValueToNumber(context, val, &exception);
+        if (exception && exception_out) {
+            gwkjs_make_exception(context, exception_out, "ConversionError",
+                                 "Value is not a valid 32-bit unsigned integer: %s",
+                                 gwkjs_exception_to_string(context, exception));
+        }
+
+        return (guint32)(value_double + 0.5);
+    }
+    return 0;
+}
+
+gdouble
+gwkjs_value_to_double(JSContextRef ctx, JSValueRef val, JSValueRef* exception)
+{
+    if (!JSValueIsNumber(ctx, val)) {
+        if (!JSValueIsNull(ctx, val))
+            gwkjs_make_exception(ctx, exception, "ConversionError",
+                                "Can not convert Javascript value to"
+                                " double");
+        return 0;
+    }
+
+    return (gdouble) JSValueToNumber(ctx, val, NULL);
+}
+
+gfloat
+gwkjs_value_to_float(JSContextRef ctx, JSValueRef val, JSValueRef* exception)
+{
+    if (!JSValueIsNumber(ctx, val)) {
+        if (!JSValueIsNull(ctx, val))
+            gwkjs_make_exception(ctx, exception, "ConversionError",
+                                "Can not convert Javascript value to"
+                                " gfloat");
+        return 0;
+    }
+
+    return (gfloat) JSValueToNumber(ctx, val, NULL);
+}
+
+gboolean
+gwkjs_value_to_boolean(JSContextRef ctx, JSValueRef val, JSValueRef* exception)
+{
+    if (!JSValueIsBoolean(ctx, val) && !JSValueIsNumber(ctx, val)) {
+        if (!JSValueIsNull(ctx, val)) {
+            gwkjs_make_exception(ctx, exception, "ConversionError",
+                                "Can not convert Javascript value to boolean");
+            return FALSE;
+        }
+
+        return FALSE;
+    }
+
+    return JSValueToBoolean(ctx, val);
+}
+
 
 //static JSBool
 //gwkjs_parse_args_valist (JSContextRef  context,

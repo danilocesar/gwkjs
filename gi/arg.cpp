@@ -1637,7 +1637,8 @@ gwkjs_value_to_g_argument(JSContextRef      context,
                 if (interface_type == GI_INFO_TYPE_ENUM) {
                     gint64 value_int64;
 
-                    if (!gwkjs_value_to_int64 (context, value, &value_int64))
+                    value_int64 = gwkjs_value_to_int64(context, value, &exception);
+                    if (exception)
                         wrong = TRUE;
                     else if (!_gwkjs_enum_value_is_valid(context, (GIEnumInfo *)interface_info, value_int64))
                         wrong = TRUE;
@@ -1645,9 +1646,9 @@ gwkjs_value_to_g_argument(JSContextRef      context,
                         arg->v_int = _gwkjs_enum_to_int ((GIEnumInfo *)interface_info, value_int64);
 
                 } else if (interface_type == GI_INFO_TYPE_FLAGS) {
-                    gint64 value_int64;
+                    gint64 value_int64 = gwkjs_value_to_int64(context, value, &exception);
 
-                    if (!gwkjs_value_to_int64 (context, value, &value_int64))
+                    if (exception)
                         wrong = TRUE;
                     else if (!_gwkjs_flags_value_is_valid(context, gtype, value_int64))
                         wrong = TRUE;

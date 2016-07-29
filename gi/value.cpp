@@ -339,431 +339,444 @@ gwkjs_closure_new_marshaled (JSContextRef    context,
 //    return closure;
 }
 
-//static GType
-//gwkjs_value_guess_g_type(JSContextRef context,
-//                       jsval      value)
-//{
-//    if (JSVAL_IS_NULL(value))
-//        return G_TYPE_POINTER;
-//
-//    if (JSVAL_IS_STRING(value))
-//        return G_TYPE_STRING;
-//
-//    if (JSVAL_IS_INT(value))
-//        return G_TYPE_INT;
-//
-//    if (JSVAL_IS_DOUBLE(value))
-//        return G_TYPE_DOUBLE;
-//
-//    if (JSVAL_IS_BOOLEAN(value))
-//        return G_TYPE_BOOLEAN;
-//
-//    if (JSVAL_IS_OBJECT(value))
-//        return gwkjs_gtype_get_actual_gtype(context, JSVAL_TO_OBJECT(value));
-//
-//    return G_TYPE_INVALID;
-//}
-//
+// XXX: Hack-ish, as there's no way to know
+// if a Number is an Integer or a Double. But this method is OK
+// as wwe don't really care about precision issues
+bool
+_is_int(double d)
+{
+    return ( (gint64) d == d);
+}
+
+static GType
+gwkjs_value_guess_g_type(JSContextRef context,
+                       jsval      value)
+{
+    if (JSValueIsNull(context, value))
+        return G_TYPE_POINTER;
+
+    if (JSValueIsString(context, value))
+        return G_TYPE_STRING;
+
+    if (JSValueIsNumber(context, value)) {
+        double n = JSValueToNumber(context, value, NULL);
+
+        // TODO: I think it's OK to skip this code
+        // and rely only in G_TYPE_DOUBLE
+        if (_is_int(n))
+            return G_TYPE_INT;
+        else
+            return G_TYPE_DOUBLE;
+    }
+
+    if (JSValueIsBoolean(context, value))
+        return G_TYPE_BOOLEAN;
+
+    if (JSValueIsObject(context, value))
+        return gwkjs_gtype_get_actual_gtype(context, JSValueToObject(context, value, NULL));
+
+    return G_TYPE_INVALID;
+}
+
 static JSBool
 gwkjs_value_to_g_value_internal(JSContextRef    context,
                               jsval         value,
                               GValue       *gvalue,
                               gboolean      no_copy)
 {
-gwkjs_throw(context, " gwkjs_value_to_g_value_internal not implemented");
-return FALSE;
-//TODO: implement
-//    GType gtype;
-//
-//    gtype = G_VALUE_TYPE(gvalue);
-//
-//    if (gtype == 0) {
-//        gtype = gwkjs_value_guess_g_type(context, value);
-//
-//        if (gtype == G_TYPE_INVALID) {
-//            gwkjs_throw(context, "Could not guess unspecified GValue type");
-//            return JS_FALSE;
-//        }
-//
-//        gwkjs_debug_marshal(GWKJS_DEBUG_GCLOSURE,
-//                          "Guessed GValue type %s from JS Value",
-//                          g_type_name(gtype));
-//
-//        g_value_init(gvalue, gtype);
-//    }
-//
-//    gwkjs_debug_marshal(GWKJS_DEBUG_GCLOSURE,
-//                      "Converting jsval to gtype %s",
-//                      g_type_name(gtype));
-//
-//
-//    if (gtype == G_TYPE_STRING) {
-//        /* Don't use ValueToString since we don't want to just toString()
-//         * everything automatically
-//         */
-//        if (JSVAL_IS_NULL(value)) {
-//            g_value_set_string(gvalue, NULL);
-//        } else if (JSVAL_IS_STRING(value)) {
-//            gchar *utf8_string;
-//
-//            if (!gwkjs_string_to_utf8(context, value, &utf8_string))
-//                return JS_FALSE;
-//
-//            g_value_take_string(gvalue, utf8_string);
-//        } else {
-//            gwkjs_throw(context,
-//                      "Wrong type %s; string expected",
-//                      gwkjs_get_type_name(value));
-//            return JS_FALSE;
-//        }
-//    } else if (gtype == G_TYPE_CHAR) {
-//        gint32 i;
-//        if (JS_ValueToInt32(context, value, &i) && i >= SCHAR_MIN && i <= SCHAR_MAX) {
-//            g_value_set_schar(gvalue, (signed char)i);
-//        } else {
-//            gwkjs_throw(context,
-//                      "Wrong type %s; char expected",
-//                      gwkjs_get_type_name(value));
-//            return JS_FALSE;
-//        }
-//    } else if (gtype == G_TYPE_UCHAR) {
-//        guint16 i;
-//        if (JS_ValueToUint16(context, value, &i) && i <= UCHAR_MAX) {
-//            g_value_set_uchar(gvalue, (unsigned char)i);
-//        } else {
-//            gwkjs_throw(context,
-//                      "Wrong type %s; unsigned char expected",
-//                      gwkjs_get_type_name(value));
-//            return JS_FALSE;
-//        }
-//    } else if (gtype == G_TYPE_INT) {
-//        gint32 i;
-//        if (JS_ValueToInt32(context, value, &i)) {
-//            g_value_set_int(gvalue, i);
-//        } else {
-//            gwkjs_throw(context,
-//                      "Wrong type %s; integer expected",
-//                      gwkjs_get_type_name(value));
-//            return JS_FALSE;
-//        }
-//    } else if (gtype == G_TYPE_DOUBLE) {
-//        gdouble d;
-//        if (JS_ValueToNumber(context, value, &d)) {
-//            g_value_set_double(gvalue, d);
-//        } else {
-//            gwkjs_throw(context,
-//                      "Wrong type %s; double expected",
-//                      gwkjs_get_type_name(value));
-//            return JS_FALSE;
-//        }
-//    } else if (gtype == G_TYPE_FLOAT) {
-//        gdouble d;
-//        if (JS_ValueToNumber(context, value, &d)) {
-//            g_value_set_float(gvalue, d);
-//        } else {
-//            gwkjs_throw(context,
-//                      "Wrong type %s; float expected",
-//                      gwkjs_get_type_name(value));
-//            return JS_FALSE;
-//        }
-//    } else if (gtype == G_TYPE_UINT) {
-//        guint32 i;
-//        if (JS_ValueToECMAUint32(context, value, &i)) {
-//            g_value_set_uint(gvalue, i);
-//        } else {
-//            gwkjs_throw(context,
-//                      "Wrong type %s; unsigned integer expected",
-//                      gwkjs_get_type_name(value));
-//            return JS_FALSE;
-//        }
-//    } else if (gtype == G_TYPE_BOOLEAN) {
-//        JSBool b;
-//
-//        /* JS_ValueToBoolean() pretty much always succeeds,
-//         * which is maybe surprising sometimes, but could
-//         * be handy also...
-//         */
-//        if (JS_ValueToBoolean(context, value, &b)) {
-//            g_value_set_boolean(gvalue, b);
-//        } else {
-//            gwkjs_throw(context,
-//                      "Wrong type %s; boolean expected",
-//                      gwkjs_get_type_name(value));
-//            return JS_FALSE;
-//        }
-//    } else if (g_type_is_a(gtype, G_TYPE_OBJECT) || g_type_is_a(gtype, G_TYPE_INTERFACE)) {
-//        GObject *gobj;
-//
-//        gobj = NULL;
-//        if (JSVAL_IS_NULL(value)) {
-//            /* nothing to do */
-//        } else if (JSVAL_IS_OBJECT(value)) {
-//            JSObjectRef obj;
-//            obj = JSVAL_TO_OBJECT(value);
-//
-//            if (!gwkjs_typecheck_object(context, obj,
-//                                      gtype, JS_TRUE))
-//                return JS_FALSE;
-//
-//            gobj = gwkjs_g_object_from_object(context, obj);
-//        } else {
-//            gwkjs_throw(context,
-//                      "Wrong type %s; object %s expected",
-//                      gwkjs_get_type_name(value),
-//                      g_type_name(gtype));
-//            return JS_FALSE;
-//        }
-//
-//        g_value_set_object(gvalue, gobj);
-//    } else if (gtype == G_TYPE_STRV) {
-//        jsid length_name;
-//        JSBool found_length;
-//
-//        length_name = gwkjs_context_get_const_string(context, GWKJS_STRING_LENGTH);
-//        if (JSVAL_IS_NULL(value)) {
-//            /* do nothing */
-//        } else if (JS_HasPropertyById(context, JSVAL_TO_OBJECT(value), length_name, &found_length) &&
-//                   found_length) {
-//            jsval length_value;
-//            guint32 length;
-//
-//            if (!gwkjs_object_require_property(context,
-//                                             JSVAL_TO_OBJECT(value), NULL,
-//                                             length_name,
-//                                             &length_value) ||
-//                !JS_ValueToECMAUint32(context, length_value, &length)) {
-//                gwkjs_throw(context,
-//                          "Wrong type %s; strv expected",
-//                          gwkjs_get_type_name(value));
-//                return JS_FALSE;
-//            } else {
-//                void *result;
-//                char **strv;
-//
-//                if (!gwkjs_array_to_strv (context,
-//                                        value,
-//                                        length, &result))
-//                    return JS_FALSE;
-//                /* cast to strv in a separate step to avoid type-punning */
-//                strv = (char**) result;
-//                g_value_take_boxed (gvalue, strv);
-//            }
-//        } else {
-//            gwkjs_throw(context,
-//                      "Wrong type %s; strv expected",
-//                      gwkjs_get_type_name(value));
-//            return JS_FALSE;
-//        }
-//    } else if (g_type_is_a(gtype, G_TYPE_BOXED)) {
-//        void *gboxed;
-//
-//        gboxed = NULL;
-//        if (JSVAL_IS_NULL(value)) {
-//            /* nothing to do */
-//        } else if (JSVAL_IS_OBJECT(value)) {
-//            JSObjectRef obj;
-//            obj = JSVAL_TO_OBJECT(value);
-//
-//            if (g_type_is_a(gtype, G_TYPE_ERROR)) {
-//                /* special case GError */
-//                if (!gwkjs_typecheck_gerror(context, obj, JS_TRUE))
-//                    return JS_FALSE;
-//
-//                gboxed = gwkjs_gerror_from_error(context, obj);
-//            } else {
-//                GIBaseInfo *registered = g_irepository_find_by_gtype (NULL, gtype);
-//
-//                /* We don't necessarily have the typelib loaded when
-//                   we first see the structure... */
-//                if (registered) {
-//                    GIInfoType info_type = g_base_info_get_type (registered);
-//
-//                    if (info_type == GI_INFO_TYPE_STRUCT &&
-//                        g_struct_info_is_foreign ((GIStructInfo*)registered)) {
-//                        GArgument arg;
-//
-//                        if (!gwkjs_struct_foreign_convert_to_g_argument (context, value,
-//                                                                       registered,
-//                                                                       NULL,
-//                                                                       GWKJS_ARGUMENT_ARGUMENT,
-//                                                                       GI_TRANSFER_NOTHING,
-//                                                                       TRUE, &arg))
-//                            return FALSE;
-//
-//                        gboxed = arg.v_pointer;
-//                    }
-//                }
-//
-//                /* First try a union, if that fails,
-//                   assume a boxed struct. Distinguishing
-//                   which one is expected would require checking
-//                   the associated GIBaseInfo, which is not necessary
-//                   possible, if e.g. we see the GType without
-//                   loading the typelib.
-//                */
-//                if (!gboxed) {
-//                    if (gwkjs_typecheck_union(context, obj,
-//                                            NULL, gtype, JS_FALSE)) {
-//                        gboxed = gwkjs_c_union_from_union(context, obj);
-//                    } else {
-//                        if (!gwkjs_typecheck_boxed(context, obj,
-//                                                 NULL, gtype, JS_TRUE))
-//                            return JS_FALSE;
-//
-//                        gboxed = gwkjs_c_struct_from_boxed(context, obj);
-//                    }
-//                }
-//            }
-//        } else {
-//            gwkjs_throw(context,
-//                      "Wrong type %s; boxed type %s expected",
-//                      gwkjs_get_type_name(value),
-//                      g_type_name(gtype));
-//            return JS_FALSE;
-//        }
-//
-//        if (no_copy)
-//            g_value_set_static_boxed(gvalue, gboxed);
-//        else
-//            g_value_set_boxed(gvalue, gboxed);
-//    } else if (g_type_is_a(gtype, G_TYPE_VARIANT)) {
-//        GVariant *variant = NULL;
-//
-//        if (JSVAL_IS_NULL(value)) {
-//            /* nothing to do */
-//        } else if (JSVAL_IS_OBJECT(value)) {
-//            JSObjectRef obj = JSVAL_TO_OBJECT(value);
-//
-//            if (!gwkjs_typecheck_boxed(context, obj,
-//                                     NULL, G_TYPE_VARIANT, JS_TRUE))
-//                return JS_FALSE;
-//
-//            variant = (GVariant*) gwkjs_c_struct_from_boxed(context, obj);
-//        } else {
-//            gwkjs_throw(context,
-//                      "Wrong type %s; boxed type %s expected",
-//                      gwkjs_get_type_name(value),
-//                      g_type_name(gtype));
-//            return JS_FALSE;
-//        }
-//
-//        g_value_set_variant (gvalue, variant);
-//    } else if (g_type_is_a(gtype, G_TYPE_ENUM)) {
-//        gint64 value_int64;
-//
-//        if (gwkjs_value_to_int64 (context, value, &value_int64)) {
-//            GEnumValue *v;
-//            gpointer gtype_class = g_type_class_ref(gtype);
-//
-//            /* See arg.c:_gwkjs_enum_to_int() */
-//            v = g_enum_get_value(G_ENUM_CLASS(gtype_class),
-//                                 (int)value_int64);
-//            g_type_class_unref(gtype_class);
-//            if (v == NULL) {
-//                gwkjs_throw(context,
-//                          "%d is not a valid value for enumeration %s",
-//                          JSVAL_TO_INT(value), g_type_name(gtype));
-//                return JS_FALSE;
-//            }
-//
-//            g_value_set_enum(gvalue, v->value);
-//        } else {
-//            gwkjs_throw(context,
-//                         "Wrong type %s; enum %s expected",
-//                         gwkjs_get_type_name(value),
-//                         g_type_name(gtype));
-//            return JS_FALSE;
-//        }
-//    } else if (g_type_is_a(gtype, G_TYPE_FLAGS)) {
-//        gint64 value_int64;
-//
-//        if (gwkjs_value_to_int64 (context, value, &value_int64)) {
-//            if (!_gwkjs_flags_value_is_valid(context, gtype, value_int64))
-//                return JS_FALSE;
-//
-//            /* See arg.c:_gwkjs_enum_to_int() */
-//            g_value_set_flags(gvalue, (int)value_int64);
-//        } else {
-//            gwkjs_throw(context,
-//                      "Wrong type %s; flags %s expected",
-//                      gwkjs_get_type_name(value),
-//                      g_type_name(gtype));
-//            return JS_FALSE;
-//        }
-//    } else if (g_type_is_a(gtype, G_TYPE_PARAM)) {
-//        void *gparam;
-//
-//        gparam = NULL;
-//        if (JSVAL_IS_NULL(value)) {
-//            /* nothing to do */
-//        } else if (JSVAL_IS_OBJECT(value)) {
-//            JSObjectRef obj;
-//            obj = JSVAL_TO_OBJECT(value);
-//
-//            if (!gwkjs_typecheck_param(context, obj, gtype, JS_TRUE))
-//                return JS_FALSE;
-//
-//            gparam = gwkjs_g_param_from_param(context, obj);
-//        } else {
-//            gwkjs_throw(context,
-//                      "Wrong type %s; param type %s expected",
-//                      gwkjs_get_type_name(value),
-//                      g_type_name(gtype));
-//            return JS_FALSE;
-//        }
-//
-//        g_value_set_param(gvalue, (GParamSpec*) gparam);
-//    } else if (g_type_is_a(gtype, G_TYPE_GTYPE)) {
-//        GType type;
-//
-//        if (!JSVAL_IS_OBJECT(value)) {
-//            gwkjs_throw(context, "Wrong type %s; expect a GType object",
-//                      gwkjs_get_type_name(value));
-//            return JS_FALSE;
-//        }
-//
-//        type = gwkjs_gtype_get_actual_gtype(context, JSVAL_TO_OBJECT(value));
-//        g_value_set_gtype(gvalue, type);
-//    } else if (g_type_is_a(gtype, G_TYPE_POINTER)) {
-//        if (JSVAL_IS_NULL(value)) {
-//            /* Nothing to do */
-//        } else {
-//            gwkjs_throw(context,
-//                      "Cannot convert non-null JS value to G_POINTER");
-//            return JS_FALSE;
-//        }
-//    } else if (JSVAL_IS_NUMBER(value) &&
-//               g_value_type_transformable(G_TYPE_INT, gtype)) {
-//        /* Only do this crazy gvalue transform stuff after we've
-//         * exhausted everything else. Adding this for
-//         * e.g. ClutterUnit.
-//         */
-//        gint32 i;
-//        if (JS_ValueToInt32(context, value, &i)) {
-//            GValue int_value = { 0, };
-//            g_value_init(&int_value, G_TYPE_INT);
-//            g_value_set_int(&int_value, i);
-//            g_value_transform(&int_value, gvalue);
-//        } else {
-//            gwkjs_throw(context,
-//                      "Wrong type %s; integer expected",
-//                      gwkjs_get_type_name(value));
-//            return JS_FALSE;
-//        }
-//    } else {
-//        gwkjs_debug(GWKJS_DEBUG_GCLOSURE, "jsval is number %d gtype fundamental %d transformable to int %d from int %d",
-//                  JSVAL_IS_NUMBER(value),
-//                  G_TYPE_IS_FUNDAMENTAL(gtype),
-//                  g_value_type_transformable(gtype, G_TYPE_INT),
-//                  g_value_type_transformable(G_TYPE_INT, gtype));
-//
-//        gwkjs_throw(context,
-//                  "Don't know how to convert JavaScript object to GType %s",
-//                  g_type_name(gtype));
-//        return JS_FALSE;
-//    }
-//
-//    return JS_TRUE;
+    GType gtype;
+    JSValueRef exception = NULL;
+
+    gtype = G_VALUE_TYPE(gvalue);
+
+    if (gtype == 0) {
+        gtype = gwkjs_value_guess_g_type(context, value);
+
+        if (gtype == G_TYPE_INVALID) {
+            gwkjs_throw(context, "Could not guess unspecified GValue type");
+            return JS_FALSE;
+        }
+
+        gwkjs_debug_marshal(GWKJS_DEBUG_GCLOSURE,
+                          "Guessed GValue type %s from JS Value",
+                          g_type_name(gtype));
+
+        g_value_init(gvalue, gtype);
+    }
+
+    gwkjs_debug_marshal(GWKJS_DEBUG_GCLOSURE,
+                      "Converting jsval to gtype %s",
+                      g_type_name(gtype));
+
+
+    if (gtype == G_TYPE_STRING) {
+        /* Don't use ValueToString since we don't want to just toString()
+         * everything automatically
+         */
+        if (JSValueIsNull(context, value)) {
+            g_value_set_string(gvalue, NULL);
+        } else if (JSValueIsString(context, value)) {
+            gchar *utf8_string;
+
+            if (!gwkjs_string_to_utf8(context, value, &utf8_string))
+                return JS_FALSE;
+
+            g_value_take_string(gvalue, utf8_string);
+        } else {
+            gwkjs_throw(context,
+                      "Wrong type %s; string expected",
+                      gwkjs_get_type_name(context, value));
+            return JS_FALSE;
+        }
+    } else if (gtype == G_TYPE_CHAR) {
+        gint32 i = gwkjs_value_to_int32(context, value, &exception);
+        if (!exception && i >= SCHAR_MIN && i <= SCHAR_MAX) {
+            g_value_set_schar(gvalue, (signed char)i);
+        } else {
+            gwkjs_throw(context,
+                      "Wrong type %s; char expected",
+                      gwkjs_get_type_name(context, value));
+            return JS_FALSE;
+        }
+    } else if (gtype == G_TYPE_UCHAR) {
+        guint16 i = gwkjs_jsvalue_to_uint(context, value, &exception);
+        if (!exception && i <= UCHAR_MAX) {
+            g_value_set_uchar(gvalue, (unsigned char)i);
+        } else {
+            gwkjs_throw(context,
+                      "Wrong type %s; unsigned char expected",
+                      gwkjs_get_type_name(context, value));
+            return JS_FALSE;
+        }
+    } else if (gtype == G_TYPE_INT) {
+        gint32 i = gwkjs_jsvalue_to_int(context, value, &exception);
+        if (!exception) {
+            g_value_set_int(gvalue, i);
+        } else {
+            gwkjs_throw(context,
+                      "Wrong type %s; integer expected",
+                      gwkjs_get_type_name(context, value));
+            return JS_FALSE;
+        }
+    } else if (gtype == G_TYPE_DOUBLE) {
+        gdouble d = gwkjs_value_to_double(context, value, &exception);
+        if (!exception) {
+            g_value_set_double(gvalue, d);
+        } else {
+            gwkjs_throw(context,
+                      "Wrong type %s; double expected",
+                      gwkjs_get_type_name(context, value));
+            return JS_FALSE;
+        }
+    } else if (gtype == G_TYPE_FLOAT) {
+        gdouble d = gwkjs_value_to_float(context, value, &exception);
+        if (!exception) {
+            g_value_set_float(gvalue, d);
+        } else {
+            gwkjs_throw(context,
+                      "Wrong type %s; float expected",
+                      gwkjs_get_type_name(context, value));
+            return JS_FALSE;
+        }
+    } else if (gtype == G_TYPE_UINT) {
+        guint32 i = gwkjs_value_to_uint32(context, value, &exception);
+        if (!exception) {
+            g_value_set_uint(gvalue, i);
+        } else {
+            gwkjs_throw(context,
+                      "Wrong type %s; unsigned integer expected",
+                      gwkjs_get_type_name(context, value));
+            return JS_FALSE;
+        }
+    } else if (gtype == G_TYPE_BOOLEAN) {
+        JSBool b = gwkjs_value_to_boolean(context, value, &exception);
+
+        /* JS_ValueToBoolean() pretty much always succeeds,
+         * which is maybe surprising sometimes, but could
+         * be handy also...
+         */
+        if (!exception) {
+            g_value_set_boolean(gvalue, b);
+        } else {
+            gwkjs_throw(context,
+                      "Wrong type %s; boolean expected",
+                      gwkjs_get_type_name(context, value));
+            return JS_FALSE;
+        }
+    } else if (g_type_is_a(gtype, G_TYPE_OBJECT) || g_type_is_a(gtype, G_TYPE_INTERFACE)) {
+        GObject *gobj;
+
+        gobj = NULL;
+        if (JSVAL_IS_NULL(context, value)) {
+            /* nothing to do */
+        } else if (JSValueIsObject(context, value)) {
+            JSObjectRef obj;
+            obj = JSValueToObject(context, value, &exception);
+
+            if (!gwkjs_typecheck_object(context, obj,
+                                      gtype, JS_TRUE))
+                return JS_FALSE;
+
+            gobj = gwkjs_g_object_from_object(context, obj);
+        } else {
+            gwkjs_throw(context,
+                      "Wrong type %s; object %s expected",
+                      gwkjs_get_type_name(context, value),
+                      g_type_name(gtype));
+            return JS_FALSE;
+        }
+
+        g_value_set_object(gvalue, gobj);
+    } else if (gtype == G_TYPE_STRV) {
+        const gchar* length_name;
+        JSBool found_length;
+
+        length_name = gwkjs_context_get_const_string(context, GWKJS_STRING_LENGTH);
+        if (JSVAL_IS_NULL(context, value)) {
+            /* do nothing */
+        } else if (gwkjs_object_has_property(context, JSValueToObject(context, value, NULL), length_name)) {
+            jsval length_value;
+            guint32 length;
+
+            gboolean prop_exist = gwkjs_object_require_property(context,
+                                          JSValueToObject(context, value, NULL), NULL,
+                                          length_name,
+                                          &length_value);
+            length = gwkjs_value_to_uint32(context, length_value, &exception);
+            if (!prop_exist ||
+                exception) {
+                gwkjs_throw(context,
+                          "Wrong type %s; strv expected",
+                          gwkjs_get_type_name(context, value));
+                return JS_FALSE;
+            } else {
+                void *result;
+                char **strv;
+
+                if (!gwkjs_array_to_strv (context,
+                                        value,
+                                        length, &result))
+                    return JS_FALSE;
+                /* cast to strv in a separate step to avoid type-punning */
+                strv = (char**) result;
+                g_value_take_boxed (gvalue, strv);
+            }
+        } else {
+            gwkjs_throw(context,
+                      "Wrong type %s; strv expected",
+                      gwkjs_get_type_name(context, value));
+            return JS_FALSE;
+        }
+    } else if (g_type_is_a(gtype, G_TYPE_BOXED)) {
+        void *gboxed;
+
+        gboxed = NULL;
+        if (JSVAL_IS_NULL(context, value)) {
+            /* nothing to do */
+        } else if (JSValueIsObject(context, value)) {
+            JSObjectRef obj;
+            obj = JSValueToObject(context, value, &exception);
+
+            if (g_type_is_a(gtype, G_TYPE_ERROR)) {
+                /* special case GError */
+                if (!gwkjs_typecheck_gerror(context, obj, JS_TRUE))
+                    return JS_FALSE;
+
+                gboxed = gwkjs_gerror_from_error(context, obj);
+            } else {
+                GIBaseInfo *registered = g_irepository_find_by_gtype (NULL, gtype);
+
+                /* We don't necessarily have the typelib loaded when
+                   we first see the structure... */
+                if (registered) {
+                    GIInfoType info_type = g_base_info_get_type (registered);
+
+                    if (info_type == GI_INFO_TYPE_STRUCT &&
+                        g_struct_info_is_foreign ((GIStructInfo*)registered)) {
+                        GArgument arg;
+
+                        if (!gwkjs_struct_foreign_convert_to_g_argument (context, value,
+                                                                       registered,
+                                                                       NULL,
+                                                                       GWKJS_ARGUMENT_ARGUMENT,
+                                                                       GI_TRANSFER_NOTHING,
+                                                                       TRUE, &arg))
+                            return FALSE;
+
+                        gboxed = arg.v_pointer;
+                    }
+                }
+
+                /* First try a union, if that fails,
+                   assume a boxed struct. Distinguishing
+                   which one is expected would require checking
+                   the associated GIBaseInfo, which is not necessary
+                   possible, if e.g. we see the GType without
+                   loading the typelib.
+                */
+                if (!gboxed) {
+                    if (gwkjs_typecheck_union(context, obj,
+                                            NULL, gtype, JS_FALSE)) {
+                        gboxed = gwkjs_c_union_from_union(context, obj);
+                    } else {
+                        if (!gwkjs_typecheck_boxed(context, obj,
+                                                 NULL, gtype, JS_TRUE))
+                            return JS_FALSE;
+
+                        gboxed = gwkjs_c_struct_from_boxed(context, obj);
+                    }
+                }
+            }
+        } else {
+            gwkjs_throw(context,
+                      "Wrong type %s; boxed type %s expected",
+                      gwkjs_get_type_name(context, value),
+                      g_type_name(gtype));
+            return JS_FALSE;
+        }
+
+        if (no_copy)
+            g_value_set_static_boxed(gvalue, gboxed);
+        else
+            g_value_set_boxed(gvalue, gboxed);
+    } else if (g_type_is_a(gtype, G_TYPE_VARIANT)) {
+        GVariant *variant = NULL;
+
+        if (JSVAL_IS_NULL(context, value)) {
+            /* nothing to do */
+        } else if (JSValueIsObject(context, value)) {
+            JSObjectRef obj = JSValueToObject(context, value, &exception);
+
+            if (!gwkjs_typecheck_boxed(context, obj,
+                                     NULL, G_TYPE_VARIANT, JS_TRUE))
+                return JS_FALSE;
+
+            variant = (GVariant*) gwkjs_c_struct_from_boxed(context, obj);
+        } else {
+            gwkjs_throw(context,
+                      "Wrong type %s; boxed type %s expected",
+                      gwkjs_get_type_name(context, value),
+                      g_type_name(gtype));
+            return JS_FALSE;
+        }
+
+        g_value_set_variant (gvalue, variant);
+    } else if (g_type_is_a(gtype, G_TYPE_ENUM)) {
+        gint64 value_int64 = gwkjs_value_to_int64(context, value, &exception);
+
+        if (!exception) {
+            GEnumValue *v;
+            gpointer gtype_class = g_type_class_ref(gtype);
+
+            /* See arg.c:_gwkjs_enum_to_int() */
+            v = g_enum_get_value(G_ENUM_CLASS(gtype_class),
+                                 (int)value_int64);
+            g_type_class_unref(gtype_class);
+            if (v == NULL) {
+                gwkjs_throw(context,
+                          "%d is not a valid value for enumeration %s",
+                          gwkjs_jsvalue_to_int(context, value, NULL), g_type_name(gtype));
+                return JS_FALSE;
+            }
+
+            g_value_set_enum(gvalue, v->value);
+        } else {
+            gwkjs_throw(context,
+                         "Wrong type %s; enum %s expected",
+                         gwkjs_get_type_name(context, value),
+                         g_type_name(gtype));
+            return JS_FALSE;
+        }
+    } else if (g_type_is_a(gtype, G_TYPE_FLAGS)) {
+        gint64 value_int64 = gwkjs_value_to_int64(context, value, &exception);
+
+        if (!exception) {
+            if (!_gwkjs_flags_value_is_valid(context, gtype, value_int64))
+                return JS_FALSE;
+
+            /* See arg.c:_gwkjs_enum_to_int() */
+            g_value_set_flags(gvalue, (int)value_int64);
+        } else {
+            gwkjs_throw(context,
+                      "Wrong type %s; flags %s expected",
+                      gwkjs_get_type_name(context, value),
+                      g_type_name(gtype));
+            return JS_FALSE;
+        }
+    } else if (g_type_is_a(gtype, G_TYPE_PARAM)) {
+        void *gparam;
+
+        gparam = NULL;
+        if (JSVAL_IS_NULL(context, value)) {
+            /* nothing to do */
+        } else if (JSValueIsObject(context, value)) {
+            JSObjectRef obj;
+            obj = JSValueToObject(context, value, &exception);
+
+            if (!gwkjs_typecheck_param(context, obj, gtype, JS_TRUE))
+                return JS_FALSE;
+
+            gparam = gwkjs_g_param_from_param(context, obj);
+        } else {
+            gwkjs_throw(context,
+                      "Wrong type %s; param type %s expected",
+                      gwkjs_get_type_name(context, value),
+                      g_type_name(gtype));
+            return JS_FALSE;
+        }
+
+        g_value_set_param(gvalue, (GParamSpec*) gparam);
+    } else if (g_type_is_a(gtype, G_TYPE_GTYPE)) {
+        GType type;
+
+        if (!JSValueIsObject(context, value)) {
+            gwkjs_throw(context, "Wrong type %s; expect a GType object",
+                      gwkjs_get_type_name(context, value));
+            return JS_FALSE;
+        }
+
+        type = gwkjs_gtype_get_actual_gtype(context, JSValueToObject(context, value, &exception));
+        g_value_set_gtype(gvalue, type);
+    } else if (g_type_is_a(gtype, G_TYPE_POINTER)) {
+        if (JSVAL_IS_NULL(context, value)) {
+            /* Nothing to do */
+        } else {
+            gwkjs_throw(context,
+                      "Cannot convert non-null JS value to G_POINTER");
+            return JS_FALSE;
+        }
+    } else if (JSValueIsNumber(context, value) &&
+               g_value_type_transformable(G_TYPE_INT, gtype)) {
+        /* Only do this crazy gvalue transform stuff after we've
+         * exhausted everything else. Adding this for
+         * e.g. ClutterUnit.
+         */
+        gint32 i = gwkjs_value_to_int32(context, value, &exception);
+        if (!exception) {
+            GValue int_value = { 0, };
+            g_value_init(&int_value, G_TYPE_INT);
+            g_value_set_int(&int_value, i);
+            g_value_transform(&int_value, gvalue);
+        } else {
+            gwkjs_throw(context,
+                      "Wrong type %s; integer expected",
+                      gwkjs_get_type_name(context, value));
+            return JS_FALSE;
+        }
+    } else {
+        gwkjs_debug(GWKJS_DEBUG_GCLOSURE, "jsval is number %d gtype fundamental %d transformable to int %d from int %d",
+                  JSValueIsNumber(context, value),
+                  G_TYPE_IS_FUNDAMENTAL(gtype),
+                  g_value_type_transformable(gtype, G_TYPE_INT),
+                  g_value_type_transformable(G_TYPE_INT, gtype));
+
+        gwkjs_throw(context,
+                  "Don't know how to convert JavaScript object to GType %s",
+                  g_type_name(gtype));
+        return JS_FALSE;
+    }
+
+    return JS_TRUE;
 }
 
 JSBool

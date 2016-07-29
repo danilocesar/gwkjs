@@ -436,9 +436,28 @@ gboolean    gwkjs_unichar_from_string          (JSContextRef       context,
 const char* gwkjs_get_type_name                (JSContextRef context,
                                                 JSValueRef   value);
 
-JSBool      gwkjs_value_to_int64               (JSContextRef       context,
+gint64      gwkjs_value_to_int64               (JSContextRef       context,
                                                 const jsval      val,
-                                                gint64          *result);
+                                                JSValueRef *exception);
+
+gint32      gwkjs_value_to_int32               (JSContextRef       context,
+                                                const jsval      val,
+                                                JSValueRef *exception);
+
+guint32      gwkjs_value_to_uint32               (JSContextRef       context,
+                                                const jsval      val,
+                                                JSValueRef *exception);
+
+gboolean      gwkjs_value_to_boolean           (JSContextRef context,
+                                                JSValueRef val,
+                                                JSValueRef* exception);
+
+gdouble
+gwkjs_value_to_double(JSContextRef ctx, JSValueRef val, JSValueRef* exception);
+
+gfloat
+gwkjs_value_to_float(JSContextRef ctx, JSValueRef val, JSValueRef* exception);
+
 
 //JSBool      gwkjs_parse_args                   (JSContextRef  context,
 //                                              const char *function_name,
