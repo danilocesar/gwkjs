@@ -270,7 +270,7 @@ gwkjs_define_param_class(JSContextRef    context,
                 constructor_name, prototype, JSObjectGetClass(context, prototype), in_object);
 
 //TODO: Should we return the constructor or the value?
-    return value;
+    return constructor;
 }
 
 JSObjectRef

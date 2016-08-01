@@ -8,6 +8,7 @@ function main() {
 	msg.response_headers.set_content_type('text/html', {});
 	msg.response_body.append('<html><body>Greetings, visitor from ' + client.get_host() + '<br>What is your name?<form action="/hello"><input name="myname"></form></body></html>\n');
     };
+
     let helloHandler = function(server, msg, path, query, client) {
 	if (!query) {
 	    msg.set_redirect(302, '/');
