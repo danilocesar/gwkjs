@@ -300,16 +300,20 @@ JSObjectRef gwkjs_new_object_for_constructor   (JSContextRef    context,
 //                                              JSObjectRef       *prototype_p);
 //*/
  JSBool      gwkjs_init_class_dynamic           (JSContextRef       context,
-                       JSObjectRef        in_object,
-                       JSObjectRef        parent_proto,
-                       const char        *ns_name,
-                       const char        *class_name,
-                       JSClassDefinition *clasp,
-                       JSClassRef        clasp_ref,
-                       JSObjectCallAsConstructorCallback      constructor_native,
-                       unsigned         nargs,
-                       JSObjectRef       *prototype_p,
-                       JSObjectRef       *constructor_p);
+                                                 JSObjectRef        in_object,
+                                                 JSObjectRef        parent_proto,
+                                                 const char         *ns_name,
+                                                 const char         *class_name,
+                                                 JSClassDefinition  *clasp,
+                                                 JSClassRef         clasp_ref,
+                                                 JSObjectCallAsConstructorCallback      constructor_native,
+                                                 unsigned           nargs,
+                                                 JSStaticValue      *proto_ps,
+                                                 JSStaticFunction   *proto_fs,
+                                                 JSStaticValue      *static_ps,
+                                                 JSStaticFunction   *static_fs,
+                                                 JSObjectRef        *prototype_p,
+                                                 JSObjectRef        *constructor_p);
 
 
 //void gwkjs_throw_constructor_error             (JSContextRef       context);
@@ -457,6 +461,15 @@ gwkjs_value_to_double(JSContextRef ctx, JSValueRef val, JSValueRef* exception);
 
 gfloat
 gwkjs_value_to_float(JSContextRef ctx, JSValueRef val, JSValueRef* exception);
+
+JSBool
+gwkjs_define_properties(JSContextRef context,
+                        JSObjectRef object,
+                        JSStaticValue *f_array);
+JSBool
+gwkjs_define_functions(JSContextRef context,
+                        JSObjectRef object,
+                        JSStaticFunction *f_array);
 
 
 //JSBool      gwkjs_parse_args                   (JSContextRef  context,

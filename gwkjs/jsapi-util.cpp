@@ -1773,3 +1773,56 @@ out:
 
     return ret;
 }
+JSBool
+gwkjs_define_properties(JSContextRef context,
+                        JSObjectRef object,
+                        JSStaticValue *f_array)
+{
+    if (!f_array)
+        return TRUE;
+
+    JSValueRef exception = NULL;
+    int i = 0;
+
+    JSStaticValue val = f_array[i];
+    while (val.name != NULL) {
+        // TODO: IMPLEMENT
+        g_warning("gwkjs_define_properties NOT IMPLEMENTED!");
+
+        JSStaticValue val = f_array[i++];
+    }
+
+    return TRUE;
+}
+
+JSBool
+gwkjs_define_functions(JSContextRef context,
+                        JSObjectRef object,
+                        JSStaticFunction *f_array)
+{
+    JSValueRef exception = NULL;
+    int i = 0;
+
+    if (!f_array)
+        return TRUE;
+
+    JSStaticFunction func = f_array[i];
+    while (func.name != NULL) {
+        JSStringRef jsname = gwkjs_cstring_to_jsstring(func.name);
+
+        JSObjectRef funObj = JSObjectMakeFunctionWithCallback(context,
+                                                              jsname,
+                                                              func.callAsFunction);
+        gwkjs_object_set_property(context, object, func.name,
+                                  funObj, func.attributes, &exception);
+
+        if (exception) {
+            g_warning("gwkjs_define_functions failed for %p", object);
+            return FALSE;
+        }
+
+        func = f_array[i++];
+    }
+
+    return TRUE;
+}

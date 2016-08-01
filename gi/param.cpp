@@ -153,7 +153,11 @@ JSStaticValue gwkjs_param_proto_props[] = {
 };
 
 JSStaticFunction gwkjs_param_proto_funcs[] = {
-    { NULL }
+    { NULL, NULL, 0 }
+};
+
+JSStaticFunction gwkjs_param_constructor_funcs[] = {
+    {NULL, NULL, 0}
 };
 
 
@@ -162,8 +166,8 @@ JSClassDefinition gwkjs_param_class = {
     kJSPropertyAttributeNone,  //     JSClassAttributes
     "GObject_ParamSpec",       //     const char* className;
     NULL,                      //     JSClassRef parentClass;
-    gwkjs_param_proto_props,   //     const JSStaticValue*                staticValues;
-    gwkjs_param_proto_funcs,   //     const JSStaticFunction*             staticFunctions;
+    NULL,                      //     const JSStaticValue*                staticValues;
+    NULL,                      //     const JSStaticFunction*             staticFunctions;
     NULL,                      //     JSObjectInitializeCallback          initialize;
     param_finalize,            //     JSObjectFinalizeCallback            finalize;
     NULL,                      //     JSObjectHasPropertyCallback         hasProperty;
@@ -174,7 +178,7 @@ JSClassDefinition gwkjs_param_class = {
     NULL,                      //     JSObjectDeletePropertyCallback      deleteProperty;
     NULL,                      //     JSObjectGetPropertyNamesCallback    getPropertyNames;
     NULL,                      //     JSObjectCallAsFunctionCallback      callAsFunction;
-    gwkjs_param_constructor,//     JSObjectCallAsConstructorCallback   callAsConstructor;
+    gwkjs_param_constructor,   //     JSObjectCallAsConstructorCallback   callAsConstructor;
     NULL,                      //     JSObjectHasInstanceCallback         hasInstance;
     NULL,                      //     JSObjectConvertToTypeCallback       convertToType;
 
@@ -241,6 +245,14 @@ gwkjs_define_param_class(JSContextRef    context,
                                   &gwkjs_param_class,
                                   gwkjs_param_class_ref,
                                   gwkjs_param_constructor, 0,
+                                  /* props of prototype */
+                                  &gwkjs_param_proto_props[0],
+                                  /* funcs of prototype */
+                                  &gwkjs_param_proto_funcs[0],
+                                  /* props of constructor, MyConstructor.myprop */
+                                  NULL,
+                                  /* funcs of constructor, MyConstructor.myfunc() */
+                                  gwkjs_param_constructor_funcs,
                                   &prototype,
                                   &constructor)) {
         g_error("Can't init class %s", constructor_name);

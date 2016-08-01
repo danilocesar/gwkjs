@@ -64,15 +64,19 @@ gwkjs_new_object_for_constructor(JSContextRef context,
 }
 
 JSBool
-gwkjs_init_class_dynamic(JSContextRef       context,
+gwkjs_init_class_dynamic(JSContextRef     context,
                        JSObjectRef        in_object,
                        JSObjectRef        parent_proto,
-                       const char        *ns_name,
-                       const char        *class_name,
-                       JSClassDefinition *clasp,
-                       JSClassRef        clasp_ref,
+                       const char         *ns_name,
+                       const char         *class_name,
+                       JSClassDefinition  *clasp,
+                       JSClassRef         clasp_ref,
                        JSObjectCallAsConstructorCallback      constructor_native,
-                       unsigned         nargs,
+                       unsigned           nargs,
+                       JSStaticValue      *proto_ps,
+                       JSStaticFunction   *proto_fs,
+                       JSStaticValue      *static_ps,
+                       JSStaticFunction   *static_fs,
                        JSObjectRef       *prototype_p,
                        JSObjectRef       *constructor_p)
 {
@@ -81,6 +85,7 @@ gwkjs_init_class_dynamic(JSContextRef       context,
        find them */
     JSObjectRef prototype = NULL;
     JSObjectRef constructor = NULL;
+    JSObjectRef constructor_fun = NULL;
     char *full_function_name = NULL;
     JSBool res = JS_FALSE;
     JSValueRef exception = NULL;
@@ -115,11 +120,10 @@ gwkjs_init_class_dynamic(JSContextRef       context,
     if (!prototype)
         goto out;
 
-// TODO: CHECK IF PROTO METHODS ARE BEING DEFINED
-//    if (proto_ps && !JS_DefineProperties(context, prototype, proto_ps))
-//        goto out;
-//    if (proto_fs && !JS_DefineFunctions(context, prototype, proto_fs))
-//        goto out;
+    if (proto_ps && !gwkjs_define_properties(context, prototype, proto_ps))
+        goto out;
+    if (proto_fs && !gwkjs_define_functions(context, prototype, proto_fs))
+        goto out;
 
     full_function_name = g_strdup_printf("return \"[%s_%s constructor]\";", ns_name, class_name);
 
@@ -127,10 +131,10 @@ gwkjs_init_class_dynamic(JSContextRef       context,
     func = JSObjectMakeFunction(context, gwkjs_cstring_to_jsstring("toString"), 0, NULL, gwkjs_cstring_to_jsstring(full_function_name), NULL, 0, NULL);
     gwkjs_object_set_property(context, constructor, "toString", func, 0, NULL);
 
-//    if (static_ps && !JS_DefineProperties(context, constructor, static_ps))
-//        goto out;
-//    if (static_fs && !JS_DefineFunctions(context, constructor, static_fs))
-//        goto out;
+    if (static_ps && !gwkjs_define_properties(context, constructor, static_ps))
+        goto out;
+    if (static_fs && !gwkjs_define_functions(context, constructor, static_fs))
+        goto out;
 
     gwkjs_object_set_property(context, constructor, "prototype", prototype,
                               kJSPropertyAttributeNone, &exception);

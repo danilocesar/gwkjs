@@ -1941,7 +1941,7 @@ JSStaticFunction gwkjs_object_instance_proto_funcs[] = {
     { "connect_after", connect_after_func, 0 },
     { "emit", emit_func, 0 },
     { "toString", to_string_func, 0 },
-    { NULL }
+    { NULL, NULL, 0 }
 };
 
 
@@ -1950,8 +1950,8 @@ JSClassDefinition gwkjs_object_instance_class = {
     kJSPropertyAttributeNone,  //     JSClassAttributes
     "GObject_Object",          //     const char* className;
     NULL,                      //     JSClassRef parentClass;
-    gwkjs_object_instance_proto_props, //     const JSStaticValue*                staticValues;
-    gwkjs_object_instance_proto_funcs, //     const JSStaticFunction*             staticFunctions;
+    NULL,                      //     const JSStaticValue*                staticValues;
+    NULL,                      //     const JSStaticFunction*             staticFunctions;
     NULL,                      //     JSObjectInitializeCallback          initialize;
     object_instance_finalize,  //     JSObjectFinalizeCallback            finalize;
     NULL,                      //     JSObjectHasPropertyCallback         hasProperty;
@@ -1963,7 +1963,7 @@ JSClassDefinition gwkjs_object_instance_class = {
     NULL,                      //     JSObjectDeletePropertyCallback      deleteProperty;
     NULL,                      //     JSObjectGetPropertyNamesCallback    getPropertyNames;
     NULL,                      //     JSObjectCallAsFunctionCallback      callAsFunction;
-    gwkjs_object_instance_constructor,//     JSObjectCallAsConstructorCallback   callAsConstructor;
+    gwkjs_object_instance_constructor, //     JSObjectCallAsConstructorCallback   callAsConstructor;
     NULL,                      //     JSObjectHasInstanceCallback         hasInstance;
     NULL,                      //     JSObjectConvertToTypeCallback       convertToType;
 };
@@ -2066,6 +2066,14 @@ gwkjs_define_object_class(JSContextRef      context,
                                   &gwkjs_object_instance_class,
                                   gwkjs_object_instance_class_ref,
                                   gwkjs_object_instance_constructor, 0,
+                                  /* props of prototype */
+                                  parent_proto ? NULL : &gwkjs_object_instance_proto_props[0],
+                                  /* funcs of prototype */
+                                  parent_proto ? NULL : &gwkjs_object_instance_proto_funcs[0],
+                                  /* props of constructor, MyConstructor.myprop */
+                                  NULL,
+                                  /* funcs of constructor, MyConstructor.myfunc() */
+                                  NULL,
                                   &prototype,
                                   &constructor)) {
         g_error("Can't init class %s", constructor_name);
