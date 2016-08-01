@@ -2141,6 +2141,7 @@ gwkjs_array_from_carray_internal (JSContextRef  context,
 
 //TODO: implement - no bytearray support yet.
 //        obj = gwkjs_byte_array_from_byte_array (context, &gbytearray);
+g_warning("UNIMPLEMENTED: requested gwkjs_byte_array_from_byte_array");
 
         if (obj == NULL)
             return JS_FALSE;
