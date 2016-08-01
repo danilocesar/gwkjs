@@ -1350,6 +1350,7 @@ gwkjs_define_root_importer_object(JSContextRef     context,
                               root_importer,
                               kJSPropertyAttributeDontDelete |
                               kJSPropertyAttributeReadOnly, NULL);
+    JSValueProtect(context, root_importer);
 
     if (exception) {
         gchar *msg = gwkjs_exception_to_string(context, exception);
